@@ -1,5 +1,5 @@
 ---
-name: 작업
+name: 작업 이슈
 about: 팀 블로그 운영 규칙 문서 작업 하나
 title: "[작업] "
 labels: task
