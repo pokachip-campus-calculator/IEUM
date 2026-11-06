@@ -2,6 +2,7 @@ package com.ieum.common;
 
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -19,7 +20,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApi(ApiException e) {
         ErrorCode ec = e.getErrorCode();
-        return ResponseEntity.status(ec.getStatus()).body(ErrorResponse.of(ec));
+        return ResponseEntity.status(ec.getStatus())
+                .body(new ErrorResponse(ec.name(), ec.getMessage(), e.getFieldErrors()));
     }
 
     // 입력 검증 실패 → 400과 함께 틀린 항목 목록을 응답
@@ -32,6 +34,13 @@ public class GlobalExceptionHandler {
         ErrorCode ec = ErrorCode.VALIDATION_FAILED;
         return ResponseEntity.status(ec.getStatus())
                 .body(new ErrorResponse(ec.name(), ec.getMessage(), fields));
+    }
+
+    // JSON 형식이 깨졌거나 enum 값이 틀린 요청 → 400 VALIDATION_FAILED
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException e) {
+        ErrorCode ec = ErrorCode.VALIDATION_FAILED;
+        return ResponseEntity.status(ec.getStatus()).body(ErrorResponse.of(ec));
     }
 
 }
