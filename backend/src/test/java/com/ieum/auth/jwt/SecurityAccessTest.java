@@ -31,7 +31,7 @@ class SecurityAccessTest {
     @RestController
     static class ProbeController {
         @GetMapping("/auth/probe") String open() { return "open"; }
-        @GetMapping("/me") String me(@AuthenticationPrincipal AuthUser user) { return user.id() + ":" + user.role(); }
+        @GetMapping("/whoami") String me(@AuthenticationPrincipal AuthUser user) { return user.id() + ":" + user.role(); }
         @GetMapping("/teacher/probe") String teacher() { return "teacher"; }
     }
 
@@ -44,21 +44,21 @@ class SecurityAccessTest {
 
     @Test
     void 토큰이_없으면_UNAUTHORIZED_401() throws Exception {
-        mockMvc.perform(get("/api/v1/me"))
+        mockMvc.perform(get("/api/v1/whoami"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
     }
 
     @Test
     void 위조한_토큰은_UNAUTHORIZED_401() throws Exception {
-        mockMvc.perform(get("/api/v1/me").header("Authorization", "Bearer abc.def.ghi"))
+        mockMvc.perform(get("/api/v1/whoami").header("Authorization", "Bearer abc.def.ghi"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
     }
 
     @Test
     void 컨트롤러에서_로그인한_사용자의_id와_role을_꺼낸다() throws Exception {
-        mockMvc.perform(get("/api/v1/me").header("Authorization", bearer(7L, Role.STUDENT)))
+        mockMvc.perform(get("/api/v1/whoami").header("Authorization", bearer(7L, Role.STUDENT)))
                 .andExpect(status().isOk())
                 .andExpect(content().string("7:STUDENT"));
     }

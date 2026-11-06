@@ -110,6 +110,7 @@ public class User {
     }
 
     public void changeNickname(String nickname) { this.nickname = nickname; }
+    public void changeEmail(String email) { this.email = email; }
     public void changePasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public void markLogin(LocalDateTime at) { this.lastLoginAt = at; }
 
