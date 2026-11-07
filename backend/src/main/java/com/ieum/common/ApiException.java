@@ -13,12 +13,13 @@ public class ApiException extends RuntimeException {
     private final ErrorCode errorCode;
     private final List<ErrorResponse.FieldError> fieldErrors;
 
+    // 필드 정보가 없는 오류
     public ApiException(ErrorCode errorCode) {
         this(errorCode, null);
     }
 
+    // 필드 정보가 있는 오류
     public ApiException(ErrorCode errorCode, List<ErrorResponse.FieldError> fieldErrors) {
-        super(errorCode.getMessage());
         this.errorCode = errorCode;
         this.fieldErrors = fieldErrors;
     }
