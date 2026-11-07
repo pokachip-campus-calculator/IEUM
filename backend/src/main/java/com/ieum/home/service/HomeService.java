@@ -1,0 +1,111 @@
+package com.ieum.home.service;
+
+import com.ieum.common.ApiException;
+import com.ieum.common.ErrorCode;
+import com.ieum.home.dto.HomeResponse;
+import com.ieum.home.dto.HomeResponse.AreaProgress;
+import com.ieum.home.dto.HomeResponse.RecentItem;
+import com.ieum.message.entity.SenderRole;
+import com.ieum.message.repository.MessageRepository;
+import com.ieum.practice.dto.PracticeItem;
+import com.ieum.practice.entity.Practice;
+import com.ieum.practice.entity.PracticeArea;
+import com.ieum.practice.repository.PracticeRepository;
+import com.ieum.practice.service.PracticeService;
+import com.ieum.record.entity.PracticeRecord;
+import com.ieum.record.entity.RecordStatus;
+import com.ieum.user.entity.Role;
+import com.ieum.user.entity.User;
+import com.ieum.user.repository.UserRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * [역할] 학습자 홈(07)에 필요한 값(닉네임·안 읽은 답장·이어하기·영역별 현황·최근 기록)을 모은다.
+ * [동작] 공개된 연습과 내 기록만으로 계산한다. resume은 하는 중 가장 최근 것, 없으면 안 한 것의 첫 번째, 다 했으면 null이다.
+ * [연결] HomeController가 부른다 / PracticeService(카드 변환·정렬), MessageRepository(안 읽은 답장)
+ * [주의] 학습자 전용이다. 이음쌤 배정(teacher_id)과 무관하게 동작한다.
+ */
+@Service
+public class HomeService {
+
+    private static final int IN_PROGRESS_MAX = 2;
+    private static final int RECENT_MAX = 3;
+
+    private final UserRepository userRepository;
+    private final PracticeRepository practiceRepository;
+    private final MessageRepository messageRepository;
+    private final PracticeService practiceService;
+
+    public HomeService(UserRepository userRepository, PracticeRepository practiceRepository,
+                       MessageRepository messageRepository, PracticeService practiceService) {
+        this.userRepository = userRepository;
+        this.practiceRepository = practiceRepository;
+        this.messageRepository = messageRepository;
+        this.practiceService = practiceService;
+    }
+
+    @Transactional(readOnly = true)
+    public HomeResponse home(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorCode.UNAUTHORIZED));
+        if (user.getRole() != Role.STUDENT) {
+            throw new ApiException(ErrorCode.FORBIDDEN);
+        }
+
+        List<Practice> practices = practiceRepository.findByPublishedTrue().stream()
+                .sorted(practiceService.listOrder())
+                .toList();
+        Map<Long, PracticeRecord> records = practiceService.recordsByPractice(userId);
+
+        // 하는 중인 연습: 최근 수정 순
+        List<Practice> inProgress = practices.stream()
+                .filter(p -> statusOf(records.get(p.getId())) == RecordStatus.IN_PROGRESS)
+                .sorted(Comparator.comparing((Practice p) -> records.get(p.getId()).getUpdatedAt()).reversed())
+                .toList();
+
+        Practice resume = !inProgress.isEmpty() ? inProgress.get(0)
+                : practices.stream().filter(p -> records.get(p.getId()) == null).findFirst().orElse(null);
+
+        List<PracticeItem> inProgressItems = inProgress.stream()
+                .filter(p -> p != resume)
+                .limit(IN_PROGRESS_MAX)
+                .map(p -> practiceService.toItem(p, records.get(p.getId())))
+                .toList();
+
+        List<Practice> done = practices.stream()
+                .filter(p -> statusOf(records.get(p.getId())) == RecordStatus.DONE)
+                .toList();
+
+        List<RecentItem> recent = done.stream()
+                .sorted(Comparator.comparing((Practice p) -> completedAt(records.get(p.getId()))).reversed())
+                .limit(RECENT_MAX)
+                .map(p -> new RecentItem(p.getId(), p.getType(), p.getArea(), p.getTopic(), p.getLevel(),
+                        p.getTitle(), records.get(p.getId()).getCompletedAt()))
+                .toList();
+
+        List<AreaProgress> areas = Arrays.stream(PracticeArea.values())
+                .map(a -> new AreaProgress(a,
+                        practices.stream().filter(p -> p.getArea() == a).count(),
+                        done.stream().filter(p -> p.getArea() == a).count()))
+                .toList();
+
+        long unread = messageRepository.countUnreadReplies(userId, SenderRole.TEACHER);
+
+        return new HomeResponse(user.getNickname(), unread, done.size(),
+                resume == null ? null : practiceService.toItem(resume, records.get(resume.getId())),
+                inProgressItems, areas, recent);
+    }
+
+    private RecordStatus statusOf(PracticeRecord r) { return r == null ? null : r.getStatus(); }
+
+    // completed_at이 비어 있는 이상 데이터는 맨 뒤로 보낸다
+    private LocalDateTime completedAt(PracticeRecord r) {
+        return r.getCompletedAt() != null ? r.getCompletedAt() : LocalDateTime.MIN;
+    }
+}
