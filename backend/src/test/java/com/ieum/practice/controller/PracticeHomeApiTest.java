@@ -132,14 +132,19 @@ class PracticeHomeApiTest {
                 .andExpect(jsonPath("$.nickname").value("길동"))
                 .andExpect(jsonPath("$.unreadMessages").value(2))
                 .andExpect(jsonPath("$.doneTotal").value(0))
-                .andExpect(jsonPath("$.resume.id").value(1))
-                .andExpect(jsonPath("$.resume.myStatus").value("NONE"))
+                .andExpect(jsonPath("$.resume.practiceId").value(1))
+                .andExpect(jsonPath("$.resume.title").value("안전 기본"))
+                .andExpect(jsonPath("$.resume.type").value("UNIT"))
+                .andExpect(jsonPath("$.resume.area").value("SAFETY"))
+                .andExpect(jsonPath("$.resume.level").value(1))
+                .andExpect(jsonPath("$.resume.estMinutes").value(10))
+                .andExpect(jsonPath("$.resume.status").value("NONE"))
                 .andExpect(jsonPath("$.inProgress.length()").value(0))
                 .andExpect(jsonPath("$.recent.length()").value(0))
                 .andExpect(jsonPath("$.areas.length()").value(3))
                 .andExpect(jsonPath("$.areas[0].area").value("SAFETY"))
-                .andExpect(jsonPath("$.areas[0].total").value(2))
-                .andExpect(jsonPath("$.areas[0].done").value(0));
+                .andExpect(jsonPath("$.areas[0].doneCount").value(0))
+                .andExpect(jsonPath("$.areas[0].total").doesNotExist());
     }
 
     @Test
@@ -150,11 +155,14 @@ class PracticeHomeApiTest {
                 record(1L, 2L, false, now.minusDays(1), null),
                 record(1L, 3L, false, now.minusHours(1), null)));
         mockMvc.perform(get("/api/v1/home").header("Authorization", bearer(1L, Role.STUDENT)))
-                .andExpect(jsonPath("$.resume.id").value(3))
-                .andExpect(jsonPath("$.resume.myStatus").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.resume.practiceId").value(3))
+                .andExpect(jsonPath("$.resume.status").value("IN_PROGRESS"))
                 .andExpect(jsonPath("$.inProgress.length()").value(2))
-                .andExpect(jsonPath("$.inProgress[0].id").value(2))
-                .andExpect(jsonPath("$.inProgress[1].id").value(1));
+                .andExpect(jsonPath("$.inProgress[0].practiceId").value(2))
+                .andExpect(jsonPath("$.inProgress[0].title").value("안전 심화"))
+                .andExpect(jsonPath("$.inProgress[0].area").value("SAFETY"))
+                .andExpect(jsonPath("$.inProgress[0].level").value(2))
+                .andExpect(jsonPath("$.inProgress[1].practiceId").value(1));
     }
 
     @Test
@@ -169,9 +177,11 @@ class PracticeHomeApiTest {
                 .andExpect(jsonPath("$.resume").isEmpty())
                 .andExpect(jsonPath("$.doneTotal").value(4))
                 .andExpect(jsonPath("$.recent.length()").value(3))
-                .andExpect(jsonPath("$.recent[0].id").value(4))
-                .andExpect(jsonPath("$.recent[2].id").value(2))
-                .andExpect(jsonPath("$.areas[0].done").value(2));
+                .andExpect(jsonPath("$.recent[0].practiceId").value(4))
+                .andExpect(jsonPath("$.recent[0].title").value("감정 읽기"))
+                .andExpect(jsonPath("$.recent[0].completedAt").value(org.hamcrest.Matchers.endsWith("+09:00")))
+                .andExpect(jsonPath("$.recent[2].practiceId").value(2))
+                .andExpect(jsonPath("$.areas[0].doneCount").value(2));
     }
 
     @Test
