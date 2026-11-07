@@ -116,15 +116,15 @@ public class PracticeMockController {
         return obj("doneCount", 1, "inProgressCount", 1, "items", filtered);
     }
 
-    // 09번 record 샘플: 1은 하는 중, 2는 기록 없음(null), 3은 마친 기록
+    // 09번 record 샘플(07·08·11과 맞춤): 1은 마친 기록, 2는 하는 중, 3은 기록 없음(null)
     private Map<String, Object> sampleRecord(long id) {
         return switch ((int) id) {
-            case 1 -> obj("status", "IN_PROGRESS",
-                    "answers", obj("pre", Map.of("q1", "c"), "cardsRead", List.of(1, 2)),
-                    "myNote", null, "updatedAt", "2026-11-04T10:30:00+09:00", "completedAt", null);
-            case 3 -> obj("status", "DONE",
-                    "answers", obj("clues", List.of("k1"), "feelings", List.of("f1")),
-                    "myNote", null, "updatedAt", "2026-10-27T11:00:00+09:00", "completedAt", "2026-10-27T11:00:00+09:00");
+            case 1 -> obj("status", "DONE",
+                    "answers", obj("pre", Map.of("q1", "c"), "cardsRead", List.of(1, 2, 3, 4, 5), "post", Map.of("q1", "b")),
+                    "myNote", null, "updatedAt", "2026-10-29T15:00:00+09:00", "completedAt", "2026-10-29T15:00:00+09:00");
+            case 2 -> obj("status", "IN_PROGRESS",
+                    "answers", obj("choice", "c2"),
+                    "myNote", null, "updatedAt", "2026-10-28T11:00:00+09:00", "completedAt", null);
             default -> null;
         };
     }

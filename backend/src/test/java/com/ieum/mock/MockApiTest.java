@@ -35,13 +35,31 @@ class MockApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.type").value("UNIT"))
                 .andExpect(jsonPath("$.content.questions[0].id").value("q1"))
-                .andExpect(jsonPath("$.record.status").value("IN_PROGRESS"));
-        mockMvc.perform(get("/api/v1/practices/2").header("Authorization", student()))
+                .andExpect(jsonPath("$.record.status").value("DONE"));
+        mockMvc.perform(get("/api/v1/practices/3").header("Authorization", student()))
                 .andExpect(jsonPath("$.record").doesNotExist())
-                .andExpect(jsonPath("$.content.choices[0].id").value("c1"));
+                .andExpect(jsonPath("$.content.clues[0].id").value("k1"));
         mockMvc.perform(get("/api/v1/practices/999").header("Authorization", student()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    void 홈_07과_연습_목록_08은_mock이_기본이고_09_11_샘플과_상태가_맞는다() throws Exception {
+        mockMvc.perform(get("/api/v1/home").header("Authorization", student()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.doneTotal").value(1))
+                .andExpect(jsonPath("$.resume.practiceId").value(2))
+                .andExpect(jsonPath("$.recent[0].completedAt").value("2026-10-29T15:00:00+09:00"));
+        mockMvc.perform(get("/api/v1/practices").param("area", "HELP").header("Authorization", student()))
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].myStatus").value("IN_PROGRESS"));
+        mockMvc.perform(get("/api/v1/practices").param("q", "친구").header("Authorization", student()))
+                .andExpect(jsonPath("$.items[0].id").value(3));
+        mockMvc.perform(get("/api/v1/practices").param("level", "abc").header("Authorization", student()))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/v1/home").header("Authorization", teacher()))
+                .andExpect(status().isForbidden());
     }
 
     @Test
