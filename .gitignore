@@ -11,3 +11,6 @@ docs/notice-summary.md
 
 # IntelliJ 설정
 .idea/
+
+# 팀 내부 개발 기준서 (레포에 올리지 않는다)
+이음 MVP 개발 기준서 (1주·3인).txt
