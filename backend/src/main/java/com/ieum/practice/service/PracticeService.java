@@ -1,6 +1,7 @@
 package com.ieum.practice.service;
 
 import com.ieum.common.ApiException;
+import com.ieum.common.ErrorCode;
 import com.ieum.practice.dto.PracticeItem;
 import com.ieum.practice.dto.PracticeItem.MyStatus;
 import com.ieum.practice.dto.PracticeListResponse;
@@ -9,6 +10,7 @@ import com.ieum.practice.entity.PracticeArea;
 import com.ieum.practice.repository.PracticeRepository;
 import com.ieum.record.entity.PracticeRecord;
 import com.ieum.record.repository.PracticeRecordRepository;
+import com.ieum.user.entity.Role;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +25,7 @@ import java.util.stream.Collectors;
  * [역할] 연습 목록(08)을 만들고, 홈(07)이 같은 카드 모양을 쓰도록 변환·정렬 기능을 함께 제공한다.
  * [동작] 공개된 연습만 영역→단계→sort_order 순으로 정렬하고, 로그인한 사용자의 기록으로 myStatus를 붙인다.
  * [연결] PracticeController, HomeService가 부른다 / PracticeRepository, PracticeRecordRepository
- * [주의] 이음쌤 배정(teacher_id)과 무관하다. 연습 수가 적어 조건 걸러내기는 자바에서 한다.
+ * [주의] 학습자 전용이다. 이음쌤 배정(teacher_id)과 무관하다. 연습 수가 적어 조건 걸러내기는 자바에서 한다.
  */
 @Service
 public class PracticeService {
@@ -44,7 +46,10 @@ public class PracticeService {
     }
 
     @Transactional(readOnly = true)
-    public PracticeListResponse list(Long userId, String area, String level, String q) {
+    public PracticeListResponse list(Long userId, Role role, String area, String level, String q) {
+        if (role != Role.STUDENT) {
+            throw new ApiException(ErrorCode.FORBIDDEN);   // 기준서 API 목록: 08은 학습자만
+        }
         PracticeArea areaFilter = parseArea(area);
         Integer levelFilter = parseLevel(level);
         String keyword = (q == null || q.isBlank()) ? null : q.strip().toLowerCase(Locale.ROOT);

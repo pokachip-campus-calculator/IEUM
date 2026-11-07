@@ -185,6 +185,13 @@ class PracticeHomeApiTest {
     }
 
     @Test
+    void 연습_목록은_이음쌤_토큰이면_403() throws Exception {
+        mockMvc.perform(get("/api/v1/practices").header("Authorization", bearer(2L, Role.TEACHER)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+    }
+
+    @Test
     void 홈은_이음쌤_토큰이면_403() throws Exception {
         mockMvc.perform(get("/api/v1/home").header("Authorization", bearer(2L, Role.TEACHER)))
                 .andExpect(status().isForbidden());

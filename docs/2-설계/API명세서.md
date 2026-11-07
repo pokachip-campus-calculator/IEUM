@@ -56,7 +56,7 @@
 ### 8. 연습 목록 (S06)
 - **Endpoint**: `/api/v1/practices?area=&level=&q=`
 - **Method**: GET
-- **권한**: 로그인한 사용자
+- **권한**: 로그인한 학습자만 (이음쌤은 403)
 
 **Request (쿼리, 모두 선택)**
 | 이름 | 설명 |
@@ -83,3 +83,4 @@
 |---|---|
 | 400 VALIDATION_FAILED | `area`가 목록 밖의 값이거나 `level`이 숫자가 아님 (`fieldErrors`의 field가 `area` 또는 `level`) |
 | 401 UNAUTHORIZED | 토큰이 없거나 만료됨 |
+| 403 FORBIDDEN | 학습자가 아닌 계정(이음쌤) |
