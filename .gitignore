@@ -2,3 +2,6 @@
 
 #DB 접속 정보 (비밀번호 포함)
 db.properties.example
+# 팀원에게 따로 전달하는 문서
+docs/3-컨벤션-환경설정/백엔드-진행현황과-MySQL-연결.md
+docs/notice-summary.md
