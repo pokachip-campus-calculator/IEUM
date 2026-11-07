@@ -51,8 +51,14 @@ public class AuthService {
         LocalDateTime now = LocalDateTime.now(clock);
         String loginId = req.loginId().toLowerCase();
 
+        // 생년월일은 학습자·이음쌤 모두 필수
+        if (req.birthDate() == null) {
+            throw ApiException.invalid("birthDate", "생년월일을 입력해 주세요.");
+        }
+
         UserStatus status = UserStatus.ACTIVE;
         boolean needGuardian = false;
+        // 보호자 확인은 학습자만 해당한다
         if (req.role() == Role.STUDENT) {
             needGuardian = isUnderGuardianAge(req.birthDate(), now.toLocalDate());
             if (needGuardian) {
@@ -67,8 +73,8 @@ public class AuthService {
 
         User user = new User(loginId, passwordEncoder.encode(req.password()), req.role(), status,
                 req.name(), req.nickname(), now);
-        // 이음쌤은 생년월일·보호자 없이 저장한다
-        user.setProfile(req.role() == Role.STUDENT ? req.birthDate() : null, req.phone(), req.email(), req.school());
+        // 이음쌤은 보호자 없이 저장한다(생년월일은 저장)
+        user.setProfile(req.birthDate(), req.phone(), req.email(), req.school());
         if (needGuardian) {
             user.setGuardian(req.guardian().name(), req.guardian().relation(), req.guardian().contact());
         }
@@ -101,11 +107,8 @@ public class AuthService {
                 new LoginResponse.UserSummary(user.getId(), user.getNickname(), user.getRole()));
     }
 
-    // 학습자는 생년월일이 필수이고, 가입일 기준 만 14세 미만이면 보호자 확인이 필요하다
+    // 가입일 기준 만 14세 미만이면 보호자 확인이 필요하다
     private boolean isUnderGuardianAge(LocalDate birthDate, LocalDate today) {
-        if (birthDate == null) {
-            throw ApiException.invalid("birthDate", "생년월일을 입력해 주세요.");
-        }
         return Period.between(birthDate, today).getYears() < GUARDIAN_REQUIRED_UNDER_AGE;
     }
 

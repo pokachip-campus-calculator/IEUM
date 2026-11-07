@@ -57,9 +57,13 @@ class AuthServiceTest {
                 "01012345678", null, "이음중", true, true, guardian);
     }
 
-    private SignupRequest teacher() {
-        return new SignupRequest(Role.TEACHER, "Teacher01", "password1", "김쌤", "김 이음쌤", null,
+    private SignupRequest teacher(LocalDate birth) {
+        return new SignupRequest(Role.TEACHER, "Teacher01", "password1", "김쌤", "김 이음쌤", birth,
                 null, null, null, true, true, null);
+    }
+
+    private SignupRequest teacher() {
+        return teacher(LocalDate.of(1990, 5, 20));
     }
 
     private User saved() {
@@ -69,12 +73,12 @@ class AuthServiceTest {
     }
 
     @Test
-    void 이음쌤은_생년월일과_보호자_없이_ACTIVE로_저장된다() {
+    void 이음쌤은_보호자_없이_ACTIVE로_저장되고_생년월일도_저장된다() {
         var res = service.signup(teacher());
 
         assertThat(res.status()).isEqualTo(UserStatus.ACTIVE);
         User user = saved();
-        assertThat(user.getBirthDate()).isNull();
+        assertThat(user.getBirthDate()).isEqualTo(LocalDate.of(1990, 5, 20));
         assertThat(user.getGuardianName()).isNull();
         assertThat(user.getRole()).isEqualTo(Role.TEACHER);
     }
@@ -118,6 +122,16 @@ class AuthServiceTest {
         assertThatThrownBy(() -> service.signup(student(null, null)))
                 .isInstanceOfSatisfying(ApiException.class,
                         e -> assertThat(e.getFieldErrors()).extracting("field").containsExactly("birthDate"));
+    }
+
+    @Test
+    void 이음쌤도_생년월일이_필수이고_저장하지_않는다() {
+        assertThatThrownBy(() -> service.signup(teacher(null)))
+                .isInstanceOfSatisfying(ApiException.class, e -> {
+                    assertThat(e.getErrorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED);
+                    assertThat(e.getFieldErrors()).extracting("field").containsExactly("birthDate");
+                });
+        verify(userRepository, never()).saveAndFlush(any());
     }
 
     @Test
