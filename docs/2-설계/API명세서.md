@@ -161,7 +161,7 @@ users 행을 지우면 학습 기록·쪽지·신호가 연쇄로 삭제된다. 
 ```
 **규칙**: `myStatus`는 `NONE`(기록 없음), `IN_PROGRESS`, `DONE`. `published=1`만 내리고 정렬은 영역(SAFETY→HELP→EMOTION), 단계, `sort_order` 순. `content`는 포함하지 않는다. 조건에 맞는 연습이 없으면 `{"items":[]}`.
 
-**에러**: 400 VALIDATION_FAILED(`area`가 목록 밖이거나 `level`이 숫자가 아님), 401, 403(이음쌤)
+**에러**: 400 VALIDATION_FAILED(`area`가 목록 밖이거나 `level`이 숫자가 아님. `fieldErrors`의 `field`는 `area` 또는 `level`), 401, 403(이음쌤)
 
 ### 09. 연습 상세 `GET /practices/{id}` (S07·S08·S09, 학습자만)
 S07·S08·S09가 열 때 한 번 부른다.
