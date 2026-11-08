@@ -14,17 +14,17 @@ import org.springframework.http.HttpStatus;
 
 // 오류 코드별 HTTP 상태와 메시지 목록
     /* comment. 오류 코드
-        | code | HTTP | 언제 |
-        |---|---|---|
-        | VALIDATION_FAILED | 400 | 입력 형식 오류 |
-        | RECORD_INCOMPLETE | 400 | 필수 선택이 빠짐 |
-        | UNAUTHORIZED | 401 | 토큰 없음·만료 |
-        | BAD_CREDENTIALS | 401 | 아이디·비밀번호 불일치 |
-        | GUARDIAN_PENDING | 403 | 보호자 확인 전 로그인 |
-        | FORBIDDEN | 403 | 권한 없음 |
-        | NOT_FOUND | 404 | 없는 id |
-        | LOGIN_ID_TAKEN | 409 | 아이디 중복 |
-        | NO_TEACHER_AVAILABLE | 409 | 맡을 이음쌤 없음 | */
+        |         code         |         HTTP       |         언제         |
+        |----------------------|--------------------|---------------------|
+        | VALIDATION_FAILED    | 400 (BAD_REQUEST)  | 입력 형식 오류        |
+        | RECORD_INCOMPLETE    | 400 (BAD_REQUEST)  | 필수 선택이 빠짐      |
+        | UNAUTHORIZED         | 401 (UNAUTHORIZED) | 토큰 없음·만료        |
+        | BAD_CREDENTIALS      | 401 (UNAUTHORIZED) | 아이디·비밀번호 불일치 |
+        | GUARDIAN_PENDING     | 403 (FORBIDDEN)    | 보호자 확인 전 로그인 |
+        | FORBIDDEN            | 403 (FORBIDDEN)    | 권한 없음           |
+        | NOT_FOUND            | 404 (NOT_FOUND)    | 없는 id            |
+        | LOGIN_ID_TAKEN       | 409 (CONFLICT)     | 아이디 중복         |
+        | NO_TEACHER_AVAILABLE | 409 (CONFLICT)     | 맡을 이음쌤 없음     | */
 
 
 public enum ErrorCode {
@@ -32,7 +32,7 @@ public enum ErrorCode {
     RECORD_INCOMPLETE(HttpStatus.BAD_REQUEST, "필수 선택이 빠졌습니다."),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "토큰이 없거나 만료되었습니다."),
     BAD_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 맞지 않습니다."),
-    GUARDIAN_PENDING(HttpStatus.FORBIDDEN, "보호자 확인이 끝나야 로그인할 수 있습니다."),
+    GUARDIAN_PENDING(HttpStatus.FORBIDDEN, "보호자 확인이 끝나면 시작할 수 있어요."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없습니다"),
     NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 아이디입니다."),
     LOGIN_ID_TAKEN(HttpStatus.CONFLICT, "이미 사용 중인 아이디입니다."),
