@@ -32,7 +32,7 @@ public enum ErrorCode {
     RECORD_INCOMPLETE(HttpStatus.BAD_REQUEST, "필수 선택이 빠졌습니다."),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "토큰이 없거나 만료되었습니다."),
     BAD_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 맞지 않습니다."),
-    GUARDIAN_PENDING(HttpStatus.FORBIDDEN, "보호자 확인이 끝나야 로그인할 수 있습니다."),
+    GUARDIAN_PENDING(HttpStatus.FORBIDDEN, "보호자 확인이 끝나면 시작할 수 있어요."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없습니다"),
     NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 아이디입니다."),
     LOGIN_ID_TAKEN(HttpStatus.CONFLICT, "이미 사용 중인 아이디입니다."),
