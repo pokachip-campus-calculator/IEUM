@@ -65,6 +65,14 @@ public class PracticeRecord {
         this.myNote = myNote;
     }
 
+    /** 다시 하기: 답과 "나에게 한 줄"을 비우고 진행 중으로 되돌린다. */
+    public void restart() {
+        this.status = RecordStatus.IN_PROGRESS;
+        this.answersJson = "{}";
+        this.myNote = null;
+        this.completedAt = null;
+    }
+
     public void complete(LocalDateTime at) {
         this.status = RecordStatus.DONE;
         this.completedAt = at;
