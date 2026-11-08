@@ -26,7 +26,7 @@ class AuthApiTest {
 
     private static final String VALID_TEACHER = """
             {"role":"TEACHER","loginId":"teacher01","password":"password1","name":"김쌤","nickname":"김 이음쌤",
-             "agreeTerms":true,"agreePrivacy":true}""";
+             "birthDate":"1990-05-20","agreeTerms":true,"agreePrivacy":true}""";
 
     @Test
     void 이음쌤_가입은_토큰_없이_201과_ACTIVE를_준다() throws Exception {

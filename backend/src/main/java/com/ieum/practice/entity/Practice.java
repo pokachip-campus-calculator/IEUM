@@ -2,6 +2,9 @@ package com.ieum.practice.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+// 42~3줄
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /**
  * [역할] 연습 콘텐츠(질문지·시나리오·감정 읽기) 하나.
@@ -28,6 +31,8 @@ public class Practice {
     @Column(nullable = false, length = 30)
     private String topic;
 
+    // DB와 변수 충돌. TINYINT 추가
+    @JdbcTypeCode(SqlTypes.TINYINT)
     @Column(nullable = false)
     private int level;
 
@@ -37,6 +42,8 @@ public class Practice {
     @Column(nullable = false, length = 200)
     private String summary;
 
+    // DB와 변수 충돌. TINYINT 추가
+    @JdbcTypeCode(SqlTypes.TINYINT)
     @Column(name = "est_minutes", nullable = false)
     private int estMinutes;
 
