@@ -34,6 +34,8 @@ export default class Collection extends Component<any, any> {
       indep: ["자립", "ie-tag ie-tag--topic"],
     };
     const R: any = this.props.records;
+    const doneCount = R.filter((r) => r.st === "done").length;
+    const inProgressCount = R.filter((r) => r.st === "doing").length;
     const list = R.filter(
       (r) =>
         (s.view !== "level" || s.lv < 0 || r.lv === s.lv) &&
@@ -100,6 +102,8 @@ export default class Collection extends Component<any, any> {
       ].map((o) => ({ value: o[0], label: o[1] })),
       onSort: (e) => this.setState({ sort: e.target.value }),
       recCount: "기록 " + list.length + "개",
+      doneCount,
+      inProgressCount,
       noRecords: list.length === 0,
       records: list.map((r) => {
         const open = s.open === r.id;
@@ -376,8 +380,8 @@ export default class Collection extends Component<any, any> {
                 <section className="ie-card ie-card--mint" style={{ gap: "10px" }}>
                   <b className="ie-body ie-strong">지금까지</b>
                   <div className="ie-row">
-                    <span className="ie-status ie-status--done">했어요 4개</span>
-                    <span className="ie-status ie-status--doing">하는 중 1개</span>
+                    <span className="ie-status ie-status--done">했어요 {v.doneCount}개</span>
+                    <span className="ie-status ie-status--doing">하는 중 {v.inProgressCount}개</span>
                   </div>
                 </section>
                 <section className="ie-card ie-card--flat" style={{ gap: "8px" }}>
