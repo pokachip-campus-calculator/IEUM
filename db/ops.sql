@@ -3,8 +3,9 @@
 
 -- (1) 이음쌤 계정 등록 — 이음쌤은 가입 화면이 아니라 운영자가 DB에 직접 넣는다
 --     password_hash는 BCrypt 해시(60자). 이음쌤마다 login_id·이름을 바꿔 한 줄씩 추가
-INSERT INTO users (login_id, password_hash, role, name, nickname, terms_agreed_at)
-VALUES ('teacher03', '여기에BCrypt해시', 'TEACHER', '이름', '○○ 이음쌤', NOW());
+--     V4부터 birth_date가 NOT NULL이라 생년월일을 반드시 넣는다
+INSERT INTO users (login_id, password_hash, role, name, nickname, birth_date, terms_agreed_at)
+VALUES ('teacher03', '여기에BCrypt해시', 'TEACHER', '이름', '○○ 이음쌤', '1990-01-01', NOW());
 
 -- (2) 보호자 확인이 끝났을 때 (기관에서 확인한 뒤) — 만 14세 미만 가입자는 PENDING_GUARDIAN으로 시작해 로그인이 막힌다
 SET @student_id = 0;   -- 확인이 끝난 학습자 users.id
