@@ -24,3 +24,7 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET:}
+  expiration-days: 7                    # 액세스 토큰 유효 기간(일)
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:*}   # 쉼표로 구분. 배포 때 Vercel 주소로 좁힌다
