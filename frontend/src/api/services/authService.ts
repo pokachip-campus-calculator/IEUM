@@ -1,12 +1,18 @@
 import { USE_MOCK, http } from "../client";
-import type { GuardianConsentRequest, LoginRequest, SignupRequest } from "../types";
+import type { GuardianConsentRequest, LoginRequest, LoginResponse, SignupRequest } from "../types";
 
 /** 로그인 · 회원 가입 */
 export const authService = {
   /** POST /auth/login */
-  async login(req: LoginRequest): Promise<void> {
-    if (USE_MOCK) return;
-    return http("POST", "/auth/login", req);
+  async login(req: LoginRequest): Promise<LoginResponse> {
+    if (USE_MOCK) {
+      return {
+        token: "mock-token",
+        expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+        user: { id: 0, nickname: "하늘", role: "STUDENT" },
+      };
+    }
+    return http<LoginResponse>("POST", "/auth/login", req);
   },
   /** POST /auth/signup  (14세 미만이면 이어서 requestGuardianConsent) */
   async signup(req: SignupRequest): Promise<void> {

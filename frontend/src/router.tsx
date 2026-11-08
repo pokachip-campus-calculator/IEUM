@@ -14,6 +14,7 @@ import {
   notificationService,
   profileService,
   recordService,
+  session,
   setSessionUser,
   teacherService,
 } from "@/api";
@@ -142,10 +143,33 @@ export const router = createBrowserRouter([
     element: <App />,
     // 로그인한 사용자 정보(헤더·홈 인사말)를 처음 한 번 불러옵니다.
     loader: async () => {
-      const p = await profileService.getProfile();
-      setSessionUser({ nick: p.nick, role: "learner" });
+      // 로그인하지 않은 사용자는 사용자 정보를 요청하지 않음
+      if (!session.token) {
+        return null;
+      }
+
+      try {
+        const p = await profileService.getProfile();
+
+        setSessionUser(
+          {
+            ...session.user,
+            nick: p.nick,
+          },
+          session.token
+        );
+      } catch (error) {
+        console.error("사용자 정보 조회 실패:", error);
+      }
+
       return null;
     },
-    children: [...pageRoutes, { path: "*", element: <Navigate to={ROUTES.landing} replace /> }],
+    children: [
+      ...pageRoutes,
+      {
+        path: "*",
+        element: <Navigate to={ROUTES.landing} replace />,
+      },
+    ],
   },
 ]);

@@ -1,6 +1,6 @@
 export * from "./types";
 export { USE_MOCK, API_BASE, ApiError, http } from "./client";
-export { session, setSessionUser } from "./session";
+export { session, setSessionUser, clearSessionUser } from "./session";
 export { authService } from "./services/authService";
 export { contentService } from "./services/contentService";
 export { recordService } from "./services/recordService";

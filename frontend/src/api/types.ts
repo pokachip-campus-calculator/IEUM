@@ -7,8 +7,19 @@
 export type UserRole = "learner" | "teacher";
 
 export interface SessionUser {
+  id: number;
   nick: string;
   role: UserRole;
+}
+
+export interface LoginResponse {
+  token: string;
+  expiresAt: string;
+  user: {
+    id: number;
+    nickname: string;
+    role: "STUDENT" | "TEACHER";
+  };
 }
 
 export interface Profile {
@@ -185,12 +196,27 @@ export interface SignalStudent {
 
 /* ---------- 요청(쓰기) 본문 ---------- */
 export interface LoginRequest {
-  uid: string;
-  pw: string;
+  loginId: string;
+  password: string;
 }
+/** 백엔드 POST /auth/signup 본문 */
 export interface SignupRequest {
-  type: string;
-  [field: string]: unknown;
+  role: "STUDENT" | "TEACHER";
+  loginId: string;
+  password: string;
+  name: string;
+  nickname: string;
+  birthDate: string;
+  phone: string;
+  email: string;
+  school?: string;
+  agreeTerms: boolean;
+  agreePrivacy: boolean;
+  guardian?: {
+    name: string;
+    relation: "PARENT" | "RELATIVE" | "FACILITY" | "OTHER";
+    contact: string;
+  };
 }
 export interface GuardianConsentRequest {
   uid: string;

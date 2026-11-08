@@ -1,3 +1,5 @@
+import { session } from "./session";
+
 /**
  * API 호출 공통 도구.
  *
@@ -19,13 +21,27 @@ export class ApiError extends Error {
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 export async function http<T = void>(method: Method, path: string, body?: unknown): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  if (session.token) headers.Authorization = `Bearer ${session.token}`;
+
   const res = await fetch(API_BASE + path, {
     method,
     credentials: "include",
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    headers: Object.keys(headers).length > 0 ? headers : undefined,
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  if (!res.ok) throw new ApiError(res.status, `${method} ${path} → ${res.status}`);
+  if (!res.ok) {
+    let msg = `${method} ${path} → ${res.status}`;
+    try {
+      const data = await res.json();
+      if (data?.fieldErrors?.[0]?.message) msg = data.fieldErrors[0].message;
+      else if (data?.message) msg = data.message;
+    } catch {
+      /* 본문이 JSON이 아니면 기본 메시지 사용 */
+    }
+    throw new ApiError(res.status, msg);
+  }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }

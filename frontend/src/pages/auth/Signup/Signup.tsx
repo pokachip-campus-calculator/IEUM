@@ -73,7 +73,34 @@ export default class Signup extends Component<any, any> {
       gAgree: false,
       gTried: false,
       gUnsent: false,
+      submitErr: "",
+      submitting: false,
     };
+  }
+  buildSignup(s, guardian?) {
+    const REL = { "부모": "PARENT", "조부모·친척": "RELATIVE", "시설 보호자": "FACILITY" };
+    const teacher = s.type === "tch";
+    const req: any = {
+      role: teacher ? "TEACHER" : "STUDENT",
+      loginId: s.uid.trim(),
+      password: s.pw,
+      name: s.name.trim(),
+      nickname: s.nick.trim(),
+      birthDate: s.birth,
+      phone: s.phone.replace(/[^0-9]/g, ""),
+      email: s.email.trim(),
+      school: s.org.trim() || undefined,
+      agreeTerms: !!s.agree[0],
+      agreePrivacy: !!s.agree[1],
+    };
+    if (guardian) {
+      req.guardian = {
+        name: guardian.name.trim(),
+        relation: REL[guardian.relation] || "OTHER",
+        contact: guardian.contact.trim(),
+      };
+    }
+    return req;
   }
   renderVals() {
     const s = this.state;
@@ -314,7 +341,7 @@ export default class Signup extends Component<any, any> {
           codeTried: false,
         }),
       onOrg: (e) => this.setState({ org: e.target.value }),
-      submit: (e) => {
+      submit: async (e) => {
         if (e && e.preventDefault) e.preventDefault();
         const g = (id, cur) => {
           try {
@@ -377,10 +404,25 @@ export default class Signup extends Component<any, any> {
           }, 0);
           return;
         }
-        // 백엔드 연결 지점: 회원 가입 요청 (14세 미만은 이어서 보호자 동의 요청)
-        void authService.signup({ type: s.type, ...v });
-        this.setState(Object.assign({ phase: under14 ? "guardian" : "done", tried: false }, v));
+        // 14세 미만은 보호자 정보까지 받은 뒤 한 번에 가입 요청을 보낸다
+        if (under14) {
+          this.setState(Object.assign({ phase: "guardian", tried: false, submitErr: "" }, v));
+          return;
+        }
+        if (s.submitting) return;
+        this.setState({ submitting: true, submitErr: "" });
+        try {
+          await authService.signup(this.buildSignup({ ...s, ...v }));
+          this.setState(Object.assign({ phase: "done", tried: false, submitting: false }, v));
+        } catch (err: any) {
+          this.setState({
+            submitting: false,
+            submitErr: err?.message || "가입에 실패했어요. 잠시 뒤 다시 시도해 주세요.",
+          });
+        }
       },
+      submitErr: s.submitErr,
+      submitting: s.submitting,
       isGuardian: s.phase === "guardian",
       isWait: s.phase === "wait",
       gName: s.gName,
@@ -399,7 +441,7 @@ export default class Signup extends Component<any, any> {
       onGRel: (e) => this.setState({ gRel: e.target.value, gUnsent: false }),
       onGCon: (e) => this.setState({ gContact: e.target.value, gUnsent: false }),
       onGAgree: (e) => this.setState({ gAgree: e.target.checked, gUnsent: false }),
-      gSubmit: (e) => {
+      gSubmit: async (e) => {
         if (e && e.preventDefault) e.preventDefault();
         const g = (id, cur) => {
           try {
@@ -416,13 +458,19 @@ export default class Signup extends Component<any, any> {
           this.setState({ gName, gRel, gContact, gTried: true, gUnsent: false });
           return;
         }
-        void authService.requestGuardianConsent({
-          uid: s.uid,
-          name: gName,
-          relation: gRel,
-          contact: gContact,
-        });
-        this.setState({ gName, gRel, gContact, gTried: false, phase: "wait" });
+        if (s.submitting) return;
+        this.setState({ gName, gRel, gContact, submitting: true, submitErr: "" });
+        try {
+          await authService.signup(
+            this.buildSignup(s, { name: gName, relation: gRel, contact: gContact }),
+          );
+          this.setState({ gTried: false, phase: "wait", submitting: false });
+        } catch (err: any) {
+          this.setState({
+            submitting: false,
+            submitErr: err?.message || "가입에 실패했어요. 잠시 뒤 다시 시도해 주세요.",
+          });
+        }
       },
       backForm: () => this.setState({ phase: "form", gUnsent: false }),
       toGuardian: () => this.setState({ phase: "guardian" }),
@@ -956,6 +1004,11 @@ export default class Signup extends Component<any, any> {
                         </div>
                       </div>
                     ) : null}
+                    {v.submitErr ? (
+                      <div className="ie-alert ie-alert--info" role="alert">
+                        {v.submitErr}
+                      </div>
+                    ) : null}
                     <div className="ie-row">
                       <button
                         type="button"
@@ -1064,6 +1117,11 @@ export default class Signup extends Component<any, any> {
                         <span className="ie-error-text">확인에 체크해 주세요.</span>
                       ) : null}
                     </div>
+                    {v.submitErr ? (
+                      <div className="ie-alert ie-alert--info" role="alert">
+                        {v.submitErr}
+                      </div>
+                    ) : null}
                     <div className="ie-row">
                       <button
                         type="button"

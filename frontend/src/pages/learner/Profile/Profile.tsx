@@ -3,7 +3,7 @@
  * (원본 디자인: Profile.dc.html)
  */
 import { Component, Fragment } from "react";
-import { profileService } from "@/api";
+import { clearSessionUser, profileService } from "@/api";
 import { A } from "@/lib/A";
 import type { CSSProperties } from "react";
 import { img } from "@/assets";
@@ -17,6 +17,8 @@ export default class Profile extends Component<any, any> {
   constructor(props) {
     super(props);
     this.state = {
+      loginId: props.profile?.loginId ?? "",
+      teacher: props.profile?.teacher ?? null,
       nick: props.profile?.nick ?? "",
       mail: props.profile?.mail ?? "",
       pwCur: "",
@@ -24,20 +26,24 @@ export default class Profile extends Component<any, any> {
       pwNew2: "",
       basicTried: false,
       pwTried: false,
+      pwError: "",
+      pwSaving: false,
       basicUnsent: false,
       pwUnsent: false,
       notif: props.profile?.notifications ?? [true, true, false],
       outOpen: false,
       outAgree: false,
       outTried: false,
-      outUnsent: false,
+      outSaving: false,
+      outError: "",
     };
   }
   renderVals() {
     const s = this.state;
     const cls = (b) => (b ? "ie-input is-error" : "ie-input");
     const nickBad = s.basicTried && s.nick.trim() === "";
-    const curBad = s.pwTried && s.pwCur === "",
+    const pwCurrentError = s.pwError.includes("현재 비밀번호");
+    const curBad = (s.pwTried && s.pwCur === "") || pwCurrentError,
       newBad = s.pwTried && s.pwNew.length < 8,
       new2Bad = s.pwTried && s.pwNew !== s.pwNew2;
     const N: any = [
@@ -46,6 +52,8 @@ export default class Profile extends Component<any, any> {
       ["새 연습이 열리면", "다음에 열려요 단계가 열릴 때 알려요"],
     ];
     return {
+      loginId: s.loginId,
+      teacher: s.teacher,
       nick: s.nick,
       mail: s.mail,
       nickBad,
@@ -59,14 +67,17 @@ export default class Profile extends Component<any, any> {
       pwCur: s.pwCur,
       pwNew: s.pwNew,
       pwNew2: s.pwNew2,
+      pwError: s.pwError,
+      pwCurrentError,
+      pwSaving: s.pwSaving,
       basicUnsent: s.basicUnsent,
       pwUnsent: s.pwUnsent,
       outUnsent: s.outUnsent,
       onNick: (e) => this.setState({ nick: e.target.value, basicUnsent: false }),
       onMail: (e) => this.setState({ mail: e.target.value, basicUnsent: false }),
-      onPwCur: (e) => this.setState({ pwCur: e.target.value, pwUnsent: false }),
-      onPwNew: (e) => this.setState({ pwNew: e.target.value, pwUnsent: false }),
-      onPwNew2: (e) => this.setState({ pwNew2: e.target.value, pwUnsent: false }),
+      onPwCur: (e) => this.setState({ pwCur: e.target.value, pwUnsent: false, pwError: "" }),
+      onPwNew: (e) => this.setState({ pwNew: e.target.value, pwUnsent: false, pwError: "" }),
+      onPwNew2: (e) => this.setState({ pwNew2: e.target.value, pwUnsent: false, pwError: "" }),
       saveBasic: () => {
         if (s.nick.trim() === "") {
           this.setState({ basicTried: true, basicUnsent: false });
@@ -75,13 +86,31 @@ export default class Profile extends Component<any, any> {
         void profileService.updateProfile({ nick: s.nick, mail: s.mail });
         this.setState({ basicTried: false, basicUnsent: true });
       },
-      savePw: () => {
+      savePw: async () => {
         if (s.pwCur === "" || s.pwNew.length < 8 || s.pwNew !== s.pwNew2) {
-          this.setState({ pwTried: true, pwUnsent: false });
+          this.setState({ pwTried: true, pwUnsent: false, pwError: "" });
           return;
         }
-        void profileService.changePassword({ current: s.pwCur, next: s.pwNew });
-        this.setState({ pwTried: false, pwUnsent: true });
+        if (s.pwSaving) return;
+
+        this.setState({ pwSaving: true, pwUnsent: false, pwError: "" });
+        try {
+          await profileService.changePassword({ current: s.pwCur, next: s.pwNew });
+          this.setState({
+            pwTried: false,
+            pwSaving: false,
+            pwUnsent: true,
+            pwCur: "",
+            pwNew: "",
+            pwNew2: "",
+          });
+        } catch (error) {
+          this.setState({
+            pwSaving: false,
+            pwUnsent: false,
+            pwError: error instanceof Error ? error.message : "비밀번호를 변경하지 못했어요.",
+          });
+        }
       },
       notifs: N.map((n, i) => ({
         label: n[0],
@@ -98,17 +127,36 @@ export default class Profile extends Component<any, any> {
       outClosed: !s.outOpen,
       outAgree: s.outAgree,
       outBad: s.outTried && !s.outAgree,
+      outSaving: s.outSaving,
+      outError: s.outError,
       openOut: () => this.setState({ outOpen: true }),
       closeOut: () =>
-        this.setState({ outOpen: false, outAgree: false, outTried: false, outUnsent: false }),
-      onOutAgree: (e) => this.setState({ outAgree: e.target.checked, outUnsent: false }),
-      confirmOut: () => {
+        this.setState({
+          outOpen: false,
+          outAgree: false,
+          outTried: false,
+          outError: "",
+          outSaving: false,
+        }),
+      onOutAgree: (e) => this.setState({ outAgree: e.target.checked, outError: "" }),
+      confirmOut: async () => {
         if (!s.outAgree) {
-          this.setState({ outTried: true, outUnsent: false });
+          this.setState({ outTried: true, outError: "" });
           return;
         }
-        void profileService.withdraw();
-        this.setState({ outTried: false, outUnsent: true });
+        if (s.outSaving) return;
+
+        this.setState({ outSaving: true, outError: "" });
+        try {
+          await profileService.withdraw();
+          clearSessionUser();
+          window.location.replace(ROUTES.landing);
+        } catch (error) {
+          this.setState({
+            outSaving: false,
+            outError: error instanceof Error ? error.message : "탈퇴를 완료하지 못했어요.",
+          });
+        }
       },
     };
   }
@@ -141,7 +189,11 @@ export default class Profile extends Component<any, any> {
                   <A className="ie-btn ie-btn--text" href={ROUTES.terms}>
                     약관 보기
                   </A>
-                  <A className="ie-btn ie-btn--outline" href={ROUTES.landing}>
+                  <A
+                    className="ie-btn ie-btn--outline"
+                    href={ROUTES.landing}
+                    onClick={clearSessionUser}
+                  >
                     로그아웃
                   </A>
                 </div>
@@ -165,7 +217,7 @@ export default class Profile extends Component<any, any> {
                         id="pf-id"
                         className="ie-input"
                         type="text"
-                        defaultValue="haneul01"
+                        value={v.loginId}
                         disabled
                         aria-describedby="pf-id-h"
                       />
@@ -244,7 +296,9 @@ export default class Profile extends Component<any, any> {
                         aria-invalid={v.curBad}
                       />
                       {v.curBad ? (
-                        <span className="ie-error-text">현재 비밀번호를 적어 주세요.</span>
+                        <span className="ie-error-text">
+                          {v.pwCurrentError ? v.pwError : "현재 비밀번호를 적어 주세요."}
+                        </span>
                       ) : null}
                     </div>
                     <div />
@@ -291,6 +345,11 @@ export default class Profile extends Component<any, any> {
                       ) : null}
                     </div>
                   </div>
+                  {v.pwError && !v.pwCurrentError ? (
+                    <div className="ie-error-text" role="alert">
+                      {v.pwError}
+                    </div>
+                  ) : null}
                   {v.pwUnsent ? (
                     <div className="ie-alert ie-alert--ok" role="status">
                       <svg width="22" height="22" viewBox="0 0 256 256" aria-hidden="true">
@@ -306,8 +365,13 @@ export default class Profile extends Component<any, any> {
                     </div>
                   ) : null}
                   <div className="ie-row">
-                    <button type="button" className="ie-btn ie-btn--primary" onClick={v.savePw}>
-                      비밀번호 바꾸기
+                    <button
+                      type="button"
+                      className="ie-btn ie-btn--primary"
+                      onClick={v.savePw}
+                      disabled={v.pwSaving}
+                    >
+                      {v.pwSaving ? "변경 중..." : "비밀번호 바꾸기"}
                     </button>
                   </div>
                 </section>
@@ -319,16 +383,12 @@ export default class Profile extends Component<any, any> {
                   style={{ "--d": "1" } as CSSProperties}
                 >
                   <span className="ie-avatar-xl" aria-hidden="true">
-                    하
+                    {v.nick.slice(0, 1) || "?"}
                   </span>
                   <b className="ie-h2" style={{ marginTop: "6px" }}>
                     {v.nick}
                   </b>
-                  <span className="ie-body ie-sub">haneul01</span>
-                  <div className="ie-profstats">
-                    <span>했어요 4개</span>
-                    <span>하는 중 1개</span>
-                  </div>
+                  <span className="ie-body ie-sub">{v.loginId}</span>
                 </section>
                 <section
                   className="ie-card ie-card--mint ie-tcard ie-pop"
@@ -343,10 +403,15 @@ export default class Profile extends Component<any, any> {
                       <h2 id="pf-teacher" className="ie-h3">
                         이음쌤 배정
                       </h2>
-                      <span className="ie-body ie-strong">푸른 이음쌤</span>
+                      <span className="ie-body ie-strong">
+                        {v.teacher?.nickname ?? "아직 담당 이음쌤이 없어요"}
+                      </span>
                     </div>
-                    <span className="ie-status ie-status--done" style={{ marginLeft: "auto" }}>
-                      배정됐어요
+                    <span
+                      className={`ie-status ${v.teacher ? "ie-status--done" : "ie-status--new"}`}
+                      style={{ marginLeft: "auto" }}
+                    >
+                      {v.teacher ? "배정됐어요" : "배정 전"}
                     </span>
                   </div>
                   <p className="ie-body">
@@ -389,21 +454,9 @@ export default class Profile extends Component<any, any> {
                       {v.outBad ? (
                         <span className="ie-error-text">확인에 체크해 주세요.</span>
                       ) : null}{" "}
-                      {v.outUnsent ? (
-                        <div className="ie-alert ie-alert--ok" role="status">
-                          <svg width="22" height="22" viewBox="0 0 256 256" aria-hidden="true">
-                            <path
-                              d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z"
-                              fill="#FFD6C1"
-                            />
-                            <path
-                              d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"
-                              fill="#94431F"
-                            />
-                          </svg>
-                          <div>
-                            <b>탈퇴했어요. 기록을 모두 지웠어요.</b>
-                          </div>
+                      {v.outError ? (
+                        <div className="ie-error-text" role="alert">
+                          {v.outError}
                         </div>
                       ) : null}
                       <div className="ie-row">
@@ -411,8 +464,9 @@ export default class Profile extends Component<any, any> {
                           type="button"
                           className="ie-btn ie-btn--danger"
                           onClick={v.confirmOut}
+                          disabled={v.outSaving}
                         >
-                          탈퇴하기
+                          {v.outSaving ? "탈퇴 중..." : "탈퇴하기"}
                         </button>
                         <button
                           type="button"

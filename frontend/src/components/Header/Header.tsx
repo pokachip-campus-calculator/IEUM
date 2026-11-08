@@ -3,7 +3,7 @@
  * (원본 디자인: Header.dc.html)
  */
 import { Component, Fragment } from "react";
-import { session } from "@/api";
+import { clearSessionUser, session } from "@/api";
 import { A } from "@/lib/A";
 import { img } from "@/assets";
 import { ROUTES } from "@/routes";
@@ -189,7 +189,11 @@ export default class Header extends Component<any, any> {
                   </span>
                   <span className="ie-body ie-strong">푸른 이음쌤</span>
                 </span>{" "}
-                <A className="ie-btn ie-btn--outline ie-hide-mobile" href={ROUTES.login}>
+                <A
+                  className="ie-btn ie-btn--outline ie-hide-mobile"
+                  href={ROUTES.login}
+                  onClick={clearSessionUser}
+                >
                   로그아웃
                 </A>
               </>
