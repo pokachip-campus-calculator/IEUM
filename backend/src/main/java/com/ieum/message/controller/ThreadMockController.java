@@ -4,6 +4,7 @@ import com.ieum.auth.jwt.AuthUser;
 import com.ieum.common.ApiException;
 import com.ieum.mock.MockSupport;
 import com.ieum.user.entity.Role;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,6 +30,7 @@ import static com.ieum.mock.MockSupport.obj;
  */
 @RestController
 @RequestMapping("/threads")
+@ConditionalOnProperty(name = "mock.learning.enabled", havingValue = "true", matchIfMissing = true)
 public class ThreadMockController {
 
     private static final Set<String> TOPICS = Set.of("FRIEND", "ONLINE", "SCHOOL", "HOME", "ETC");

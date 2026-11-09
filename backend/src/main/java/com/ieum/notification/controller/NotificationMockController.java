@@ -1,6 +1,7 @@
 package com.ieum.notification.controller;
 
 import com.ieum.mock.MockSupport;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -24,6 +25,7 @@ import static com.ieum.mock.MockSupport.obj;
  */
 @RestController
 @RequestMapping("/notifications")
+@ConditionalOnProperty(name = "mock.learning.enabled", havingValue = "true", matchIfMissing = true)
 public class NotificationMockController {
 
     private static final Set<Long> IDS = Set.of(41L, 42L, 43L, 44L);

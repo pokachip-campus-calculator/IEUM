@@ -3,7 +3,7 @@
  * (원본 디자인: Notifications.dc.html)
  */
 import { Component, Fragment } from "react";
-import { notificationService } from "@/api";
+import { notificationService, session } from "@/api";
 import { A } from "@/lib/A";
 import type { CSSProperties } from "react";
 import { img } from "@/assets";
@@ -17,7 +17,7 @@ export default class Notifications extends Component<any, any> {
 
   constructor(props) {
     super(props);
-    this.state = { role: "learner", f: "all", read: {} };
+    this.state = { role: session.user.role, f: "all", read: {}, apiError: "" };
   }
   renderVals() {
     const s = this.state;
@@ -45,29 +45,39 @@ export default class Notifications extends Component<any, any> {
           ? "이음쌤의 답장과 쪽지 소식을 여기에서 알려 줘요."
           : "새 쪽지와 확인이 필요한 신호를 여기에서 알려 줘요.",
       unreadCount,
+      apiError: s.apiError,
       hasUnread: unreadCount > 0,
       noUnread: unreadCount === 0,
       filters: [
         ["all", "전체 " + all.length + "개"],
         ["unread", "안 읽음 " + unreadCount + "개"],
       ].map((f) => ({ label: f[1], on: s.f === f[0], pick: () => this.setState({ f: f[0] }) })),
-      readAll: () => {
+      readAll: async () => {
         const m: any = {};
         all.forEach((n) => {
           m[n.id] = true;
         });
-        void notificationService.markRead(Object.keys(m));
-        this.setState({ read: Object.assign({}, s.read, m) });
+        this.setState({ apiError: "" });
+        try {
+          await notificationService.markRead(Object.keys(m));
+          this.setState({ read: Object.assign({}, s.read, m) });
+        } catch (error) {
+          this.setState({
+            apiError: error instanceof Error ? error.message : "알림을 읽음 처리하지 못했어요.",
+          });
+        }
       },
       showAll: () => this.setState({ f: "all" }),
       roles: [
         ["learner", "학습자"],
         ["teacher", "이음쌤"],
-      ].map((r) => ({
+      ]
+        .filter((r) => r[0] === session.user.role)
+        .map((r) => ({
         label: r[1],
         on: s.role === r[0],
         pick: () => this.setState({ role: r[0], f: "all" }),
-      })),
+        })),
       isLearner: s.role === "learner",
       isTeacher: s.role === "teacher",
       kinds: KINDS[s.role].map((k) => ({ n: k[0], t: k[1], d: k[2] })),
@@ -88,9 +98,16 @@ export default class Notifications extends Component<any, any> {
         isMsg: n.type === "msg",
         isSig: n.type === "signal",
         isDone: n.type === "done",
-        read: () => {
-          void notificationService.markRead([n.id]);
-          this.setState({ read: Object.assign({}, s.read, { [n.id]: true }) });
+        read: async () => {
+          this.setState({ apiError: "" });
+          try {
+            await notificationService.markRead([n.id]);
+            this.setState({ read: Object.assign({}, s.read, { [n.id]: true }) });
+          } catch (error) {
+            this.setState({
+              apiError: error instanceof Error ? error.message : "알림을 읽음 처리하지 못했어요.",
+            });
+          }
         },
       })),
     };
@@ -170,6 +187,11 @@ export default class Notifications extends Component<any, any> {
                     모두 읽음으로 표시
                   </button>
                 </section>
+                {v.apiError ? (
+                  <p className="ie-error-text" role="alert">
+                    {v.apiError}
+                  </p>
+                ) : null}
                 {v.hasList ? (
                   <ul className="ie-notilist" aria-label="알림 목록">
                     {(v.list || []).map((n: any, __i0: number) => (
