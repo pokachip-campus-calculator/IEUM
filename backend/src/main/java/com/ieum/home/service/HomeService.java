@@ -32,7 +32,7 @@ import java.util.Map;
 
 /**
  * [역할] 학습자 홈(07)에 필요한 값(닉네임·안 읽은 답장·이어하기·영역별 현황·최근 기록)을 모은다.
- * [동작] 공개된 연습과 내 기록만으로 계산한다(응답 모양은 기준서 3장 07). resume은 하는 중 가장 최근 것, 없으면 안 한 것의 첫 번째, 다 했으면 null이다.
+ * [동작] 공개된 연습과 내 기록만으로 계산한다(응답 모양은 기준서 3장 07). resume은 하는 중 가장 최근 것, 없으면 안 한 것의 첫 번째, 다 했으면 null이다. 완료 수·recent는 completed_at이 남은 기록 기준(다시 하는 중 포함)이다.
  * [연결] HomeController가 부른다 / PracticeService(카드 변환·정렬), MessageRepository(안 읽은 답장)
  * [주의] 학습자 전용이다. 이음쌤 배정(teacher_id)과 무관하게 동작한다.
  */
@@ -85,7 +85,7 @@ public class HomeService {
                 .toList();
 
         List<Practice> done = practices.stream()
-                .filter(p -> statusOf(records.get(p.getId())) == RecordStatus.DONE)
+                .filter(p -> records.get(p.getId()) != null && records.get(p.getId()).hasCompleted())   // 다시 하는 중이어도 완료한 적 있으면 포함
                 .toList();
 
         List<RecentItem> recent = done.stream()

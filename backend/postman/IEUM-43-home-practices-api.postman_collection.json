@@ -61,7 +61,7 @@
         "pm.test('200', () => pm.response.to.have.status(200));",
         "const items = pm.response.json().items;",
         "pm.test('items 배열', () => pm.expect(items).to.be.an('array'));",
-        "pm.test('카드 필드, content 없음', () => items.forEach(i => { pm.expect(i).to.have.keys('id','type','area','topic','level','title','summary','estMinutes','myStatus'); }));",
+        "pm.test('카드 필드, content 없음', () => items.forEach(i => { pm.expect(i).to.have.keys('id','type','area','topic','level','title','summary','estMinutes','myStatus','completedAt'); }));",
         "pm.test('myStatus 값', () => items.forEach(i => pm.expect(['NONE','IN_PROGRESS','DONE']).to.include(i.myStatus)));",
         "const order = {SAFETY:0, HELP:1, EMOTION:2};",
         "pm.test('영역→단계 순', () => { for (let k = 1; k < items.length; k++) { const a = items[k-1], b = items[k]; pm.expect(order[a.area] < order[b.area] || (a.area === b.area && a.level <= b.level)).to.eql(true); } });"

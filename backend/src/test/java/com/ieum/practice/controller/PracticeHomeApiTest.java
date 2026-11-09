@@ -185,6 +185,34 @@ class PracticeHomeApiTest {
     }
 
     @Test
+    void 다시_하는_중이어도_완료한_적_있으면_완료_수와_recent에_남는다() throws Exception {
+        LocalDateTime now = LocalDateTime.now();
+        when(recordRepository.findByUserId(1L)).thenReturn(List.of(
+                redoing(1L, 1L, now.minusHours(1), now.minusDays(2)),
+                record(1L, 2L, true, now.minusDays(1), now.minusDays(1))));
+        mockMvc.perform(get("/api/v1/home").header("Authorization", bearer(1L, Role.STUDENT)))
+                .andExpect(jsonPath("$.resume.practiceId").value(1))
+                .andExpect(jsonPath("$.resume.myStatus").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.doneTotal").value(2))
+                .andExpect(jsonPath("$.recent.length()").value(2))
+                .andExpect(jsonPath("$.recent[1].practiceId").value(1))
+                .andExpect(jsonPath("$.areas[0].doneCount").value(2));
+    }
+
+    @Test
+    void 목록은_다시_하는_중인_연습에도_completedAt을_내린다() throws Exception {
+        LocalDateTime now = LocalDateTime.now();
+        when(recordRepository.findByUserId(1L)).thenReturn(List.of(
+                redoing(1L, 1L, now.minusHours(1), now.minusDays(2))));
+        mockMvc.perform(get("/api/v1/practices").header("Authorization", bearer(1L, Role.STUDENT)))
+                .andExpect(jsonPath("$.items[0].id").value(1))
+                .andExpect(jsonPath("$.items[0].myStatus").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.items[0].completedAt").value(org.hamcrest.Matchers.endsWith("+09:00")))
+                .andExpect(jsonPath("$.items[1].myStatus").value("NONE"))
+                .andExpect(jsonPath("$.items[1].completedAt").isEmpty());
+    }
+
+    @Test
     void 연습_목록은_이음쌤_토큰이면_403() throws Exception {
         mockMvc.perform(get("/api/v1/practices").header("Authorization", bearer(2L, Role.TEACHER)))
                 .andExpect(status().isForbidden())
@@ -219,6 +247,14 @@ class PracticeHomeApiTest {
         ReflectionTestUtils.setField(p, "sortOrder", 1);
         ReflectionTestUtils.setField(p, "published", true);
         return p;
+    }
+
+    // 완료한 뒤 다시 하기를 눌러 진행 중으로 돌아간 기록 (completed_at은 남는다)
+    private static PracticeRecord redoing(long userId, long practiceId, LocalDateTime updatedAt, LocalDateTime completedAt) {
+        PracticeRecord r = record(userId, practiceId, true, updatedAt, completedAt);
+        r.restart();
+        ReflectionTestUtils.setField(r, "updatedAt", updatedAt);
+        return r;
     }
 
     private static PracticeRecord record(long userId, long practiceId, boolean done, LocalDateTime updatedAt, LocalDateTime completedAt) {

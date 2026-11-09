@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** [역할] mock API 16개(09~24)의 접근 규칙, 응답 모양, 기준서 오류 코드를 DB 없이 확인한다. */
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource(properties = "jwt.secret=test-secret-test-secret-test-secret-1234")
+@TestPropertySource(properties = {"jwt.secret=test-secret-test-secret-test-secret-1234", "mock.learning.enabled=true"})   // yaml 값과 무관하게 학습 mock(07~10)을 켠다
 class MockApiTest {
 
     @Autowired MockMvc mockMvc;
