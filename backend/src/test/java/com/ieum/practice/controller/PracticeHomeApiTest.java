@@ -138,7 +138,7 @@ class PracticeHomeApiTest {
                 .andExpect(jsonPath("$.resume.area").value("SAFETY"))
                 .andExpect(jsonPath("$.resume.level").value(1))
                 .andExpect(jsonPath("$.resume.estMinutes").value(10))
-                .andExpect(jsonPath("$.resume.status").value("NONE"))
+                .andExpect(jsonPath("$.resume.myStatus").value("NONE"))
                 .andExpect(jsonPath("$.inProgress.length()").value(0))
                 .andExpect(jsonPath("$.recent.length()").value(0))
                 .andExpect(jsonPath("$.areas.length()").value(3))
@@ -156,7 +156,7 @@ class PracticeHomeApiTest {
                 record(1L, 3L, false, now.minusHours(1), null)));
         mockMvc.perform(get("/api/v1/home").header("Authorization", bearer(1L, Role.STUDENT)))
                 .andExpect(jsonPath("$.resume.practiceId").value(3))
-                .andExpect(jsonPath("$.resume.status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.resume.myStatus").value("IN_PROGRESS"))
                 .andExpect(jsonPath("$.inProgress.length()").value(2))
                 .andExpect(jsonPath("$.inProgress[0].practiceId").value(2))
                 .andExpect(jsonPath("$.inProgress[0].title").value("안전 심화"))

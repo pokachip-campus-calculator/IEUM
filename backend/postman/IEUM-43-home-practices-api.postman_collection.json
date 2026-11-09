@@ -43,7 +43,7 @@
         "pm.test('필드', () => { pm.expect(b).to.have.keys('nickname','unreadMessages','doneTotal','resume','inProgress','areas','recent'); });",
         "pm.test('areas 3개(SAFETY·HELP·EMOTION)', () => pm.expect(b.areas.map(a => a.area)).to.eql(['SAFETY','HELP','EMOTION']));",
         "pm.test('inProgress 최대 2개, recent 최대 3개', () => { pm.expect(b.inProgress.length).to.be.at.most(2); pm.expect(b.recent.length).to.be.at.most(3); });",
-        "pm.test('resume은 기준서 모양 또는 null', () => { if (b.resume) pm.expect(b.resume).to.have.keys('practiceId','title','type','area','level','estMinutes','status'); });",
+        "pm.test('resume은 기준서 모양 또는 null', () => { if (b.resume) pm.expect(b.resume).to.have.keys('practiceId','title','type','area','level','estMinutes','myStatus'); });",
         "pm.test('areas 항목은 area·doneCount', () => b.areas.forEach(a => pm.expect(a).to.have.keys('area','doneCount')));",
         "pm.test('inProgress 항목 모양', () => b.inProgress.forEach(i => pm.expect(i).to.have.keys('practiceId','title','area','level')));",
         "pm.test('recent 항목 모양, completedAt은 +09:00', () => b.recent.forEach(i => { pm.expect(i).to.have.keys('practiceId','title','area','completedAt'); pm.expect(i.completedAt).to.match(/[+]09:00$/); }));"
