@@ -4,7 +4,7 @@
  * (원본 디자인: Login.dc.html)
  */
 import { Component } from "react";
-import { authService, setSessionUser } from "@/api";
+import { ApiError, authService, setSessionUser } from "@/api";
 import type { LoginResponse, SessionUser } from "@/api";
 import { useNavigate } from "react-router-dom";
 import { A } from "@/lib/A";
@@ -158,6 +158,7 @@ class Login extends Component<any, any> {
 
           // 로그인 사용자 정보와 JWT 토큰 저장
           setSessionUser(user, response.token, response.expiresAt);
+          this.setState({ loading: false });
 
           // 사용자 역할에 따라 홈 화면 이동
           if (user.role === "learner") {
@@ -169,8 +170,9 @@ class Login extends Component<any, any> {
           console.error("로그인 오류:", err);
 
           this.setState({
-            error:
-              "로그인에 실패했어요. 아이디와 비밀번호를 확인해 주세요.",
+            error: err instanceof ApiError
+              ? err.message
+              : "로그인 서버에 연결하지 못했어요. 잠시 뒤 다시 시도해 주세요.",
             loading: false,
             msg: false,
           });

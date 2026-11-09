@@ -1,4 +1,4 @@
-import { session } from "./session";
+import { session, syncSessionUser } from "./session";
 
 /**
  * API 호출 공통 도구.
@@ -20,7 +20,13 @@ export class ApiError extends Error {
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-export async function http<T = void>(method: Method, path: string, body?: unknown): Promise<T> {
+export async function http<T = void>(
+  method: Method,
+  path: string,
+  body?: unknown,
+  options?: Pick<RequestInit, "signal">,
+): Promise<T> {
+  syncSessionUser();
   const headers: Record<string, string> = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (session.token) headers.Authorization = `Bearer ${session.token}`;
@@ -30,6 +36,7 @@ export async function http<T = void>(method: Method, path: string, body?: unknow
     credentials: "include",
     headers: Object.keys(headers).length > 0 ? headers : undefined,
     body: body === undefined ? undefined : JSON.stringify(body),
+    signal: options?.signal,
   });
   if (!res.ok) {
     let msg = `${method} ${path} → ${res.status}`;
