@@ -9,6 +9,7 @@ import com.ieum.message.entity.ThreadTopic;
 import com.ieum.message.repository.MessageRepository;
 import com.ieum.message.repository.MessageThreadRepository;
 import com.ieum.practice.repository.PracticeRepository;
+import com.ieum.record.repository.PracticeRecordRepository;
 import com.ieum.signal.repository.SignalEventRepository;
 import com.ieum.signal.repository.SignalKeywordRepository;
 import com.ieum.user.entity.Role;
@@ -55,6 +56,7 @@ class ThreadApiTest {
     @MockitoBean MessageThreadRepository threadRepository;
     @MockitoBean MessageRepository messageRepository;
     @MockitoBean PracticeRepository practiceRepository;
+    @MockitoBean PracticeRecordRepository recordRepository;
     @MockitoBean SignalKeywordRepository signalKeywordRepository;   // 신호 검사가 DB에 닿지 않게 막는다
     @MockitoBean SignalEventRepository signalEventRepository;
     @MockitoBean PlatformTransactionManager transactionManager;   // DB 없이 @Transactional을 통과시키기 위해
@@ -73,6 +75,7 @@ class ThreadApiTest {
         when(messageRepository.save(any(Message.class))).thenAnswer(inv -> {
             Message m = inv.getArgument(0);
             ReflectionTestUtils.setField(m, "id", 101L);
+            ReflectionTestUtils.setField(m, "createdAt", T);
             return m;
         });
     }
@@ -239,5 +242,94 @@ class ThreadApiTest {
     void 이음쌤이_쪽지함을_부르면_403() throws Exception {
         mockMvc.perform(get("/api/v1/threads").header("Authorization", bearer(9L, Role.TEACHER)))
                 .andExpect(status().isForbidden());
+    }
+
+    // ---------- 14·15 ----------
+
+    private MessageThread thread31() {
+        MessageThread t = new MessageThread(1L, 9L, ThreadTopic.ONLINE, null);
+        ReflectionTestUtils.setField(t, "id", 31L);
+        ReflectionTestUtils.setField(t, "createdAt", T);
+        ReflectionTestUtils.setField(t, "lastMessageAt", T);
+        when(threadRepository.findById(31L)).thenReturn(Optional.of(t));
+        return t;
+    }
+
+    private Message message(long id, SenderRole role, String body) {
+        Message m = new Message(31L, role, body);
+        ReflectionTestUtils.setField(m, "id", id);
+        ReflectionTestUtils.setField(m, "createdAt", T);
+        return m;
+    }
+
+    private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder reply(long userId, Role role, String json) {
+        return post("/api/v1/threads/31/messages").header("Authorization", bearer(userId, role))
+                .contentType(MediaType.APPLICATION_JSON).content(json);
+    }
+
+    @Test
+    void 학습자_상세는_signal_키가_없고_my_note도_없다() throws Exception {
+        thread31();
+        when(messageRepository.findByThreadIdOrderByIdAsc(31L)).thenReturn(List.of(message(101L, SenderRole.STUDENT, "도와주세요")));
+
+        mockMvc.perform(get("/api/v1/threads/31").header("Authorization", bearer(1L, Role.STUDENT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(31))
+                .andExpect(jsonPath("$.student.nickname").value("닉1"))
+                .andExpect(jsonPath("$.teacher.nickname").value("닉9"))
+                .andExpect(jsonPath("$.messages[0].body").value("도와주세요"))
+                .andExpect(jsonPath("$.messages[0].createdAt").value("2026-11-04T10:30:00+09:00"))
+                .andExpect(jsonPath("$.signal").doesNotExist())
+                .andExpect(jsonPath("$.myNote").doesNotExist());
+    }
+
+    @Test
+    void 남의_쪽지는_403_없는_쪽지는_404() throws Exception {
+        thread31();
+        mockUser(2L, Role.STUDENT);
+        mockUser(8L, Role.TEACHER);
+
+        mockMvc.perform(get("/api/v1/threads/31").header("Authorization", bearer(2L, Role.STUDENT)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+        mockMvc.perform(get("/api/v1/threads/31").header("Authorization", bearer(8L, Role.TEACHER)))
+                .andExpect(status().isForbidden());
+        when(threadRepository.findById(404L)).thenReturn(Optional.empty());
+        mockMvc.perform(get("/api/v1/threads/404").header("Authorization", bearer(1L, Role.STUDENT)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 이어쓰기는_201과_네_필드를_주고_학습자가_보내면_WAITING() throws Exception {
+        MessageThread t = thread31();
+        ReflectionTestUtils.setField(t, "status", ThreadStatus.ANSWERED);
+
+        mockMvc.perform(reply(1L, Role.STUDENT, "{\"body\":\"고마워요\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(101))
+                .andExpect(jsonPath("$.senderRole").value("STUDENT"))
+                .andExpect(jsonPath("$.body").value("고마워요"))
+                .andExpect(jsonPath("$.length()").value(4));
+        org.assertj.core.api.Assertions.assertThat(t.getStatus()).isEqualTo(ThreadStatus.WAITING);
+    }
+
+    @Test
+    void 이음쌤이_답장하면_ANSWERED() throws Exception {
+        MessageThread t = thread31();
+
+        mockMvc.perform(reply(9L, Role.TEACHER, "{\"body\":\"어떤 마음이에요?\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.senderRole").value("TEACHER"));
+        org.assertj.core.api.Assertions.assertThat(t.getStatus()).isEqualTo(ThreadStatus.ANSWERED);
+    }
+
+    @Test
+    void 이어쓰기_본문이_비었거나_501자면_400() throws Exception {
+        thread31();
+        for (String json : List.of("{\"body\":\"  \"}", "{}", "{\"body\":\"" + "가".repeat(501) + "\"}")) {
+            mockMvc.perform(reply(1L, Role.STUDENT, json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.fieldErrors[0].field").value("body"));
+        }
     }
 }
