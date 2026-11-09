@@ -2,6 +2,7 @@ package com.ieum.user.controller;
 
 import com.ieum.common.ApiException;
 import com.ieum.mock.MockSupport;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,7 +22,7 @@ import static com.ieum.mock.MockSupport.obj;
 /**
  * [역할] 이음쌤 16 GET /teacher/summary, 17 GET /teacher/students, 18 GET /teacher/students/{id},
  *        19 GET /teacher/threads, 20 GET /teacher/signals, 21 PATCH /teacher/signals/{id}의 가짜 응답을 내린다.
- * [동작] DB 없이 학습자 2명(12 하늘, 13 바다), 쪽지 2개(31, 32), 신호 2개(5 OPEN, 6 HANDLED)를 고정값으로 돌려준다.
+ * [동작] mock.learning.enabled=true일 때만 고정 학습자·쪽지·신호를 돌려주고, 실제 연동 모드에서는 빈 목록을 돌려준다.
  * [연결] 화면 T01~T03 / 실제 구현 이슈 #50(16~18), #51(19~21)
  * [주의] /teacher/**는 SecurityConfig가 이음쌤만 통과시킨다. 응답에 점수·신호 등급·나에게 한 줄(my_note)은 넣지 않는다.
  */
@@ -29,12 +30,18 @@ import static com.ieum.mock.MockSupport.obj;
 @RequestMapping("/teacher")
 public class TeacherMockController {
 
+    @Value("${mock.learning.enabled:true}")
+    private boolean mockEnabled;
+
     /** 21번 요청. memo는 생략하면 그대로 두고 학습자에게는 보이지 않는다. */
     public record HandleSignalRequest(Boolean handled, String memo) {}
 
     // TODO: 실제 구현으로 교체 (#50) — 담당 학습자 수, 대기 쪽지 수, 열린 신호 수 집계
     @GetMapping("/summary")
     public Map<String, Object> summary() {
+        if (!mockEnabled) {
+            return obj("studentCount", 0, "waitingThreadCount", 0, "openSignalCount", 0);
+        }
         return obj("studentCount", 5, "waitingThreadCount", 2, "openSignalCount", 1);
     }
 
@@ -43,6 +50,9 @@ public class TeacherMockController {
     public Map<String, Object> students(@RequestParam(required = false) String q,
                                         @RequestParam(required = false) String sort) {
         MockSupport.checkAllowed("sort", sort, Set.of("nickname", "assigned", "recent"));
+        if (!mockEnabled) {
+            return obj("items", List.of());
+        }
         List<Map<String, Object>> items = new ArrayList<>(List.of(
                 obj("id", 12, "nickname", "하늘", "assignedAt", "2026-11-04T10:30:00+09:00",
                         "lastActivityAt", "2026-11-04T14:00:00+09:00", "doneCount", 4, "waitingThreadCount", 1, "hasOpenSignal", true),
@@ -63,7 +73,7 @@ public class TeacherMockController {
     // TODO: 실제 구현으로 교체 (#50) — 담당 학습자가 아니면 FORBIDDEN, records는 DONE만(SCENARIO는 answers·my_note 제외)
     @GetMapping("/students/{id}")
     public Map<String, Object> studentDetail(@PathVariable long id) {
-        if (id != 12) {
+        if (!mockEnabled || id != 12) {
             throw MockSupport.notFound();
         }
         return obj("id", 12, "nickname", "하늘", "assignedAt", "2026-11-04T10:30:00+09:00", "hasOpenSignal", true, "doneCount", 4,
@@ -74,7 +84,7 @@ public class TeacherMockController {
                                         "text", "처음 보는 사람이 “둘만의 비밀이야”라며 내 사진을 보내 달래요.",
                                         "then", "잘 모르겠어요", "now", "보내지 않고 대화를 멈춘다", "changed", true)),
                                 "emotion", null),
-                        obj("practiceId", 3, "title", "혼자 떨어져 앉은 친구", "type", "EMOTION", "area", "EMOTION", "level", 1,
+                        obj("practiceId", 3, "title", "혼자 떨어져 앉은 친구", "type", "EMOTION", "area", "MIND", "level", 1,
                                 "completedAt", "2026-10-27T11:00:00+09:00", "compare", null,
                                 "emotion", obj("clues", List.of("표정 · 시선을 아래로 향해요"), "feelings", List.of("서운함")))),
                 "threads", List.of(
@@ -85,6 +95,9 @@ public class TeacherMockController {
     @GetMapping("/threads")
     public Map<String, Object> threads(@RequestParam(required = false) String status) {
         MockSupport.checkAllowed("status", status, Set.of("WAITING", "ANSWERED"));
+        if (!mockEnabled) {
+            return obj("items", List.of());
+        }
         List<Map<String, Object>> items = List.of(
                 obj("id", 31, "student", obj("id", 12, "nickname", "하늘"), "topic", "ONLINE", "status", "WAITING",
                         "lastMessageAt", "2026-11-04T10:30:00+09:00", "preview", "게임에서 알게 된 사람이 사진을 보내 달래요",
@@ -99,6 +112,9 @@ public class TeacherMockController {
     @GetMapping("/signals")
     public Map<String, Object> signals(@RequestParam(required = false) String status) {
         MockSupport.checkAllowed("status", status, Set.of("OPEN", "HANDLED"));
+        if (!mockEnabled) {
+            return obj("items", List.of());
+        }
         return obj("items", List.of(signal(5, false, null), signal(6, true, "다음 날 담임과 통화했고 1388을 안내했다")).stream()
                 .filter(i -> status == null || status.equals(i.get("status")))
                 .toList());
@@ -107,7 +123,7 @@ public class TeacherMockController {
     // TODO: 실제 구현으로 교체 (#51) — 담당 학습자의 신호가 아니면 FORBIDDEN, handled·handled_at·response_memo 갱신
     @PatchMapping("/signals/{id}")
     public Map<String, Object> handleSignal(@PathVariable long id, @RequestBody HandleSignalRequest request) {
-        if (id != 5 && id != 6) {
+        if (!mockEnabled || id != 5 && id != 6) {
             throw MockSupport.notFound();
         }
         if (request.handled() == null) {
