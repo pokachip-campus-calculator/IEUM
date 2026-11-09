@@ -1,4 +1,4 @@
-import { USE_MOCK, http } from "../client";
+import { ApiError, USE_MOCK, http } from "../client";
 import type { GuardianConsentRequest, LoginRequest, LoginResponse, SignupRequest } from "../types";
 
 /** 로그인 · 회원 가입 */
@@ -12,7 +12,20 @@ export const authService = {
         user: { id: 0, nickname: "하늘", role: "STUDENT" },
       };
     }
-    return http<LoginResponse>("POST", "/auth/login", req);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15_000);
+    try {
+      return await http<LoginResponse>("POST", "/auth/login", req, {
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (controller.signal.aborted) {
+        throw new ApiError(408, "로그인 서버 응답이 늦어요. 잠시 후 다시 시도해 주세요.");
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
   },
   /** POST /auth/signup  (14세 미만이면 이어서 requestGuardianConsent) */
   async signup(req: SignupRequest): Promise<void> {

@@ -3,6 +3,8 @@ export { USE_MOCK, API_BASE, ApiError, http } from "./client";
 export { session, setSessionUser, clearSessionUser } from "./session";
 export { authService } from "./services/authService";
 export { contentService } from "./services/contentService";
+export { homeService } from "./services/homeService";
+export { practiceService } from "./services/practiceService";
 export { recordService } from "./services/recordService";
 export { messageService } from "./services/messageService";
 export { notificationService } from "./services/notificationService";

@@ -3,6 +3,7 @@
  * (원본 디자인: Unit.dc.html)
  */
 import { Component, Fragment } from "react";
+import type { MouseEvent } from "react";
 import { recordService } from "@/api";
 import { A } from "@/lib/A";
 import { css } from "@/lib/css";
@@ -27,8 +28,74 @@ export default class Unit extends Component<any, any> {
       read: [false, false, false, false, false],
       paused: false,
       hint: "",
+      apiError: "",
     };
   }
+  private progressSave: Promise<void> = Promise.resolve();
+
+  componentDidMount() {
+    const record = this.props.record;
+    if (!record || record.status !== "IN_PROGRESS") return;
+
+    const answerIndexes = (answers: Record<string, string> | undefined) =>
+      Object.fromEntries(
+        Object.entries(answers ?? {}).flatMap(([questionId, optionId]) => {
+          const questionIndex = Number(questionId.replace(/^q/, "")) - 1;
+          const optionIndex = ["a", "b", "c", "d", "e"].indexOf(optionId);
+          return questionIndex >= 0 && optionIndex >= 0
+            ? [[questionIndex, optionIndex]]
+            : [];
+        }),
+      );
+    const answers = record.answers as {
+      pre?: Record<string, string>;
+      post?: Record<string, string>;
+      cardsRead?: number[];
+    };
+    const pre = answerIndexes(answers.pre);
+    const post = answerIndexes(answers.post);
+    const read = Array.from({ length: 5 }, (_, index) =>
+      (answers.cardsRead ?? []).includes(index + 1),
+    );
+    const questionCount = this.props.questions.length;
+    const phase =
+      Object.keys(post).length > 0 || read.every(Boolean)
+        ? "post"
+        : Object.keys(pre).length === questionCount
+          ? "learn"
+          : "pre";
+    const card = read.findIndex((wasRead) => !wasRead);
+
+    this.setState({
+      phase,
+      pre,
+      post,
+      read,
+      card: card < 0 ? 4 : card,
+    });
+  }
+
+  saveProgress(pre, post, read) {
+    const save = this.progressSave
+      .catch(() => undefined)
+      .then(() =>
+        recordService.saveUnitProgress({
+          practiceId: this.props.practiceId,
+          pre,
+          post,
+          cardsRead: read.flatMap((wasRead, index) => (wasRead ? [index + 1] : [])),
+        }),
+      );
+    this.progressSave = save;
+    void save
+      .then(() => this.setState({ apiError: "" }))
+      .catch((error) =>
+        this.setState({
+          apiError: error instanceof Error ? error.message : "학습 진행을 저장하지 못했어요.",
+        }),
+      );
+  }
+
   renderVals() {
     const s = this.state;
 
@@ -46,7 +113,15 @@ export default class Unit extends Component<any, any> {
           mouth: q.t === "face" ? o[1] : "",
           fill: q.t === "face" ? o[2] : "",
           on: s[key][i] === j,
-          pick: () => this.setState({ [key]: Object.assign({}, s[key], { [i]: j }) }),
+          pick: () => {
+            const answers = Object.assign({}, s[key], { [i]: j });
+            this.setState({ [key]: answers });
+            this.saveProgress(
+              key === "pre" ? answers : s.pre,
+              key === "post" ? answers : s.post,
+              s.read,
+            );
+          },
         })),
       }));
     const C: any = this.props.cards;
@@ -91,21 +166,36 @@ export default class Unit extends Component<any, any> {
         current: k === pi ? "step" : "false",
       })),
       paused: s.paused,
-      pause: () => this.setState({ paused: true }),
+      pause: (event: MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        this.setState({ paused: true });
+        this.saveProgress(s.pre, s.post, s.read);
+      },
       resume: () => this.setState({ paused: false }),
       isPre: s.phase === "pre" && !s.paused,
       isLearn: s.phase === "learn" && !s.paused,
       isPost: s.phase === "post" && !s.paused,
       isCompare: s.phase === "compare" && !s.paused,
       isDone: s.phase === "done" && !s.paused,
-      finishUnit: () => {
-        void recordService.completeUnit({
-          kind: "cards",
-          level: this.props.level,
-          pre: s.pre,
-          post: s.post,
-        });
-        this.setState({ phase: "done" });
+      apiError: s.apiError,
+      finishUnit: async () => {
+        this.setState({ apiError: "" });
+        try {
+          await this.progressSave.catch(() => undefined);
+          await recordService.completeUnit({
+            practiceId: this.props.practiceId,
+            kind: "cards",
+            level: this.props.level,
+            pre: s.pre,
+            post: s.post,
+          });
+          this.setState({ phase: "done" });
+        } catch (error) {
+          this.setState({
+            apiError: error instanceof Error ? error.message : "학습 기록을 저장하지 못했어요.",
+          });
+        }
       },
       preQs: mkQs("pre"),
       postQs: mkQs("post"),
@@ -162,6 +252,7 @@ export default class Unit extends Component<any, any> {
         const r = s.read.slice();
         r[i] = !r[i];
         this.setState({ read: r, hint: "" });
+        this.saveProgress(s.pre, s.post, r);
       },
       notLast: i < 4,
       isLast: i === 4,
@@ -257,6 +348,11 @@ export default class Unit extends Component<any, any> {
                 <div className="ie-banner-art ie-fade-l">
                   <img className="ie-3img" src={img.bannerUnit} alt="" draggable="false" />
                 </div>
+                {v.apiError ? (
+                  <p className="ie-error-text" role="alert">
+                    {v.apiError}
+                  </p>
+                ) : null}
               </section>
               {v.paused ? (
                 <section
@@ -1119,14 +1215,6 @@ export default class Unit extends Component<any, any> {
                       >
                         <A
                           className="ie-card"
-                          href={ROUTES.areas}
-                          style={{ gap: "6px", textDecoration: "none", color: "inherit" }}
-                        >
-                          <b className="ie-body ie-strong">다음 연습 고르기</b>
-                          <span className="ie-body ie-sub">마음이 가는 연습부터 골라요.</span>
-                        </A>{" "}
-                        <A
-                          className="ie-card"
                           href={ROUTES.talk}
                           style={{ gap: "6px", textDecoration: "none", color: "inherit" }}
                         >
@@ -1164,6 +1252,9 @@ export default class Unit extends Component<any, any> {
                         <button type="button" className="ie-btn ie-btn--text" onClick={v.again}>
                           이 단위 다시 해 보기
                         </button>
+                        <A className="ie-btn ie-btn--primary ie-btn--lg" href={ROUTES.areas}>
+                          다음 연습 고르기
+                        </A>
                         <A className="ie-btn ie-btn--outline" href={ROUTES.home}>
                           홈으로 돌아가기
                         </A>

@@ -2,6 +2,7 @@ import { lazy, type ComponentType } from "react";
 import {
   createBrowserRouter,
   Navigate,
+  redirect,
   useLoaderData,
   type LoaderFunctionArgs,
   type RouteObject,
@@ -9,9 +10,13 @@ import {
 import App from "./App";
 import { ROUTES } from "./routes";
 import {
+  ApiError,
   contentService,
+  clearSessionUser,
+  homeService,
   messageService,
   notificationService,
+  practiceService,
   profileService,
   recordService,
   session,
@@ -44,6 +49,47 @@ const TeacherUpload = lazy(() => import("@/pages/teacher/TeacherUpload/TeacherUp
 const levelOf = (a: LoaderFunctionArgs) =>
   new URL(a.request.url).searchParams.get("level") ?? undefined;
 
+function practiceIdOf(a: LoaderFunctionArgs, fallback: number): number {
+  const value = new URL(a.request.url).searchParams.get("practiceId");
+  if (value === null) return fallback;
+  const practiceId = Number(value);
+  if (!Number.isSafeInteger(practiceId) || practiceId < 1) {
+    throw new Error("연습 정보를 확인할 수 없습니다.");
+  }
+  return practiceId;
+}
+
+async function loadLearnerData<T>(load: () => Promise<T>): Promise<T> {
+  if (!session.token) throw redirect(ROUTES.login);
+  if (session.user.role !== "learner") throw redirect(ROUTES.teacher);
+  try {
+    return await load();
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      clearSessionUser();
+      throw redirect(ROUTES.login);
+    }
+    throw error;
+  }
+}
+
+async function loadTeacherData<T>(load: () => Promise<T>): Promise<T> {
+  if (!session.token) throw redirect(ROUTES.login);
+  if (session.user.role !== "teacher") throw redirect(ROUTES.home);
+  try {
+    return await load();
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      clearSessionUser();
+      throw redirect(ROUTES.login);
+    }
+    if (error instanceof ApiError && error.status === 403) {
+      throw redirect(ROUTES.home);
+    }
+    throw error;
+  }
+}
+
 /**
  * 라우트 로더가 가져온 데이터를 화면(클래스 컴포넌트)의 props 로 넘겨 줍니다.
  * 화면이 뜨기 전에 데이터를 받아 두기 때문에 "빈 화면 → 채워짐" 깜빡임이 없어요.
@@ -66,18 +112,27 @@ const pageRoutes: RouteObject[] = [
     element: <Page C={Terms} />,
     loader: async () => ({ docs: await contentService.getTerms() }),
   },
-  { path: ROUTES.home, element: <Page C={Home} /> },
+  {
+    path: ROUTES.home,
+    element: <Page C={Home} />,
+    loader: async () => ({ home: await loadLearnerData(() => homeService.getHome()) }),
+  },
   {
     path: ROUTES.areas,
     element: <Page C={Areas} />,
-    loader: async () => ({ practices: await contentService.getPractices() }),
+    loader: async () => ({ practices: await loadLearnerData(() => practiceService.getPractices()) }),
   },
   {
     path: ROUTES.unit,
     element: <Page C={Unit} />,
     loader: async (a) => {
       const level = levelOf(a);
-      return { level, ...(await contentService.getUnitContent(level)) };
+      const practiceId = practiceIdOf(a, 1);
+      return {
+        level,
+        practiceId,
+        ...(await loadLearnerData(() => contentService.getUnitContent(level, practiceId))),
+      };
     },
   },
   {
@@ -85,57 +140,102 @@ const pageRoutes: RouteObject[] = [
     element: <Page C={UnitVideo} />,
     loader: async (a) => {
       const level = levelOf(a);
-      return { level, ...(await contentService.getUnitVideoContent(level)) };
+      const practiceId = practiceIdOf(a, 1);
+      return {
+        level,
+        practiceId,
+        ...(await loadLearnerData(() => contentService.getUnitVideoContent(level, practiceId))),
+      };
     },
   },
   {
     path: ROUTES.scenario,
     element: <Page C={Scenario} />,
-    loader: async () => ({ scenarios: await contentService.getScenarios() }),
+    loader: async (a) => {
+      const practiceId = practiceIdOf(a, 2);
+      return {
+        practiceId,
+        scenarios: await loadLearnerData(() => contentService.getScenarios(practiceId)),
+      };
+    },
   },
   {
     path: ROUTES.emotion,
     element: <Page C={Emotion} />,
-    loader: async () => ({ ...(await contentService.getEmotionScene()) }),
+    loader: async (a) => {
+      const practiceId = practiceIdOf(a, 3);
+      return {
+        practiceId,
+        ...(await loadLearnerData(() => contentService.getEmotionScene(practiceId))),
+      };
+    },
   },
   {
     path: ROUTES.collection,
     element: <Page C={Collection} />,
-    loader: async () => ({ records: await recordService.getLearningRecords() }),
+    loader: async () => ({
+      records: await loadLearnerData(() => recordService.getLearningRecords()),
+    }),
   },
-  { path: ROUTES.talk, element: <Page C={Talk} /> },
+  {
+    path: ROUTES.talk,
+    element: <Page C={Talk} />,
+    loader: async () => {
+      await loadLearnerData(async () => null);
+      return null;
+    },
+  },
   {
     path: ROUTES.messages,
     element: <Page C={Messages} />,
-    loader: async () => ({ messages: await messageService.getMyMessages() }),
+    loader: async () => ({
+      messages: await loadLearnerData(() => messageService.getMyMessages()),
+    }),
   },
   { path: ROUTES.help, element: <Page C={ExternalHelp} /> },
   {
     path: ROUTES.profile,
     element: <Page C={Profile} />,
-    loader: async () => ({ profile: await profileService.getProfile() }),
+    loader: async () => ({
+      profile: await loadLearnerData(() => profileService.getProfile()),
+    }),
   },
   {
     path: ROUTES.notifications,
     element: <Page C={Notifications} />,
-    loader: async () => ({ notifications: await notificationService.getNotifications() }),
+    loader: async () => ({
+      notifications: await loadLearnerData(() => notificationService.getNotifications()),
+    }),
   },
   {
     path: ROUTES.teacher,
     element: <Page C={Teacher} />,
-    loader: async () => ({ students: await teacherService.getStudents() }),
+    loader: async () => ({
+      students: await loadTeacherData(() => teacherService.getStudents()),
+    }),
   },
   {
     path: ROUTES.teacherMessages,
     element: <Page C={TeacherMessages} />,
-    loader: async () => ({ messages: await teacherService.getMessages() }),
+    loader: async () => ({
+      messages: await loadTeacherData(() => teacherService.getMessages()),
+    }),
   },
   {
     path: ROUTES.teacherSignal,
     element: <Page C={TeacherSignal} />,
-    loader: async () => ({ students: await teacherService.getSignalStudents() }),
+    loader: async () => ({
+      students: await loadTeacherData(() => teacherService.getSignalStudents()),
+    }),
   },
-  { path: ROUTES.teacherUpload, element: <Page C={TeacherUpload} /> },
+  {
+    path: ROUTES.teacherUpload,
+    element: <Page C={TeacherUpload} />,
+    loader: async () => {
+      await loadTeacherData(async () => null);
+      return null;
+    },
+  },
 ];
 
 export const router = createBrowserRouter([

@@ -7,6 +7,8 @@ import { clearSessionUser, session } from "@/api";
 import { A } from "@/lib/A";
 import { img } from "@/assets";
 import { ROUTES } from "@/routes";
+import { badgeService } from "@/api/services/badgeService";
+import { BADGE_COUNTS_CHANGED } from "@/api/services/badgeEvents";
 import SideNav from "@/components/SideNav/SideNav";
 import TeacherNav from "@/components/TeacherNav/TeacherNav";
 import "./Header.css";
@@ -16,15 +18,33 @@ export default class Header extends Component<any, any> {
 
   constructor(props) {
     super(props);
-    this.state = { open: false };
+    this.state = { open: false, unreadNotifications: 0, unreadReplies: 0 };
+  }
+
+  componentDidMount() {
+    window.addEventListener(BADGE_COUNTS_CHANGED, this.refreshBadges);
+    this.refreshBadges();
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener(BADGE_COUNTS_CHANGED, this.refreshBadges);
+  }
+
+  refreshBadges = () => {
+    badgeService.getCounts().then(
+      (counts) => this.setState(counts),
+      (error) => console.error("메뉴 배지 정보를 불러오지 못했습니다:", error),
+    );
   }
   renderVals() {
     const open = this.state.open;
+    const nickname = session.user.nick || "이음쌤";
     return {
       active: this.props.active ?? "home",
       isLearner: (this.props.role ?? "learner") === "learner",
       isTeacher: (this.props.role ?? "learner") === "teacher",
       isGuest: (this.props.role ?? "learner") === "guest",
+      nickname,
       showMenu: ["guest", "guest-plain"].indexOf(this.props.role ?? "learner") < 0,
       logoHref:
         ["guest", "guest-plain"].indexOf(this.props.role ?? "learner") >= 0
@@ -37,6 +57,8 @@ export default class Header extends Component<any, any> {
           ? "이음 처음 화면으로"
           : "이음 홈으로",
       open,
+      unreadNotifications: this.state.unreadNotifications,
+      unreadReplies: this.state.unreadReplies,
       closed: !open,
       menuLabel: open ? "메뉴 닫기" : "메뉴 열기",
       toggle: () => this.setState({ open: !open }),
@@ -102,7 +124,7 @@ export default class Header extends Component<any, any> {
                 <A
                   className="ie-bell ie-hide-mobile"
                   href={ROUTES.notifications}
-                  aria-label="알림 · 안 읽은 알림 3개"
+                  aria-label={`알림 · 안 읽은 알림 ${v.unreadNotifications}개`}
                 >
                   <svg width="26" height="26" viewBox="0 0 256 256" aria-hidden="true">
                     <path
@@ -114,14 +136,16 @@ export default class Header extends Component<any, any> {
                       fill="#4E3FA6"
                     />
                   </svg>
-                  <span className="ie-bell-n" aria-hidden="true">
-                    3
-                  </span>
+                  {v.unreadNotifications > 0 ? (
+                    <span className="ie-bell-n" aria-hidden="true">
+                      {v.unreadNotifications}
+                    </span>
+                  ) : null}
                 </A>{" "}
                 <A
                   className="ie-btn ie-btn--outline ie-hide-mobile"
                   href={ROUTES.talk}
-                  aria-label="이음상담소 · 새 답변 1개"
+                  aria-label={`이음상담소 · 새 답변 ${v.unreadReplies}개`}
                 >
                   <svg width="22" height="22" viewBox="0 0 256 256" aria-hidden="true">
                     <path
@@ -134,7 +158,9 @@ export default class Header extends Component<any, any> {
                     />
                   </svg>
                   {"이음상담소 "}
-                  <span className="ie-newtag">1</span>
+                  {v.unreadReplies > 0 ? (
+                    <span className="ie-newtag">{v.unreadReplies}</span>
+                  ) : null}
                 </A>{" "}
                 <A
                   className="ie-row ie-hide-mobile"
@@ -159,7 +185,7 @@ export default class Header extends Component<any, any> {
                 <A
                   className="ie-bell ie-hide-mobile"
                   href={ROUTES.notifications}
-                  aria-label="알림 · 안 읽은 알림 3개"
+                  aria-label={`알림 · 안 읽은 알림 ${v.unreadNotifications}개`}
                 >
                   <svg width="26" height="26" viewBox="0 0 256 256" aria-hidden="true">
                     <path
@@ -171,9 +197,11 @@ export default class Header extends Component<any, any> {
                       fill="#4E3FA6"
                     />
                   </svg>
-                  <span className="ie-bell-n" aria-hidden="true">
-                    3
-                  </span>
+                  {v.unreadNotifications > 0 ? (
+                    <span className="ie-bell-n" aria-hidden="true">
+                      {v.unreadNotifications}
+                    </span>
+                  ) : null}
                 </A>{" "}
                 <span
                   className="ie-row ie-hide-mobile"
@@ -185,9 +213,9 @@ export default class Header extends Component<any, any> {
                   }}
                 >
                   <span className="ie-avatar" aria-hidden="true">
-                    푸
+                    {v.nickname.slice(0, 1)}
                   </span>
-                  <span className="ie-body ie-strong">푸른 이음쌤</span>
+                  <span className="ie-body ie-strong">{v.nickname}님</span>
                 </span>{" "}
                 <A
                   className="ie-btn ie-btn--outline ie-hide-mobile"
@@ -201,8 +229,12 @@ export default class Header extends Component<any, any> {
           </div>
           {v.open ? (
             <div id="ie-drawer" className="ie-drawer">
-              {v.isLearner ? <SideNav active={v.active} /> : null}{" "}
-              {v.isTeacher ? <TeacherNav active={v.active} /> : null}
+              {v.isLearner ? (
+                <SideNav active={v.active} />
+              ) : null}{" "}
+              {v.isTeacher ? (
+                <TeacherNav active={v.active} unreadNotifications={v.unreadNotifications} />
+              ) : null}
             </div>
           ) : null}
         </header>

@@ -17,11 +17,19 @@ export default class Messages extends Component<any, any> {
 
   constructor(props) {
     super(props);
-    this.state = { f: "all", sel: "m3", add: "", tried: false, unsent: false };
+    this.state = {
+      f: "all",
+      sel: props.messages?.[0]?.id ?? "m3",
+      messages: props.messages ?? [],
+      add: "",
+      tried: false,
+      unsent: false,
+      apiError: "",
+    };
   }
   renderVals() {
     const s = this.state;
-    const M: any = this.props.messages;
+    const M: any = s.messages;
     const ST: any = {
       wait: ["답변 대기", "ie-status ie-status--wait"],
       reply: ["답변 도착", "ie-status ie-status--reply"],
@@ -94,14 +102,32 @@ export default class Messages extends Component<any, any> {
       addBad,
       addCls: addBad ? "ie-textarea is-error" : "ie-textarea",
       unsent: s.unsent,
+      apiError: s.apiError,
       onAdd: (e) => this.setState({ add: e.target.value, unsent: false }),
-      send: () => {
+      send: async () => {
         if (s.add.trim() === "") {
           this.setState({ tried: true, unsent: false });
           return;
         }
-        void messageService.sendFollowUp(s.sel, s.add);
-        this.setState({ tried: false, add: "" });
+        this.setState({ apiError: "" });
+        try {
+          await messageService.sendFollowUp(s.sel, s.add);
+          this.setState({ tried: false, add: "", unsent: true });
+          try {
+            const messages = await messageService.getMyMessages();
+            this.setState({ messages, unsent: false });
+          } catch (error) {
+            this.setState({
+              apiError: error instanceof Error
+                ? `쪽지는 보냈지만 목록을 새로 불러오지 못했어요: ${error.message}`
+                : "쪽지는 보냈지만 목록을 새로 불러오지 못했어요.",
+            });
+          }
+        } catch (error) {
+          this.setState({
+            apiError: error instanceof Error ? error.message : "답장을 보내지 못했어요.",
+          });
+        }
       },
     };
   }
@@ -326,6 +352,16 @@ export default class Messages extends Component<any, any> {
                         쪽지 보내기
                       </button>
                     </div>
+                    {v.apiError ? (
+                      <p className="ie-error-text" role="alert">
+                        {v.apiError}
+                      </p>
+                    ) : null}
+                    {v.unsent ? (
+                      <p className="ie-help" role="status">
+                        답장을 보냈어요. 목록을 새로 불러오면 내용이 보여요.
+                      </p>
+                    ) : null}
                   </section>
                 ) : null}
               </div>
