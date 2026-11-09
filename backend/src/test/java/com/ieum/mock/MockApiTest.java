@@ -50,6 +50,8 @@ class MockApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.doneTotal").value(1))
                 .andExpect(jsonPath("$.resume.practiceId").value(2))
+                .andExpect(jsonPath("$.resume.myStatus").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.resume.status").doesNotExist())
                 .andExpect(jsonPath("$.recent[0].completedAt").value("2026-10-29T15:00:00+09:00"));
         mockMvc.perform(get("/api/v1/practices").param("area", "HELP").header("Authorization", student()))
                 .andExpect(jsonPath("$.items.length()").value(1))

@@ -30,7 +30,7 @@ public class HomeMockController {
         MockSupport.requireStudent(user);
         return obj("nickname", "하늘", "unreadMessages", 1, "doneTotal", 1,
                 "resume", obj("practiceId", 2, "title", "온라인에서 받은 비밀 부탁", "type", "SCENARIO", "area", "HELP",
-                        "level", 1, "estMinutes", 10, "status", "IN_PROGRESS"),
+                        "level", 1, "estMinutes", 10, "myStatus", "IN_PROGRESS"),
                 "inProgress", List.of(),
                 "areas", List.of(obj("area", "SAFETY", "doneCount", 1), obj("area", "HELP", "doneCount", 0),
                         obj("area", "EMOTION", "doneCount", 0)),
