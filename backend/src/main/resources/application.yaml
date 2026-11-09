@@ -31,4 +31,4 @@ cors:
 
 mock:
   learning:
-    enabled: false                       # 홈·연습 목록(07·08)을 mock으로 내린다(#58). 학습 전체 수동 테스트가 끝나면 false로 바꾸고 mock을 지운다
+    enabled: true                       # 홈·연습 목록(07·08)을 mock으로 내린다(#58). 학습 전체 수동 테스트가 끝나면 false로 바꾸고 mock을 지운다
