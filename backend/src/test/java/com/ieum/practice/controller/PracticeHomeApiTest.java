@@ -192,7 +192,7 @@ class PracticeHomeApiTest {
                 record(1L, 2L, true, now.minusDays(1), now.minusDays(1))));
         mockMvc.perform(get("/api/v1/home").header("Authorization", bearer(1L, Role.STUDENT)))
                 .andExpect(jsonPath("$.resume.practiceId").value(1))
-                .andExpect(jsonPath("$.resume.status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.resume.myStatus").value("IN_PROGRESS"))
                 .andExpect(jsonPath("$.doneTotal").value(2))
                 .andExpect(jsonPath("$.recent.length()").value(2))
                 .andExpect(jsonPath("$.recent[1].practiceId").value(1))

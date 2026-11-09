@@ -363,7 +363,7 @@
             "type": "text/javascript",
             "exec": [
               "pm.test('200', () => pm.response.to.have.status(200));",
-              "pm.test('resume은 방금 저장한 연습', () => { const b = pm.response.json(); pm.expect(b.resume.practiceId).to.eql(2); pm.expect(b.resume.status).to.eql('IN_PROGRESS'); });"
+              "pm.test('resume은 방금 저장한 연습', () => { const b = pm.response.json(); pm.expect(b.resume.practiceId).to.eql(2); pm.expect(b.resume.myStatus).to.eql('IN_PROGRESS'); });"
             ]
           }
         }
