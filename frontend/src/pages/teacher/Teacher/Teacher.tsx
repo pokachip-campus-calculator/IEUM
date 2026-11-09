@@ -18,11 +18,12 @@ export default class Teacher extends Component<any, any> {
       q: "",
       how: "all",
       sort: "nick",
-      sel: "p2",
+      sel: props.students?.[0]?.id ?? "p2",
       tab: "sum",
       reply: "",
       replyTried: false,
       replyUnsent: false,
+      replyError: "",
       memos: {},
       kept: {},
       help: false,
@@ -153,14 +154,22 @@ export default class Teacher extends Component<any, any> {
       replyBad,
       replyCls: replyBad ? "ie-textarea is-error" : "ie-textarea",
       replyUnsent: s.replyUnsent,
+      replyError: s.replyError,
       onReply: (e) => this.setState({ reply: e.target.value, replyUnsent: false }),
-      sendReply: () => {
+      sendReply: async () => {
         if (s.reply.trim() === "") {
           this.setState({ replyTried: true, replyUnsent: false });
           return;
         }
-        void teacherService.sendReply(s.sel, s.reply);
-        this.setState({ replyTried: false, reply: "", replyUnsent: true });
+        this.setState({ replyError: "" });
+        try {
+          await teacherService.sendReply(s.sel, s.reply);
+          this.setState({ replyTried: false, reply: "", replyUnsent: true });
+        } catch (error) {
+          this.setState({
+            replyError: error instanceof Error ? error.message : "답장을 보내지 못했어요.",
+          });
+        }
       },
       memo: p ? s.memos[p.id] || "" : "",
       kept: p ? !!s.kept[p.id] : false,
@@ -612,6 +621,11 @@ export default class Teacher extends Component<any, any> {
                           </div>
                           {v.replyBad ? (
                             <span className="ie-error-text">답장 내용을 적어 주세요.</span>
+                          ) : null}
+                          {v.replyError ? (
+                            <span className="ie-error-text" role="alert">
+                              {v.replyError}
+                            </span>
                           ) : null}
                         </div>
                         <div className="ie-row">

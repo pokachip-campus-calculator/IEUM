@@ -16,7 +16,7 @@ export default class Talk extends Component<any, any> {
 
   constructor(props) {
     super(props);
-    this.state = { topic: "", body: "", tried: false, sent: false, popup: false };
+    this.state = { topic: "", body: "", tried: false, sent: false, popup: false, apiError: "" };
   }
   renderVals() {
     const s = this.state;
@@ -28,6 +28,7 @@ export default class Talk extends Component<any, any> {
       editing: !s.sent,
       isSent: s.sent,
       isPopup: s.popup,
+      apiError: s.apiError,
       closePop: () => this.setState({ popup: false }),
       topic: s.topic,
       body: s.body,
@@ -38,16 +39,22 @@ export default class Talk extends Component<any, any> {
       bodyCls: bodyInvalid ? "ie-textarea is-error" : "ie-textarea",
       onTopic: (e) => this.setState({ topic: e.target.value }),
       onBody: (e) => this.setState({ body: e.target.value }),
-      submit: (e) => {
+      submit: async (e) => {
         if (e && e.preventDefault) e.preventDefault();
         const cur = this.state;
         if (cur.topic === "" || cur.body.trim() === "") {
           this.setState({ tried: true });
           return;
         }
-        // 백엔드 연결 지점: 이음쌤에게 쪽지 보내기
-        void messageService.sendNote({ topic: cur.topic, body: cur.body });
-        this.setState({ tried: false, sent: true, popup: true });
+        this.setState({ apiError: "" });
+        try {
+          await messageService.sendNote({ topic: cur.topic, body: cur.body });
+          this.setState({ tried: false, sent: true, popup: true });
+        } catch (error) {
+          this.setState({
+            apiError: error instanceof Error ? error.message : "쪽지를 보내지 못했어요.",
+          });
+        }
       },
       clear: () => this.setState({ topic: "", body: "", tried: false }),
       again: () => this.setState({ topic: "", body: "", tried: false, sent: false, popup: false }),
@@ -171,6 +178,11 @@ export default class Talk extends Component<any, any> {
                       {v.bodyInvalid ? (
                         <span id="body-e" className="ie-error-text" role="alert">
                           내용을 입력해주세요.
+                        </span>
+                      ) : null}
+                      {v.apiError ? (
+                        <span className="ie-error-text" role="alert">
+                          {v.apiError}
                         </span>
                       ) : null}
                     </div>

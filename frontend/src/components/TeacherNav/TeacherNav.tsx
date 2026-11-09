@@ -56,13 +56,6 @@ export default class TeacherNav extends Component<any, any> {
                   </svg>
                 </span>
                 {"쪽지 모아 보기 "}
-                <span
-                  className="ie-newtag"
-                  style={{ marginLeft: "8px" }}
-                  aria-label="답장이 필요한 쪽지 2개"
-                >
-                  2
-                </span>
               </A>
             </li>
             <li>
@@ -80,13 +73,6 @@ export default class TeacherNav extends Component<any, any> {
                   </svg>
                 </span>
                 {"신호 대응 기록 "}
-                <span
-                  className="ie-newtag"
-                  style={{ marginLeft: "8px" }}
-                  aria-label="확인이 필요한 신호 1개"
-                >
-                  1
-                </span>
               </A>
             </li>
             <li>
@@ -118,13 +104,15 @@ export default class TeacherNav extends Component<any, any> {
                   </svg>
                 </span>
                 {"알림 "}
-                <span
-                  className="ie-newtag"
-                  style={{ marginLeft: "8px" }}
-                  aria-label="안 읽은 알림 3개"
-                >
-                  3
-                </span>
+                {this.props.unreadNotifications > 0 ? (
+                  <span
+                    className="ie-newtag"
+                    style={{ marginLeft: "8px" }}
+                    aria-label={`안 읽은 알림 ${this.props.unreadNotifications}개`}
+                  >
+                    {this.props.unreadNotifications}
+                  </span>
+                ) : null}
               </A>
             </li>
           </ul>

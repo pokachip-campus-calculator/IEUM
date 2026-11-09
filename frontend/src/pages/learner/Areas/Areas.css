@@ -746,7 +746,7 @@
   position: absolute;
   inset: 0;
   z-index: 3;
-  clip-path: inset(-400% 0 var(--cb) 0);
+  clip-path: inset(-400% 0 calc(var(--cb) + 12%) 0);
 }
 .ie-env-card {
   position: absolute;
@@ -757,8 +757,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0.25em;
-  padding: 0.55em 0.3em 0;
+  padding: 0 0.3em;
   border-radius: 6px 6px 2px 2px;
   background: linear-gradient(180deg, #fff 0%, #fff 62%, #f5f2fe 100%);
   box-shadow:
@@ -772,21 +773,14 @@
 }
 .ie-env-tt {
   position: relative;
-  font-size: clamp(10px, 1.7cqw, 19px);
-  font-weight: 700;
-  line-height: 1.2;
+  font-family: "Jua", var(--ie-font);
+  font-size: clamp(14px, 2cqw, 23px);
+  font-weight: 400;
+  line-height: 1.3;
   color: var(--ink);
   letter-spacing: -0.01em;
   white-space: nowrap;
-  margin-top: 0.1em;
-}
-.ie-env-ts {
-  position: relative;
-  font-size: clamp(8.5px, 1.2cqw, 14px);
-  font-weight: 600;
-  line-height: 1.2;
-  color: #6a6f8f;
-  white-space: nowrap;
+  margin: 0;
 }
 .ie-pst--help {
   --ink: #b24a22;
@@ -831,6 +825,7 @@
 }
 /* 눌러 둔 편지 */
 .ie-pst-hit.is-on .ie-env {
+  pointer-events: auto;
   transform: rotate(0deg) translate(var(--dx), var(--dy)) scale(var(--s));
   transition: transform 0.8s cubic-bezier(0.3, 0.8, 0.3, 1) 0s;
 }
@@ -892,11 +887,8 @@
     transform: rotate(0deg) translate(var(--dx), calc(var(--dy) - 3.2cqw))
       scale(calc(var(--s) * 0.8));
   }
-  .ie-env-ts {
-    display: none;
-  }
   .ie-env-tt {
-    font-size: clamp(9px, 2.1cqw, 12px);
+    font-size: clamp(12px, 2.4cqw, 15px);
   }
 }
 @media (prefers-reduced-motion: reduce) {

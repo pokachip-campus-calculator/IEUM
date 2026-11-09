@@ -14,7 +14,19 @@ export default class TeacherSignal extends Component<any, any> {
 
   constructor(props) {
     super(props);
-    this.state = { sel: "p2", done: { p2: [false], p6: [false] }, memos: {}, unsent: false };
+    const done = Object.fromEntries(
+      (props.students ?? []).map((student) => [student.id, [student.handled ?? false]]),
+    );
+    const memos = Object.fromEntries(
+      (props.students ?? []).map((student) => [student.id, student.memo ?? ""]),
+    );
+    this.state = {
+      sel: props.students?.[0]?.id ?? "p2",
+      done,
+      memos,
+      unsent: false,
+      apiError: "",
+    };
   }
   renderVals() {
     const s = this.state;
@@ -25,8 +37,8 @@ export default class TeacherSignal extends Component<any, any> {
         "소속 기관의 절차에 따라 학습자를 살폈으면 체크해요. 다시 체크를 풀면 아직 안 했어요로 돌아가요.",
       ],
     ];
-    const cur = P.filter((p) => p.id === s.sel)[0];
-    const d = s.done[cur.id];
+    const cur = P.find((p) => p.id === s.sel) ?? null;
+    const d = cur ? s.done[cur.id] : [];
     return {
       people: P.map((p) => {
         const n = s.done[p.id].filter(Boolean).length;
@@ -42,7 +54,10 @@ export default class TeacherSignal extends Component<any, any> {
           pick: () => this.setState({ sel: p.id, unsent: false }),
         };
       }),
-      cur: { nick: cur.nick, msgDate: cur.msgDate, msgText: cur.msgText, word: cur.word },
+      hasCur: cur !== null,
+      cur: cur
+        ? { nick: cur.nick, msgDate: cur.msgDate, msgText: cur.msgText, word: cur.word }
+        : null,
       steps: ST.map((x, i) => ({
         t: x[0],
         d: x[1],
@@ -60,12 +75,21 @@ export default class TeacherSignal extends Component<any, any> {
           memos: Object.assign({}, s.memos, { [cur.id]: e.target.value }),
           unsent: false,
         }),
-      save: () => {
-        void teacherService.saveSignalRecord(cur.id, {
-          done: s.done[cur.id],
-          memo: s.memos[cur.id] || "",
-        });
-        this.setState({ unsent: true });
+      apiError: s.apiError,
+      save: async () => {
+        if (!cur) return;
+        this.setState({ apiError: "" });
+        try {
+          await teacherService.saveSignalRecord(cur.id, {
+            done: s.done[cur.id],
+            memo: s.memos[cur.id] || "",
+          });
+          this.setState({ unsent: true });
+        } catch (error) {
+          this.setState({
+            apiError: error instanceof Error ? error.message : "대응 기록을 저장하지 못했어요.",
+          });
+        }
       },
     };
   }
@@ -149,6 +173,7 @@ export default class TeacherSignal extends Component<any, any> {
                     ))}
                   </div>
                 </section>
+                {v.hasCur ? (
                 <section className="ie-card" aria-labelledby="ts-d" style={{ gap: "18px" }}>
                   <div className="ie-row-between">
                     <h2 id="ts-d" className="ie-h2">
@@ -245,6 +270,11 @@ export default class TeacherSignal extends Component<any, any> {
                       </div>
                     </div>
                   ) : null}
+                  {v.apiError ? (
+                    <p className="ie-error-text" role="alert">
+                      {v.apiError}
+                    </p>
+                  ) : null}
                   <div className="ie-row">
                     <button type="button" className="ie-btn ie-btn--primary" onClick={v.save}>
                       대응 기록 남기기
@@ -257,6 +287,14 @@ export default class TeacherSignal extends Component<any, any> {
                     </A>
                   </div>
                 </section>
+                ) : (
+                  <section className="ie-card" role="status" style={{ gap: "12px" }}>
+                    <h2 className="ie-h2">확인할 신호가 없어요</h2>
+                    <p className="ie-body ie-sub">
+                      새 신호가 확인되면 이곳에 표시돼요.
+                    </p>
+                  </section>
+                )}
               </div>
               <aside className="ie-panel" aria-label="신호 대응 안내">
                 <section className="ie-card ie-card--peach" style={{ gap: "12px" }}>

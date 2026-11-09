@@ -46,6 +46,19 @@ export const session: {
   expiresAt: savedSession?.expiresAt ?? null,
 };
 
+export function syncSessionUser(): void {
+  const saved = readSavedSession();
+  session.user = saved?.user ?? { id: 0, nick: "", role: "learner" };
+  session.token = saved?.token ?? null;
+  session.expiresAt = saved?.expiresAt ?? null;
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
+    if (event.key === STORAGE_KEY || event.key === null) syncSessionUser();
+  });
+}
+
 /** 로그인 성공 시 사용자 정보와 토큰 저장 */
 export function setSessionUser(
   user: SessionUser,

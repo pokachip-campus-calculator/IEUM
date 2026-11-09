@@ -18590,8 +18590,8 @@ export default class Landing extends Component<any, any> {
                     </span>
                     <h3 className="ie-h3">상황 연습하기</h3>
                     <p className="ie-body">
-                      안전, 도움 구하기, 감정 읽기. 세 영역의 짧은 장면을 보고 내가 편한 방법을 골라
-                      봐요. 정해진 답은 없어요.
+                      안전, 관계, 마음, 생활, 자립 다섯 영역에서 나에게 맞는 방법을 알아봐요.
+                      정해진 답은 없어요.
                     </p>
                   </section>
                   <section className="ie-step3 ie-pop" style={{ "--d": "2" } as CSSProperties}>

@@ -4,6 +4,7 @@
  */
 import { Component, Fragment } from "react";
 import { session } from "@/api";
+import type { HomeResponse } from "@/api";
 import { A } from "@/lib/A";
 import type { CSSProperties } from "react";
 import { img } from "@/assets";
@@ -29,6 +30,13 @@ export default class Home extends Component<any, any> {
 
   render() {
     const v: any = this.renderVals();
+    const home = this.props.home as HomeResponse | undefined;
+    const resume = home?.resume;
+    const resumeAction = resume
+      ? resume.myStatus === "IN_PROGRESS"
+        ? "이어서 할 연습 확인하기"
+        : "시작할 연습 확인하기"
+      : "모든 연습 살펴보기";
     return (
       <>
         <PageStyle css={pageCss} />
@@ -179,12 +187,12 @@ export default class Home extends Component<any, any> {
                 </svg>
                 <div className="ie-w3head">
                   <h1 id="home-h" className="ie-title">
-                    {session.user.nick}님, 반가워요.
+                    {(home?.nickname || session.user.nick)}님, 반가워요.
                   </h1>
-                  <p className="ie-body-lg ie-sub">스크롤하면 마을의 한 곳씩 가까이 보여요.</p>
+                  <p className="ie-body-lg ie-sub">스크롤로 마을의 장소를 하나씩 둘러보고, 드래그해서 마을을 돌려 보세요.</p>
                   <div className="ie-row" style={{ marginTop: "14px", pointerEvents: "auto" }}>
                     <A className="ie-btn ie-btn--primary ie-btn--lg" href={ROUTES.areas}>
-                      학습 영역으로 가기
+                      {resumeAction}
                       <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
                         <path
                           d="M5 12h14M13 6l6 6-6 6"
@@ -197,6 +205,17 @@ export default class Home extends Component<any, any> {
                       </svg>
                     </A>
                   </div>
+                  {home ? (
+                    <p className="ie-meta" style={{ marginTop: "8px" }}>
+                      {resume
+                        ? `${resume.title} · ${
+                            resume.myStatus === "IN_PROGRESS" ? "이어서 할 연습" : "새로 시작할 연습"
+                          }`
+                        : "모든 연습을 마쳤어요"}
+                      {" · 완료한 연습 "}
+                      {home.doneTotal}개
+                    </p>
+                  ) : null}
                 </div>
                 <p className="ie-w3hint" aria-hidden="true">
                   <svg width="20" height="20" viewBox="0 0 24 24">
@@ -209,14 +228,14 @@ export default class Home extends Component<any, any> {
                       strokeLinejoin="round"
                     />
                   </svg>
-                  스크롤하거나 끌어서 둘러보세요
+                  스크롤로 장소를 하나씩 보고, 드래그해서 마을을 돌려 보세요
                 </p>
                 <div
                   className="ie-w3stage ie-3stage"
                   tabIndex={0}
                   role="group"
                   aria-roledescription="3D 마을"
-                  aria-label="이음 마을. 마우스 휠이나 화살표 키로 한 곳씩 가까이 가 보고, 끌어서 둘러봐요. 확대·축소는 Ctrl+휠이나 +, - 키, 오른쪽 아래 버튼으로 해요."
+                  aria-label="이음 마을. 마우스 휠이나 화살표 키로 장소를 하나씩 보고, 끌어서 마을을 돌려 보세요. 확대·축소는 두 손가락 벌리기나 오른쪽 아래 버튼으로 할 수 있어요."
                 >
                   <div className="ie-3map" aria-hidden="true">
                     <img
