@@ -1,0 +1,293 @@
+{
+  "info": {
+    "name": "IEUM #46 쪽지 보내기·목록 API (12·13)",
+    "description": "실행 전: MySQL에 db/ 스키마·시드, .env의 JWT_SECRET, 서버(localhost:8080), DB에 이음쌤(TEACHER, ACTIVE)이 있어야 한다. 이 컬렉션은 이음쌤을 가입시키지 않는다.\n순서: 00 사전(학습자 가입·로그인) → 12-A(이음쌤이 DB에 한 명도 없을 때만 409, 이미 있으면 건너뜀) → 12-A2 이음쌤 로그인(변수 teacherLoginId·teacherPassword를 DB에 있는 이음쌤으로 채운다) → 12-B 이후.\n배정 규칙 확인: 맨 아래 14번을 Runner로 여러 번 반복(Iterations는 이음쌤 수 + 1 정도)하면 매번 새 학생(asg로 시작)을 만들어 쪽지를 보내고, 배정된 이음쌤 id 순서를 Postman Console에 출력한다. 실행 전 DB에서 이음쌤별 맡은 학생 수를 먼저 확인하고, 끝나면 asg% 학생을 지운다(배포 DB에서는 SELECT로 대상부터 확인).\n신호 검사(#47)·알림(#49)은 아직 빈 구현이라 signal_events·notifications에는 행이 생기지 않는다.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api/v1" },
+    { "key": "loginId", "value": "thread1234" },
+    { "key": "password", "value": "password123" },
+    { "key": "teacherLoginId", "value": "여기에이음쌤아이디" },
+    { "key": "teacherPassword", "value": "여기에이음쌤비밀번호" },
+    { "key": "practiceId", "value": "1" },
+    { "key": "token", "value": "" },
+    { "key": "teacherToken", "value": "" },
+    { "key": "threadId", "value": "" },
+    { "key": "longBody", "value": "" },
+    { "key": "asgToken", "value": "" },
+    { "key": "asgLoginId", "value": "" },
+    { "key": "assignLog", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "00 사전 - 학습자 가입 (만 14세 이상, 이미 있으면 409여도 무방)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": { "mode": "raw", "raw": "{\n  \"role\": \"STUDENT\",\n  \"loginId\": \"{{loginId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"테스트\",\n  \"nickname\": \"쪽지테스트\",\n  \"birthDate\": \"2000-01-01\",\n  \"phone\": \"01012345678\",\n  \"email\": \"thread@example.com\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}" }
+      }
+    },
+    {
+      "name": "00 사전 - 학습자 로그인 (토큰 자동 저장)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.collectionVariables.set('token', pm.response.json().token);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": { "mode": "raw", "raw": "{\n  \"loginId\": \"{{loginId}}\",\n  \"password\": \"{{password}}\"\n}" }
+      }
+    },
+    {
+      "name": "12-A 이음쌤이 한 명도 없을 때 (409, 아무것도 저장 안 됨)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('409', () => pm.response.to.have.status(409));",
+        "pm.test('코드', () => pm.expect(pm.response.json().code).to.eql('NO_TEACHER_AVAILABLE'));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/threads",
+        "body": { "mode": "raw", "raw": "{\n  \"topic\": \"ONLINE\",\n  \"body\": \"이음쌤이 없을 때 보내 보는 쪽지\"\n}" }
+      }
+    },
+    {
+      "name": "12-A2 이음쌤 로그인 (403 확인용, DB에 있는 이음쌤 계정, 토큰 자동 저장)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.collectionVariables.set('teacherToken', pm.response.json().token);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": { "mode": "raw", "raw": "{\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{teacherPassword}}\"\n}" }
+      }
+    },
+    {
+      "name": "12-B 첫 쪽지 보내기 (201, 이음쌤 자동 배정)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('201', () => pm.response.to.have.status(201));",
+        "const b = pm.response.json();",
+        "pm.test('필드는 id·status·createdAt뿐', () => { pm.expect(b).to.have.keys('id','status','createdAt'); });",
+        "pm.test('WAITING', () => pm.expect(b.status).to.eql('WAITING'));",
+        "pm.test('시각에 +09:00', () => pm.expect(b.createdAt).to.match(/\\+09:00$/));",
+        "pm.test('signal 없음', () => pm.expect(b).to.not.have.property('signal'));",
+        "pm.collectionVariables.set('threadId', b.id);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/threads",
+        "body": { "mode": "raw", "raw": "{\n  \"topic\": \"ONLINE\",\n  \"body\": \"게임에서 알게 된 사람이 사진을 보내 달래요\"\n}" }
+      }
+    },
+    {
+      "name": "12-C 연습(시나리오)을 연결해서 보내기 (201, practiceId 변수 사용)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('201', () => pm.response.to.have.status(201));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/threads",
+        "body": { "mode": "raw", "raw": "{\n  \"topic\": \"FRIEND\",\n  \"body\": \"이 상황이 내 일 같아요\",\n  \"practiceId\": {{practiceId}}\n}" }
+      }
+    },
+    {
+      "name": "12 내용이 공백뿐 (400, body)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('400', () => pm.response.to.have.status(400));",
+        "pm.test('body 칸', () => pm.expect(pm.response.json().fieldErrors[0].field).to.eql('body'));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/threads",
+        "body": { "mode": "raw", "raw": "{\n  \"topic\": \"ONLINE\",\n  \"body\": \"   \"\n}" }
+      }
+    },
+    {
+      "name": "12 내용이 501자 (400, body)",
+      "event": [
+        { "listen": "prerequest", "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('longBody', '가'.repeat(501));"] } },
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('400', () => pm.response.to.have.status(400));",
+          "pm.test('body 칸', () => pm.expect(pm.response.json().fieldErrors[0].field).to.eql('body'));"
+        ] } }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/threads",
+        "body": { "mode": "raw", "raw": "{\n  \"topic\": \"ONLINE\",\n  \"body\": \"{{longBody}}\"\n}" }
+      }
+    },
+    {
+      "name": "12 주제가 목록 밖 (400)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('400', () => pm.response.to.have.status(400));",
+        "pm.test('코드', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_FAILED'));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/threads",
+        "body": { "mode": "raw", "raw": "{\n  \"topic\": \"GAME\",\n  \"body\": \"안녕\"\n}" }
+      }
+    },
+    {
+      "name": "12 없는 practiceId (400, practiceId)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('400', () => pm.response.to.have.status(400));",
+        "pm.test('practiceId 칸', () => pm.expect(pm.response.json().fieldErrors[0].field).to.eql('practiceId'));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/threads",
+        "body": { "mode": "raw", "raw": "{\n  \"topic\": \"ONLINE\",\n  \"body\": \"안녕\",\n  \"practiceId\": 999999\n}" }
+      }
+    },
+    {
+      "name": "12 토큰 없이 보내기 (401)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('401', () => pm.response.to.have.status(401));"] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/threads",
+        "body": { "mode": "raw", "raw": "{\n  \"topic\": \"ONLINE\",\n  \"body\": \"안녕\"\n}" }
+      }
+    },
+    {
+      "name": "12 이음쌤 토큰으로 보내기 (403)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('403', () => pm.response.to.have.status(403));",
+        "pm.test('코드', () => pm.expect(pm.response.json().code).to.eql('FORBIDDEN'));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{teacherToken}}" }],
+        "url": "{{baseUrl}}/threads",
+        "body": { "mode": "raw", "raw": "{\n  \"topic\": \"ONLINE\",\n  \"body\": \"안녕\"\n}" }
+      }
+    },
+    {
+      "name": "13 내 쪽지함 전체 (200)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "const items = pm.response.json().items;",
+        "pm.test('items 배열', () => pm.expect(items).to.be.an('array'));",
+        "pm.test('항목 필드', () => { if (items.length) pm.expect(items[0]).to.have.keys('id','topic','status','createdAt','lastMessageAt','preview','unread','linkedPractice'); });",
+        "pm.test('최신 순', () => { for (let i = 1; i < items.length; i++) pm.expect(items[i-1].lastMessageAt >= items[i].lastMessageAt).to.be.true; });",
+        "pm.test('preview 40자 이하', () => items.forEach(it => pm.expect(Array.from(it.preview).length).to.be.at.most(40)));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/threads" }
+    },
+    {
+      "name": "13 WAITING만 (200)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.test('모두 WAITING', () => pm.response.json().items.forEach(it => pm.expect(it.status).to.eql('WAITING')));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/threads?status=WAITING" }
+    },
+    {
+      "name": "13 ANSWERED만 (200, 답장 API 전이라 비어 있는 게 정상)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.test('모두 ANSWERED', () => pm.response.json().items.forEach(it => pm.expect(it.status).to.eql('ANSWERED')));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/threads?status=ANSWERED" }
+    },
+    {
+      "name": "13 status가 허용 값 밖 (400, status)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('400', () => pm.response.to.have.status(400));",
+        "pm.test('status 칸', () => pm.expect(pm.response.json().fieldErrors[0].field).to.eql('status'));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/threads?status=DONE" }
+    },
+    {
+      "name": "13 토큰 없이 조회 (401)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('401', () => pm.response.to.have.status(401));"] } }],
+      "request": { "method": "GET", "url": "{{baseUrl}}/threads" }
+    },
+    {
+      "name": "13 이음쌤 토큰으로 조회 (403)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('403', () => pm.response.to.have.status(403));"] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{teacherToken}}" }], "url": "{{baseUrl}}/threads" }
+    },
+    {
+      "name": "14 배정 확인 - 새 학생 1명 만들어 쪽지 보내기 (Runner로 여러 번 반복)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.collectionVariables.get('baseUrl');",
+              "const loginId = 'asg' + Date.now().toString(36);",
+              "const password = pm.collectionVariables.get('password');",
+              "const json = (url, body) => ({ url, method: 'POST', header: { 'Content-Type': 'application/json' }, body: { mode: 'raw', raw: JSON.stringify(body) } });",
+              "pm.collectionVariables.set('asgLoginId', loginId);",
+              "pm.sendRequest(json(base + '/auth/signup', {",
+              "  role: 'STUDENT', loginId, password, name: '배정테스트', nickname: '배정확인',",
+              "  birthDate: '2000-01-01', agreeTerms: true, agreePrivacy: true",
+              "}), (e1, r1) => {",
+              "  if (e1 || r1.code !== 201) { throw new Error('학생 가입 실패: ' + (e1 || r1.code + ' ' + r1.text())); }",
+              "  pm.sendRequest(json(base + '/auth/login', { loginId, password }), (e2, r2) => {",
+              "    if (e2 || r2.code !== 200) { throw new Error('학생 로그인 실패: ' + (e2 || r2.code + ' ' + r2.text())); }",
+              "    pm.collectionVariables.set('asgToken', r2.json().token);",
+              "  });",
+              "});"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201', () => pm.response.to.have.status(201));",
+              "pm.sendRequest({",
+              "  url: pm.collectionVariables.get('baseUrl') + '/me',",
+              "  method: 'GET',",
+              "  header: { Authorization: 'Bearer ' + pm.collectionVariables.get('asgToken') }",
+              "}, (err, res) => {",
+              "  const t = res.json().teacher;",
+              "  pm.test('이음쌤이 배정됨', () => pm.expect(t).to.not.be.null);",
+              "  const log = pm.collectionVariables.get('assignLog');",
+              "  const next = (log ? log + ', ' : '') + t.id;",
+              "  pm.collectionVariables.set('assignLog', next);",
+              "  console.log('학생 ' + pm.collectionVariables.get('asgLoginId') + ' → 이음쌤 id ' + t.id + ' (' + t.nickname + ')  | 배정 순서: ' + next);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{asgToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/threads",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"topic\": \"ONLINE\",\n  \"body\": \"배정 확인용 쪽지\"\n}"
+        }
+      }
+    }
+  ]
+}

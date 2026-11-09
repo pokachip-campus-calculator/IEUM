@@ -1,5 +1,6 @@
 package com.ieum.message.controller;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import com.ieum.auth.jwt.AuthUser;
 import com.ieum.common.ApiException;
 import com.ieum.mock.MockSupport;
@@ -28,6 +29,7 @@ import static com.ieum.mock.MockSupport.obj;
  * [주의] 12·13은 학습자만, 14·15는 학습자(본인)·이음쌤(담당)이 호출한다. signal은 이음쌤이 14를 부를 때만 내리고 학습자 응답에는 키 자체를 뺀다.
  */
 @RestController
+@ConditionalOnProperty(name = "mock.learning.enabled", havingValue = "true", matchIfMissing = true)
 @RequestMapping("/threads")
 public class ThreadMockController {
 
