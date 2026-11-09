@@ -1,8 +1,25 @@
 package com.ieum.message.repository;
 
 import com.ieum.message.entity.Message;
+import com.ieum.message.entity.SenderRole;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-/** [역할] messages 테이블 조회·저장 통로. */
+import java.util.Collection;
+import java.util.List;
+
+/** [역할] messages 테이블 조회·저장 통로. 목록은 쪽지마다 따로 묻지 않고 한 번에 묶어서 가져온다. */
 public interface MessageRepository extends JpaRepository<Message, Long> {
+
+    // 각 쪽지 묶음의 첫 메시지(목록 preview용)
+    @Query("select m from Message m where m.id in "
+            + "(select min(f.id) from Message f where f.threadId in :threadIds group by f.threadId)")
+    List<Message> findFirstMessages(@Param("threadIds") Collection<Long> threadIds);
+
+    // 받는 사람이 아직 안 읽은 메시지가 있는 쪽지 묶음 id (보낸 사람 역할 기준)
+    @Query("select distinct m.threadId from Message m "
+            + "where m.threadId in :threadIds and m.senderRole = :senderRole and m.readAt is null")
+    List<Long> findThreadIdsWithUnread(@Param("threadIds") Collection<Long> threadIds,
+                                       @Param("senderRole") SenderRole senderRole);
 }
