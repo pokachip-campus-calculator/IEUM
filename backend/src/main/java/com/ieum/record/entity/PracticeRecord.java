@@ -65,12 +65,11 @@ public class PracticeRecord {
         this.myNote = myNote;
     }
 
-    /** 다시 하기: 답과 "나에게 한 줄"을 비우고 진행 중으로 되돌린다. */
+    /** 다시 하기: 답과 "나에게 한 줄"을 비우고 진행 중으로 되돌린다. completed_at은 "완료한 적 있다"는 표시라 지우지 않는다. */
     public void restart() {
         this.status = RecordStatus.IN_PROGRESS;
         this.answersJson = "{}";
         this.myNote = null;
-        this.completedAt = null;
     }
 
     public void complete(LocalDateTime at) {
@@ -87,4 +86,7 @@ public class PracticeRecord {
     public LocalDateTime getStartedAt() { return startedAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public LocalDateTime getCompletedAt() { return completedAt; }
+
+    /** 한 번이라도 완료했는지. 다시 하는 중(IN_PROGRESS)이어도 completed_at이 남아 있으면 true. */
+    public boolean hasCompleted() { return completedAt != null || status == RecordStatus.DONE; }
 }

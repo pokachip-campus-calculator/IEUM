@@ -67,9 +67,10 @@ public class PracticeDetailMockController {
             throw MockSupport.notFound();
         }
         String now = MockSupport.now();
-        // restart:true는 answers·myNote를 비우고 IN_PROGRESS로 되돌린다(다른 필드는 무시)
+        // restart:true는 answers·myNote를 비우고 IN_PROGRESS로 되돌린다(다른 필드는 무시). completedAt은 지우지 않는다(샘플 1번은 마친 기록)
         if (Boolean.TRUE.equals(request.restart())) {
-            return obj("status", "IN_PROGRESS", "answers", Map.of(), "myNote", null, "updatedAt", now, "completedAt", null);
+            return obj("status", "IN_PROGRESS", "answers", Map.of(), "myNote", null, "updatedAt", now,
+                    "completedAt", id == 1 ? "2026-10-29T15:00:00+09:00" : null);
         }
         Map<String, Object> answers = request.answers() == null ? Map.of() : request.answers();
         // myNote는 SCENARIO(id 2)에서만 저장하고 500자까지다

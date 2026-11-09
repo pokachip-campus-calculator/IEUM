@@ -223,7 +223,7 @@ class PracticeDetailApiTest {
     // ---------- 10: restart ----------
 
     @Test
-    void restart는_답과_메모를_비우고_진행_중으로_되돌린다() throws Exception {
+    void restart는_답과_메모를_비우고_진행_중으로_되돌리되_completedAt은_남긴다() throws Exception {
         PracticeRecord r = new PracticeRecord(1L, 2L, "{\"choice\":\"c1\"}");
         r.saveProgress("{\"choice\":\"c1\"}", "메모");
         r.complete(LocalDateTime.of(2026, 11, 1, 9, 0));
@@ -235,11 +235,11 @@ class PracticeDetailApiTest {
                 .andExpect(jsonPath("$.status").value("IN_PROGRESS"))
                 .andExpect(jsonPath("$.answers").isEmpty())
                 .andExpect(jsonPath("$.myNote").isEmpty())
-                .andExpect(jsonPath("$.completedAt").isEmpty());
+                .andExpect(jsonPath("$.completedAt").value(org.hamcrest.Matchers.endsWith("+09:00")));
         assertEquals(RecordStatus.IN_PROGRESS, r.getStatus());
         assertEquals("{}", r.getAnswersJson());
         assertNull(r.getMyNote());
-        assertNull(r.getCompletedAt());
+        assertEquals(LocalDateTime.of(2026, 11, 1, 9, 0), r.getCompletedAt());
     }
 
     // ---------- 10: answers 검증 ----------

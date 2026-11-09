@@ -204,7 +204,7 @@
               "pm.test('record 모양', () => pm.expect(r).to.have.keys('status','answers','myNote','updatedAt','completedAt'));",
               "pm.test('status IN_PROGRESS', () => pm.expect(r.status).to.eql('IN_PROGRESS'));",
               "pm.test('updatedAt은 +09:00', () => pm.expect(r.updatedAt).to.match(/[+]09:00$/));",
-              "pm.test('비워짐', () => { const r = pm.response.json(); pm.expect(r.answers).to.eql({}); pm.expect(r.myNote).to.eql(null); pm.expect(r.completedAt).to.eql(null); });"
+              "pm.test('비워짐 (completedAt은 지우지 않으므로 검사하지 않음)', () => { const r = pm.response.json(); pm.expect(r.answers).to.eql({}); pm.expect(r.myNote).to.eql(null); pm.expect(r.status).to.eql('IN_PROGRESS'); });"
             ]
           }
         }
@@ -959,7 +959,7 @@
       }
     },
     {
-      "name": "10 restart로 되돌리기 (200 IN_PROGRESS)",
+      "name": "10 restart로 되돌리기 (200 IN_PROGRESS, completedAt 유지)",
       "event": [
         {
           "listen": "test",
@@ -971,7 +971,7 @@
               "pm.test('record 모양', () => pm.expect(r).to.have.keys('status','answers','myNote','updatedAt','completedAt'));",
               "pm.test('status IN_PROGRESS', () => pm.expect(r.status).to.eql('IN_PROGRESS'));",
               "pm.test('updatedAt은 +09:00', () => pm.expect(r.updatedAt).to.match(/[+]09:00$/));",
-              "pm.test('다른 필드는 무시되고 비워짐', () => { const r = pm.response.json(); pm.expect(r.answers).to.eql({}); pm.expect(r.myNote).to.eql(null); pm.expect(r.completedAt).to.eql(null); });"
+              "pm.test('다른 필드는 무시되고 비워지며 completedAt은 남음', () => { const r = pm.response.json(); pm.expect(r.answers).to.eql({}); pm.expect(r.myNote).to.eql(null); pm.expect(r.status).to.eql('IN_PROGRESS'); pm.expect(r.completedAt).to.match(/[+]09:00$/); });"
             ]
           }
         }

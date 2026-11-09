@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * [역할] 연습 상세(09)와 진행 저장·마침(10)을 처리한다.
  * [동작] 09는 연습 정보·content와 내 기록을 한 번에 만든다. 10은 answers를 content와 맞춰 검사한 뒤
- *        done:false면 IN_PROGRESS, done:true면 필수 선택을 확인하고 DONE+completed_at, restart:true면 처음 상태로 되돌린다.
+ *        done:false면 IN_PROGRESS, done:true면 필수 선택을 확인하고 DONE+completed_at, restart:true면 처음 상태로 되돌린다(completed_at은 남긴다).
  * [연결] PracticeDetailController가 부른다 / PracticeRepository, PracticeRecordRepository
  * [주의] 학습자 전용이다. published=0인 연습은 NOT_FOUND다. 점수·채점은 하지 않는다.
  *        이미 DONE인 기록은 restart로만 되돌리므로, restart 없는 저장 요청은 기록을 바꾸지 않고 현재 기록을 돌려준다.

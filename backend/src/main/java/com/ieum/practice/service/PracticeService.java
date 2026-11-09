@@ -14,6 +14,9 @@ import com.ieum.user.entity.Role;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -39,8 +42,10 @@ public class PracticeService {
 
     private final PracticeRepository practiceRepository;
     private final PracticeRecordRepository recordRepository;
+    private final Clock clock;
 
-    public PracticeService(PracticeRepository practiceRepository, PracticeRecordRepository recordRepository) {
+    public PracticeService(PracticeRepository practiceRepository, PracticeRecordRepository recordRepository, Clock clock) {
+        this.clock = clock;
         this.practiceRepository = practiceRepository;
         this.recordRepository = recordRepository;
     }
@@ -78,7 +83,13 @@ public class PracticeService {
     public PracticeItem toItem(Practice p, PracticeRecord record) {
         return new PracticeItem(p.getId(), p.getType(), p.getArea(), p.getTopic(), p.getLevel(),
                 p.getTitle(), p.getSummary(), p.getEstMinutes(),
-                MyStatus.of(record == null ? null : record.getStatus()));
+                MyStatus.of(record == null ? null : record.getStatus()),
+                record == null || record.getCompletedAt() == null ? null : toOffset(record.getCompletedAt()));
+    }
+
+    // DB의 한국 시간 값에 +09:00을 붙여 내린다
+    private OffsetDateTime toOffset(LocalDateTime t) {
+        return t.atZone(clock.getZone()).toOffsetDateTime();
     }
 
     private PracticeArea parseArea(String area) {
