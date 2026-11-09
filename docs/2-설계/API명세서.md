@@ -129,14 +129,14 @@ users 행을 지우면 학습 기록·쪽지·신호가 연쇄로 삭제된다. 
 ```json
 {
   "nickname": "하늘", "unreadMessages": 1, "doneTotal": 4,
-  "resume": { "practiceId": 3, "title": "안전·자기 보호", "type": "UNIT", "area": "SAFETY", "level": 1, "estMinutes": 10, "status": "IN_PROGRESS" },
+  "resume": { "practiceId": 3, "title": "안전·자기 보호", "type": "UNIT", "area": "SAFETY", "level": 1, "estMinutes": 10, "myStatus": "IN_PROGRESS" },
   "inProgress": [ { "practiceId": 4, "title": "안전·자기 보호", "area": "SAFETY", "level": 2 } ],
   "areas": [ { "area": "SAFETY", "doneCount": 1 }, { "area": "HELP", "doneCount": 1 }, { "area": "EMOTION", "doneCount": 2 } ],
   "recent": [ { "practiceId": 5, "title": "선생님께 처음 말 꺼내기", "area": "HELP", "completedAt": "2026-10-31T16:20:00+09:00" } ]
 }
 ```
 **규칙**
-- `resume`: 하는 중인 연습 중 가장 최근 것. 없으면 아직 안 한 연습 중 (영역, 단계, 정렬 순서) 첫 번째이고 이때 `status`는 `NONE`. 모두 했으면 `null`.
+- `resume`: 하는 중인 연습 중 가장 최근 것. 없으면 아직 안 한 연습 중 (영역, 단계, 정렬 순서) 첫 번째이고 이때 `myStatus`는 `NONE`. 모두 했으면 `null`.
 - `inProgress`: 하는 중인 것 중 `resume`을 빼고 최대 2개.
 - `recent`: 마친 날짜 최신 3개.
 - `unreadMessages`: 읽지 않은 이음쌤 답장 수.
