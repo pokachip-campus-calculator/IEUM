@@ -6,7 +6,6 @@ import com.ieum.practice.dto.PracticeItem;
 import com.ieum.practice.dto.PracticeItem.MyStatus;
 import com.ieum.practice.dto.PracticeListResponse;
 import com.ieum.practice.entity.Practice;
-import com.ieum.practice.entity.PracticeArea;
 import com.ieum.practice.repository.PracticeRepository;
 import com.ieum.record.entity.PracticeRecord;
 import com.ieum.record.repository.PracticeRecordRepository;
@@ -33,7 +32,7 @@ import java.util.stream.Collectors;
 @Service
 public class PracticeService {
 
-    /** 영역 순서(SAFETY→HELP→EMOTION)는 enum 선언 순서를 따른다. */
+    /** 영역 순서는 enum 선언 순서를 따른다. */
     private static final Comparator<Practice> LIST_ORDER = Comparator
             .comparing(Practice::getArea)
             .thenComparingInt(Practice::getLevel)
@@ -55,13 +54,13 @@ public class PracticeService {
         if (role != Role.STUDENT) {
             throw new ApiException(ErrorCode.FORBIDDEN);   // 기준서 API 목록: 08은 학습자만
         }
-        PracticeArea areaFilter = parseArea(area);
+        String areaFilter = parseArea(area);
         Integer levelFilter = parseLevel(level);
         String keyword = (q == null || q.isBlank()) ? null : q.strip().toLowerCase(Locale.ROOT);
 
         Map<Long, PracticeRecord> records = recordsByPractice(userId);
         List<PracticeItem> items = practiceRepository.findByPublishedTrue().stream()
-                .filter(p -> areaFilter == null || p.getArea() == areaFilter)
+                .filter(p -> areaFilter == null || p.getArea().apiName().equals(areaFilter))
                 .filter(p -> levelFilter == null || p.getLevel() == levelFilter)
                 .filter(p -> keyword == null
                         || p.getTitle().toLowerCase(Locale.ROOT).contains(keyword)
@@ -81,7 +80,7 @@ public class PracticeService {
     public Comparator<Practice> listOrder() { return LIST_ORDER; }
 
     public PracticeItem toItem(Practice p, PracticeRecord record) {
-        return new PracticeItem(p.getId(), p.getType(), p.getArea(), p.getTopic(), p.getLevel(),
+        return new PracticeItem(p.getId(), p.getType(), p.getArea().apiName(), p.getTopic(), p.getLevel(),
                 p.getTitle(), p.getSummary(), p.getEstMinutes(),
                 MyStatus.of(record == null ? null : record.getStatus()),
                 record == null || record.getCompletedAt() == null ? null : toOffset(record.getCompletedAt()));
@@ -92,13 +91,13 @@ public class PracticeService {
         return t.atZone(clock.getZone()).toOffsetDateTime();
     }
 
-    private PracticeArea parseArea(String area) {
+    private String parseArea(String area) {
         if (area == null || area.isBlank()) return null;
-        try {
-            return PracticeArea.valueOf(area.strip());
-        } catch (IllegalArgumentException e) {
-            throw ApiException.invalid("area", "area는 SAFETY, HELP, EMOTION 중 하나여야 합니다.");
+        String value = area.strip();
+        if (List.of("SAFETY", "RELATION", "MIND", "LIFE", "INDEPENDENCE").contains(value)) {
+            return value;
         }
+        throw ApiException.invalid("area", "area는 SAFETY, RELATION, MIND, LIFE, INDEPENDENCE 중 하나여야 합니다.");
     }
 
     private Integer parseLevel(String level) {

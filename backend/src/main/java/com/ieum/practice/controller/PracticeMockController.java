@@ -2,6 +2,7 @@ package com.ieum.practice.controller;
 
 import com.ieum.auth.jwt.AuthUser;
 import com.ieum.mock.MockSupport;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +26,7 @@ import static com.ieum.mock.MockSupport.obj;
  */
 @RestController
 @RequestMapping
+@ConditionalOnProperty(name = "mock.learning.enabled", havingValue = "true", matchIfMissing = true)
 public class PracticeMockController {
 
     // TODO: 실제 구현으로 교체 (#45) — practice_records × practices 조회, UNIT은 사전·사후 답으로 compare 계산
@@ -43,7 +45,7 @@ public class PracticeMockController {
                         "compare", List.of(obj("questionId", "q1",
                                 "text", "처음 보는 사람이 “둘만의 비밀이야”라며 내 사진을 보내 달래요.",
                                 "then", "잘 모르겠어요", "now", "보내지 않고 대화를 멈춘다", "changed", true))),
-                obj("practiceId", 2, "title", "온라인에서 받은 비밀 부탁", "type", "SCENARIO", "area", "HELP", "level", 1,
+                obj("practiceId", 2, "title", "온라인에서 받은 비밀 부탁", "type", "SCENARIO", "area", "RELATION", "level", 1,
                         "status", "IN_PROGRESS", "completedAt", null, "updatedAt", "2026-10-28T11:00:00+09:00",
                         "compare", null)));
         List<Map<String, Object>> filtered = items.stream()

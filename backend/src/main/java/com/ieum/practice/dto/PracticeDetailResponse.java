@@ -1,6 +1,5 @@
 package com.ieum.practice.dto;
 
-import com.ieum.practice.entity.PracticeArea;
 import com.ieum.practice.entity.PracticeType;
 import com.ieum.record.entity.RecordStatus;
 import tools.jackson.databind.JsonNode;
@@ -13,7 +12,7 @@ import java.time.OffsetDateTime;
  * [연결] PracticeDetailService가 만들고 PracticeDetailController가 내린다 / 10번 응답은 RecordView와 같다
  * [주의] content·answers는 DB의 JSON 문자열을 풀어서 내린다.
  */
-public record PracticeDetailResponse(Long id, PracticeType type, PracticeArea area, String topic, int level,
+public record PracticeDetailResponse(Long id, PracticeType type, String area, String topic, int level,
                                      String title, String summary, int estMinutes,
                                      JsonNode content, RecordView record) {
 

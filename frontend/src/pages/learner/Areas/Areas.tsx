@@ -3,6 +3,7 @@
  * (원본 디자인: Areas.dc.html)
  */
 import { Component, Fragment } from "react";
+import type { PracticeItem } from "@/api";
 import { A } from "@/lib/A";
 import { css } from "@/lib/css";
 import type { CSSProperties } from "react";
@@ -33,13 +34,8 @@ export default class Areas extends Component<any, any> {
       자립: "ie-tag ie-tag--topic",
     };
     const TAGS = ["마음", "관계", "안전", "생활", "자립"];
-    const TAG: any = {
-      "타인의 감정 읽기": ["마음", "ie-tag ie-tag--emotion"],
-      "인간관계와 단체생활": ["관계", "ie-tag ie-tag--topic"],
-      "범죄 예방과 연루": ["안전", "ie-tag ie-tag--safety"],
-      "재난·응급·교통": ["안전", "ie-tag ie-tag--safety"],
-    };
     const LV = ["오팔", "아쿠아마린", "자수정", "사파이어", "다이아몬드"];
+    const LEVEL_KEYS = ["opal", "aqua", "ame", "sap", "dia"];
     const ST: any = {
       done: ["했어요", "ie-status ie-status--done", "다시 해 보기", "ie-btn ie-btn--outline", true],
       doing: [
@@ -57,7 +53,22 @@ export default class Areas extends Component<any, any> {
         true,
       ],
     };
-    const DATA: any = this.props.practices;
+    const DATA = (this.props.practices || []) as PracticeItem[];
+    const AREA_GROUP = {
+      SAFETY: { key: "safe", tag: "안전" },
+      RELATION: { key: "emo", tag: "관계" },
+      MIND: { key: "help", tag: "마음" },
+      LIFE: { key: "life", tag: "생활" },
+      INDEPENDENCE: { key: "indep", tag: "자립" },
+    } as const;
+    const STATUS_KEY = { NONE: "next", IN_PROGRESS: "doing", DONE: "done" } as const;
+    const normalized = DATA.map((practice) => ({
+      ...practice,
+      areaKey: AREA_GROUP[practice.area].key,
+      tag: AREA_GROUP[practice.area].tag,
+      levelIndex: Math.max(0, Math.min(LV.length - 1, practice.level - 1)),
+      statusKey: STATUS_KEY[practice.myStatus],
+    }));
     const s = this.state;
     const LET: any = [
       { id: "help", name: "마음", tag: "마음" },
@@ -69,13 +80,15 @@ export default class Areas extends Component<any, any> {
       help: [img.letterHelpBack, img.letterHelpFlap, img.letterHelpSeal],
       emo: [img.letterEmoBack, img.letterEmoFlap, img.letterEmoSeal],
     };
-    const q = (s.query || "").trim();
-    const list = DATA.filter(
-      (d) =>
-        (s.area === "all" || d[2] === s.area) &&
-        (s.topic === "all" || d[3] === s.topic) &&
-        (s.tag === "all" || d[6] === s.tag) &&
-        (q === "" || d[0].indexOf(q) !== -1 || d[1].indexOf(q) !== -1),
+    const q = (s.query || "").trim().toLocaleLowerCase();
+    const list = normalized.filter(
+      (practice) =>
+        (s.area === "all" || practice.areaKey === s.area) &&
+        (s.topic === "all" || practice.levelIndex === s.topic) &&
+        (s.tag === "all" || practice.tag === s.tag) &&
+        (q === "" ||
+          practice.title.toLocaleLowerCase().includes(q) ||
+          practice.summary.toLocaleLowerCase().includes(q)),
     );
     const chips = (opts, key) =>
       opts.map((o) => ({
@@ -104,17 +117,25 @@ export default class Areas extends Component<any, any> {
         "aqua",
         "ie-lane ie-lane--safe",
       ],
+      생활: ["생활", "일상에서 필요한 상황을 살펴보고 연습해요", "ame", "ie-lane ie-lane--help"],
+      자립: ["자립", "나에게 필요한 일을 스스로 해 보는 연습", "sap", "ie-lane ie-lane--emo"],
     };
     const sorted = list
       .slice()
-      .sort((a, b) => ORDER.indexOf(a[6]) - ORDER.indexOf(b[6]) || a[3] - b[3]);
-    const items = sorted.map((d, i) => {
-      const total = DATA.filter((x) => x[6] === d[6]).length;
-      const done = DATA.filter((x) => x[6] === d[6] && x[4] === "done").length;
-      const L = LANE[d[6]];
-      const K = TKEY[d[6]];
+      .sort((a, b) => ORDER.indexOf(a.tag) - ORDER.indexOf(b.tag) || a.levelIndex - b.levelIndex);
+    const items = sorted.map((practice, i) => {
+      const total = normalized.filter((item) => item.tag === practice.tag).length;
+      const done = normalized.filter((item) => item.tag === practice.tag && item.myStatus === "DONE").length;
+      const L = LANE[practice.tag];
+      const K = TKEY[practice.tag];
+      const href =
+        practice.type === "EMOTION"
+          ? `${ROUTES.emotion}?practiceId=${practice.id}`
+          : practice.type === "SCENARIO"
+            ? `${ROUTES.scenario}?practiceId=${practice.id}`
+            : `${ROUTES.unit}?level=${LEVEL_KEYS[practice.levelIndex]}&practiceId=${practice.id}`;
       return {
-        laneStart: i === 0 || sorted[i - 1][6] !== d[6],
+        laneStart: i === 0 || sorted[i - 1].tag !== practice.tag,
         laneName: L[0],
         laneDesc: L[1],
         laneGem: L[2],
@@ -127,20 +148,20 @@ export default class Areas extends Component<any, any> {
         lanePct: Math.round((done / total) * 100),
         laneAria: L[0] + " " + total + "개 중 " + done + "개 했어요",
         idx: i,
-        title: d[0],
-        desc: d[1],
-        areaLabel: d[6],
-        areaCls: TAGCLS[d[6]],
-        topicLabel: "LEVEL " + (d[3] + 1) + " · " + LV[d[3]],
-        minText: "10분 안팎",
+        title: practice.title,
+        desc: practice.summary,
+        areaLabel: practice.tag,
+        areaCls: TAGCLS[practice.tag],
+        topicLabel: "LEVEL " + practice.level + " · " + LV[practice.levelIndex],
+        minText: `${practice.estMinutes}분 안팎`,
         cardCls: "ie-card ie-pcard ie-pcard--" + K,
-        gem: ["opal", "aqua", "ame", "sap", "dia"][d[3]],
-        stLabel: ST[d[4]][0],
-        stCls: ST[d[4]][1],
-        cta: ST[d[4]][2],
-        ctaCls: ST[d[4]][3],
-        hasCta: ST[d[4]][4],
-        href: d[5] || (d[3] > 0 ? ROUTES.unitVideo : ROUTES.unit),
+        gem: LEVEL_KEYS[practice.levelIndex],
+        stLabel: ST[practice.statusKey][0],
+        stCls: ST[practice.statusKey][1],
+        cta: ST[practice.statusKey][2],
+        ctaCls: ST[practice.statusKey][3],
+        hasCta: ST[practice.statusKey][4],
+        href,
       };
     });
     return {
@@ -176,13 +197,11 @@ export default class Areas extends Component<any, any> {
             int: img.envEmoInner,
           },
         }[L.id];
-        const cnt = DATA.filter((x) => x[6] === L.tag).length;
         return {
           id: L.id,
           name: L.name,
           on: open,
           px: B[4],
-          cnt: cnt,
           cls: "ie-pst-hit ie-pst--" + L.id + (open ? " is-on" : ""),
           box:
             "left:" +
@@ -199,8 +218,13 @@ export default class Areas extends Component<any, any> {
           imgBody: D.body,
           imgFlap: D.flap,
           imgInt: D.int,
-          aria: L.name + " 편지, 연습 " + cnt + "개, " + (open ? "열려 있어요" : "닫혀 있어요"),
-          pick: () => this.upd({ sel: open ? null : L.id, tag: open ? "all" : L.tag }),
+          aria: L.name + ", " + (open ? "열려 있어요" : "닫혀 있어요"),
+          pick: () =>
+            this.upd(
+              s.sel
+                ? { sel: null, tag: "all" }
+                : { sel: L.id, tag: L.tag },
+            ),
         };
       }),
       stageCls: "ie-pst ie-in" + (s.sel ? " has-open" : ""),
@@ -330,11 +354,6 @@ export default class Areas extends Component<any, any> {
                               <span className="ie-env-card">
                                 <span className="ie-env-tt">
                                   {l.name}
-                                  {" 편지"}
-                                </span>
-                                <span className="ie-env-ts">
-                                  {"연습 "}
-                                  {l.cnt}개
                                 </span>
                               </span>
                             </span>

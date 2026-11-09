@@ -1,7 +1,6 @@
 package com.ieum.home.dto;
 
 import com.ieum.practice.dto.PracticeItem.MyStatus;
-import com.ieum.practice.entity.PracticeArea;
 import com.ieum.practice.entity.PracticeType;
 
 import java.time.OffsetDateTime;
@@ -17,15 +16,15 @@ public record HomeResponse(String nickname, long unreadMessages, long doneTotal,
                            List<AreaProgress> areas, List<RecentItem> recent) {
 
     /** [역할] 이어서 할 연습. myStatus는 기록이 없으면 NONE, 하는 중이면 IN_PROGRESS다. */
-    public record Resume(Long practiceId, String title, PracticeType type, PracticeArea area,
+    public record Resume(Long practiceId, String title, PracticeType type, String area,
                          int level, int estMinutes, MyStatus myStatus) {}
 
     /** [역할] 하는 중인 연습 한 건. */
-    public record InProgressItem(Long practiceId, String title, PracticeArea area, int level) {}
+    public record InProgressItem(Long practiceId, String title, String area, int level) {}
 
     /** [역할] 영역별로 마친 연습 수. */
-    public record AreaProgress(PracticeArea area, long doneCount) {}
+    public record AreaProgress(String area, long doneCount) {}
 
     /** [역할] 최근에 마친 연습 한 건. */
-    public record RecentItem(Long practiceId, String title, PracticeArea area, OffsetDateTime completedAt) {}
+    public record RecentItem(Long practiceId, String title, String area, OffsetDateTime completedAt) {}
 }

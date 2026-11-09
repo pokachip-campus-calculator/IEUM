@@ -11,7 +11,6 @@ import com.ieum.message.entity.SenderRole;
 import com.ieum.message.repository.MessageRepository;
 import com.ieum.practice.dto.PracticeItem.MyStatus;
 import com.ieum.practice.entity.Practice;
-import com.ieum.practice.entity.PracticeArea;
 import com.ieum.practice.repository.PracticeRepository;
 import com.ieum.practice.service.PracticeService;
 import com.ieum.record.entity.PracticeRecord;
@@ -25,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +79,7 @@ public class HomeService {
         List<InProgressItem> inProgressItems = inProgress.stream()
                 .filter(p -> p != resume)
                 .limit(IN_PROGRESS_MAX)
-                .map(p -> new InProgressItem(p.getId(), p.getTitle(), p.getArea(), p.getLevel()))
+                .map(p -> new InProgressItem(p.getId(), p.getTitle(), p.getArea().apiName(), p.getLevel()))
                 .toList();
 
         List<Practice> done = practices.stream()
@@ -91,13 +89,13 @@ public class HomeService {
         List<RecentItem> recent = done.stream()
                 .sorted(Comparator.comparing((Practice p) -> completedAt(records.get(p.getId()))).reversed())
                 .limit(RECENT_MAX)
-                .map(p -> new RecentItem(p.getId(), p.getTitle(), p.getArea(),
+                .map(p -> new RecentItem(p.getId(), p.getTitle(), p.getArea().apiName(),
                         toOffset(records.get(p.getId()).getCompletedAt())))
                 .toList();
 
-        List<AreaProgress> areas = Arrays.stream(PracticeArea.values())
-                .map(a -> new AreaProgress(a,
-                        done.stream().filter(p -> p.getArea() == a).count()))
+        List<AreaProgress> areas = List.of("SAFETY", "RELATION", "MIND", "LIFE", "INDEPENDENCE").stream()
+                .map(area -> new AreaProgress(area,
+                        done.stream().filter(p -> p.getArea().apiName().equals(area)).count()))
                 .toList();
 
         long unread = messageRepository.countUnreadReplies(userId, SenderRole.TEACHER);
@@ -108,7 +106,7 @@ public class HomeService {
     }
 
     private Resume toResume(Practice p, PracticeRecord record) {
-        return new Resume(p.getId(), p.getTitle(), p.getType(), p.getArea(), p.getLevel(), p.getEstMinutes(),
+        return new Resume(p.getId(), p.getTitle(), p.getType(), p.getArea().apiName(), p.getLevel(), p.getEstMinutes(),
                 MyStatus.of(record == null ? null : record.getStatus()));
     }
 

@@ -6,10 +6,10 @@
  * 그려요. 화면 구성(이름표·카드·점·좌우 버튼·확대/축소 버튼)은 그대로 쓰고 '마을 그림'만 바뀌었어요.
  *
  * 입력
- *  - 마우스 휠 / 트랙패드: 마을이 돌아가요. 멈추면 그 자리에서 부드럽게 멈춰요.
+ *  - 마우스 휠 / 트랙패드: 마을의 장소를 한 곳씩 둘러봐요.
  *  - 끌기(마우스·터치): 돌리기. 놓으면 살짝 관성이 남아요.
  *  - 건물/이름표 클릭, 점, 좌우 버튼, 방향키: 한 곳씩 가까이 보기
- *  - Ctrl(⌘)+휠, 두 손가락 벌리기, +/- 키, 오른쪽 아래 버튼: 확대·축소
+ *  - 두 손가락 벌리기, +/- 키, 오른쪽 아래 버튼: 확대·축소
  */
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -137,13 +137,14 @@ export function startVillage(this: any): void {
     last = 0,
     used = false,
     cy0 = 300,
-    wheelUntil = 0;
+    wheelUntil = 0,
+    wheelLockUntil = 0;
   const TH = Math.tan((FOV * Math.PI) / 360);
 
-  // 마을 전체가 화면에 들어오는 크기(모델 1단위가 몇 px인지). 마을은 가로 약 2, 높이 약 1.9 단위예요.
+  // 첫 화면에서 마을을 더 크게 보여 주되, 좁은 화면에서는 가장자리를 자르지 않아요.
   const fitOf = () => {
-    const k = W < 720 ? 1.0 : 1.02;
-    return Math.max(20, Math.min((W - 48) / 2.15, (H - padT - padB) / 1.5) * k);
+    const k = W < 720 ? 1.0 : 1.42;
+    return Math.max(20, Math.min((W - 32) / 1.95, (H - padT - padB) / 1.78) * k);
   };
   const setGoal = () => {
     if (step <= 0) {
@@ -425,25 +426,21 @@ export function startVillage(this: any): void {
   };
 
   // ── 입력
-  const WDEG = 0.12; // 휠 1px 당 도는 각도(°)
   root.addEventListener(
     "wheel",
     (e) => {
       e.preventDefault();
-      if (e.ctrlKey || e.metaKey) {
-        zoomBy(Math.exp(-e.deltaY * 0.012));
-        markUsed();
+      if (down) return;
+      const d = e.deltaY || e.deltaX;
+      if (!d) return;
+      const now = performance.now();
+      if (now < wheelLockUntil) {
+        wheelLockUntil = now + 450;
         return;
       }
-      if (down) return;
-      // 마우스 휠(큰 단위)·트랙패드(작은 단위) 모두 픽셀로 맞춰 연속으로 누적해요. 입력이 멈추면 그 자리에서 부드럽게 멈춰요.
-      let d = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-      if (e.deltaMode === 1) d *= 16;
-      else if (e.deltaMode === 2) d *= H;
-      d = Math.max(-150, Math.min(150, d));
-      tt += d * WDEG;
-      wheelUntil = performance.now() + 160;
-      wake();
+      setStep(step + (d > 0 ? 1 : -1));
+      wheelUntil = now + 160;
+      wheelLockUntil = now + 450;
       markUsed();
     },
     { passive: false },

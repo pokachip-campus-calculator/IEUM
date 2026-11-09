@@ -131,8 +131,8 @@ users 행을 지우면 학습 기록·쪽지·신호가 연쇄로 삭제된다. 
   "nickname": "하늘", "unreadMessages": 1, "doneTotal": 4,
   "resume": { "practiceId": 3, "title": "안전·자기 보호", "type": "UNIT", "area": "SAFETY", "level": 1, "estMinutes": 10, "myStatus": "IN_PROGRESS" },
   "inProgress": [ { "practiceId": 4, "title": "안전·자기 보호", "area": "SAFETY", "level": 2 } ],
-  "areas": [ { "area": "SAFETY", "doneCount": 1 }, { "area": "HELP", "doneCount": 1 }, { "area": "EMOTION", "doneCount": 2 } ],
-  "recent": [ { "practiceId": 5, "title": "선생님께 처음 말 꺼내기", "area": "HELP", "completedAt": "2026-10-31T16:20:00+09:00" } ]
+  "areas": [ { "area": "SAFETY", "doneCount": 1 }, { "area": "RELATION", "doneCount": 1 }, { "area": "MIND", "doneCount": 2 }, { "area": "LIFE", "doneCount": 0 }, { "area": "INDEPENDENCE", "doneCount": 0 } ],
+  "recent": [ { "practiceId": 5, "title": "선생님께 처음 말 꺼내기", "area": "RELATION", "completedAt": "2026-10-31T16:20:00+09:00" } ]
 }
 ```
 **규칙**
@@ -140,7 +140,7 @@ users 행을 지우면 학습 기록·쪽지·신호가 연쇄로 삭제된다. 
 - `inProgress`: 하는 중인 것 중 `resume`을 빼고 최대 2개.
 - `recent`: 마친 날짜 최신 3개.
 - `unreadMessages`: 읽지 않은 이음쌤 답장 수.
-- `areas`는 SAFETY, HELP, EMOTION 순서로 항상 3개. `doneTotal`은 공개된 연습 중 마친 수.
+- `areas`는 SAFETY, RELATION, MIND, LIFE, INDEPENDENCE 순서로 항상 5개. 기존 HELP 연습은 RELATION, EMOTION 영역은 MIND로 분류한다. `doneTotal`은 공개된 연습 중 마친 수.
 - 공개(`published=1`)된 연습만 계산하고, 이음쌤 배정(`teacher_id`)과 관계없이 동작한다.
 
 **에러**: 401 UNAUTHORIZED, 403 FORBIDDEN(이음쌤)
@@ -148,7 +148,7 @@ users 행을 지우면 학습 기록·쪽지·신호가 연쇄로 삭제된다. 
 ### 08. 연습 목록 `GET /practices?area=&level=&q=` (S06, 학습자만)
 | 쿼리(모두 선택) | 설명 |
 |---|---|
-| area | `SAFETY`, `HELP`, `EMOTION` 중 하나 |
+| area | `SAFETY`, `RELATION`, `MIND`, `LIFE`, `INDEPENDENCE` 중 하나 |
 | level | 단계 숫자 |
 | q | `title`·`summary` 부분 일치 (대소문자 무시) |
 
@@ -159,7 +159,7 @@ users 행을 지우면 학습 기록·쪽지·신호가 연쇄로 삭제된다. 
     "title": "...", "summary": "...", "estMinutes": 10, "myStatus": "NONE" }
 ] }
 ```
-**규칙**: `myStatus`는 `NONE`(기록 없음), `IN_PROGRESS`, `DONE`. `published=1`만 내리고 정렬은 영역(SAFETY→HELP→EMOTION), 단계, `sort_order` 순. `content`는 포함하지 않는다. 조건에 맞는 연습이 없으면 `{"items":[]}`.
+**규칙**: `myStatus`는 `NONE`(기록 없음), `IN_PROGRESS`, `DONE`. `published=1`만 내리고 정렬은 영역(SAFETY→RELATION→MIND→LIFE→INDEPENDENCE), 단계, `sort_order` 순. 기존 DB의 HELP/EMOTION 값은 각각 RELATION/MIND로 응답한다. `content`는 포함하지 않는다. 조건에 맞는 연습이 없으면 `{"items":[]}`.
 
 **에러**: 400 VALIDATION_FAILED(`area`가 목록 밖이거나 `level`이 숫자가 아님. `fieldErrors`의 `field`는 `area` 또는 `level`), 401, 403(이음쌤)
 
@@ -191,6 +191,7 @@ S07·S08·S09가 열 때 한 번 부른다.
 
 ### 11. 학습 기록 `GET /records?status=&sort=` (S10, 학습자만)
 `status`는 `DONE` 또는 `IN_PROGRESS`(생략=모두), `sort`는 `recent`(기본) 또는 `old`.
+`area`는 SAFETY, RELATION, MIND, LIFE, INDEPENDENCE 중 하나이며, DB의 기존 HELP/EMOTION 값은 각각 RELATION/MIND로 변환한다.
 ```json
 { "doneCount": 4, "inProgressCount": 1,
   "items": [ { "practiceId": 3, "title": "...", "type": "UNIT", "area": "SAFETY", "level": 1,

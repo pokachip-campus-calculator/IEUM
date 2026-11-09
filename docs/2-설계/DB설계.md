@@ -124,7 +124,7 @@ erDiagram
 |---|---|---|---|---|---|
 | id | BIGINT UNSIGNED | NOT NULL | PK | AUTO_INCREMENT | 연습 번호 (자동 증가) |
 | type | ENUM('UNIT','SCENARIO','EMOTION') | NOT NULL |  |  | 연습 종류. UNIT 질문지 단위 / SCENARIO 시나리오 / EMOTION 감정 읽기 |
-| area | ENUM('SAFETY','HELP','EMOTION') | NOT NULL |  |  | 학습 영역. SAFETY 안전 / HELP 도움 구하기 / EMOTION 감정 읽기 |
+| area | ENUM('SAFETY','HELP','EMOTION') | NOT NULL |  |  | 저장값은 SAFETY / HELP(화면의 관계) / EMOTION(화면의 마음) |
 | topic | VARCHAR(30) | NOT NULL |  |  | 목록에 보이는 소분류 이름 |
 | level | TINYINT UNSIGNED | NOT NULL |  |  | 단계 (1 오팔, 2 아쿠아마린 …) |
 | title | VARCHAR(60) | NOT NULL |  |  | 제목 |

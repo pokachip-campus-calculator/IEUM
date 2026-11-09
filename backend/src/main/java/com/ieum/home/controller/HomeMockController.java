@@ -29,11 +29,12 @@ public class HomeMockController {
     public Map<String, Object> home(@AuthenticationPrincipal AuthUser user) {
         MockSupport.requireStudent(user);
         return obj("nickname", "하늘", "unreadMessages", 1, "doneTotal", 1,
-                "resume", obj("practiceId", 2, "title", "온라인에서 받은 비밀 부탁", "type", "SCENARIO", "area", "HELP",
+                "resume", obj("practiceId", 2, "title", "온라인에서 받은 비밀 부탁", "type", "SCENARIO", "area", "RELATION",
                         "level", 1, "estMinutes", 10, "myStatus", "IN_PROGRESS"),
                 "inProgress", List.of(),
-                "areas", List.of(obj("area", "SAFETY", "doneCount", 1), obj("area", "HELP", "doneCount", 0),
-                        obj("area", "EMOTION", "doneCount", 0)),
+                "areas", List.of(obj("area", "SAFETY", "doneCount", 1), obj("area", "RELATION", "doneCount", 0),
+                        obj("area", "MIND", "doneCount", 0), obj("area", "LIFE", "doneCount", 0),
+                        obj("area", "INDEPENDENCE", "doneCount", 0)),
                 "recent", List.of(obj("practiceId", 1, "title", "안전·자기 보호", "area", "SAFETY",
                         "completedAt", "2026-10-29T15:00:00+09:00")));
     }

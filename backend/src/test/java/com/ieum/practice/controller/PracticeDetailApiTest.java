@@ -97,6 +97,16 @@ class PracticeDetailApiTest {
     }
 
     @Test
+    void 기존_DB_영역값은_새_영역명으로_내려온다() throws Exception {
+        mockMvc.perform(get("/api/v1/practices/2").header("Authorization", student()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.area").value("RELATION"));
+        mockMvc.perform(get("/api/v1/practices/3").header("Authorization", student()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.area").value("MIND"));
+    }
+
+    @Test
     void 기록이_있으면_status_answers_myNote_시각이_내려온다() throws Exception {
         PracticeRecord r = new PracticeRecord(1L, 2L, "{\"choice\":\"c2\"}");
         ReflectionTestUtils.setField(r, "updatedAt", LocalDateTime.of(2026, 11, 4, 10, 30));

@@ -56,7 +56,7 @@ public class PracticeDetailService {
         Practice p = findPublished(practiceId);
         RecordView record = recordRepository.findByUserIdAndPracticeId(userId, practiceId)
                 .map(this::toView).orElse(null);
-        return new PracticeDetailResponse(p.getId(), p.getType(), p.getArea(), p.getTopic(), p.getLevel(),
+        return new PracticeDetailResponse(p.getId(), p.getType(), p.getArea().apiName(), p.getTopic(), p.getLevel(),
                 p.getTitle(), p.getSummary(), p.getEstMinutes(), parse(p.getContentJson()), record);
     }
 

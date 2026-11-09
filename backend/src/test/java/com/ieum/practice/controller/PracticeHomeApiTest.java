@@ -49,7 +49,7 @@ class PracticeHomeApiTest {
     @MockitoBean MessageRepository messageRepository;
     @MockitoBean PlatformTransactionManager transactionManager;
 
-    // 연습 4개: 1 SAFETY L1, 2 SAFETY L2, 3 HELP L1(시나리오), 4 EMOTION L1
+    // 연습 4개: 1 SAFETY L1, 2 SAFETY L2, 3 HELP L1(관계), 4 EMOTION L1(마음)
     private final Practice p1 = practice(1, PracticeType.UNIT, PracticeArea.SAFETY, 1, "안전 기본", "낯선 사람 대처");
     private final Practice p2 = practice(2, PracticeType.UNIT, PracticeArea.SAFETY, 2, "안전 심화", "Online 친구");
     private final Practice p3 = practice(3, PracticeType.SCENARIO, PracticeArea.HELP, 1, "도움 요청", "어른에게 말하기");
@@ -81,6 +81,8 @@ class PracticeHomeApiTest {
                 .andExpect(jsonPath("$.items[2].id").value(3))
                 .andExpect(jsonPath("$.items[3].id").value(4))
                 .andExpect(jsonPath("$.items[0].myStatus").value("NONE"))
+                .andExpect(jsonPath("$.items[2].area").value("RELATION"))
+                .andExpect(jsonPath("$.items[3].area").value("MIND"))
                 .andExpect(jsonPath("$.items[0].estMinutes").value(10))
                 .andExpect(jsonPath("$.items[0].content").doesNotExist())
                 .andExpect(jsonPath("$.items[0].contentJson").doesNotExist());
@@ -91,6 +93,11 @@ class PracticeHomeApiTest {
         String auth = bearer(1L, Role.STUDENT);
         mockMvc.perform(get("/api/v1/practices?area=SAFETY").header("Authorization", auth))
                 .andExpect(jsonPath("$.items.length()").value(2));
+        mockMvc.perform(get("/api/v1/practices?area=RELATION").header("Authorization", auth))
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].area").value("RELATION"));
+        mockMvc.perform(get("/api/v1/practices?area=LIFE").header("Authorization", auth))
+                .andExpect(jsonPath("$.items").isEmpty());
         mockMvc.perform(get("/api/v1/practices?level=1").header("Authorization", auth))
                 .andExpect(jsonPath("$.items.length()").value(3));
         mockMvc.perform(get("/api/v1/practices?area=SAFETY&level=2").header("Authorization", auth))
@@ -141,10 +148,35 @@ class PracticeHomeApiTest {
                 .andExpect(jsonPath("$.resume.myStatus").value("NONE"))
                 .andExpect(jsonPath("$.inProgress.length()").value(0))
                 .andExpect(jsonPath("$.recent.length()").value(0))
-                .andExpect(jsonPath("$.areas.length()").value(3))
+                .andExpect(jsonPath("$.areas.length()").value(5))
                 .andExpect(jsonPath("$.areas[0].area").value("SAFETY"))
                 .andExpect(jsonPath("$.areas[0].doneCount").value(0))
+                .andExpect(jsonPath("$.areas[1].area").value("RELATION"))
+                .andExpect(jsonPath("$.areas[2].area").value("MIND"))
+                .andExpect(jsonPath("$.areas[3].area").value("LIFE"))
+                .andExpect(jsonPath("$.areas[4].area").value("INDEPENDENCE"))
                 .andExpect(jsonPath("$.areas[0].total").doesNotExist());
+    }
+
+    @Test
+    void 새_계정의_학습_기록은_비어_있다() throws Exception {
+        mockMvc.perform(get("/api/v1/records").header("Authorization", bearer(1L, Role.STUDENT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(0))
+                .andExpect(jsonPath("$.doneCount").value(0))
+                .andExpect(jsonPath("$.inProgressCount").value(0));
+    }
+
+    @Test
+    void 기록의_기존_DB_영역값도_새_영역명으로_내려온다() throws Exception {
+        LocalDateTime now = LocalDateTime.now();
+        when(recordRepository.findByUserId(1L)).thenReturn(List.of(record(1L, 3L, true, now, now)));
+        when(practiceRepository.findById(3L)).thenReturn(Optional.of(p3));
+
+        mockMvc.perform(get("/api/v1/records").header("Authorization", bearer(1L, Role.STUDENT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].area").value("RELATION"))
+                .andExpect(jsonPath("$.items[0].status").value("DONE"));
     }
 
     @Test
@@ -179,9 +211,12 @@ class PracticeHomeApiTest {
                 .andExpect(jsonPath("$.recent.length()").value(3))
                 .andExpect(jsonPath("$.recent[0].practiceId").value(4))
                 .andExpect(jsonPath("$.recent[0].title").value("감정 읽기"))
+                .andExpect(jsonPath("$.recent[0].area").value("MIND"))
                 .andExpect(jsonPath("$.recent[0].completedAt").value(org.hamcrest.Matchers.endsWith("+09:00")))
                 .andExpect(jsonPath("$.recent[2].practiceId").value(2))
-                .andExpect(jsonPath("$.areas[0].doneCount").value(2));
+                .andExpect(jsonPath("$.areas[0].doneCount").value(2))
+                .andExpect(jsonPath("$.areas[1].doneCount").value(1))
+                .andExpect(jsonPath("$.areas[2].doneCount").value(1));
     }
 
     @Test
@@ -223,6 +258,26 @@ class PracticeHomeApiTest {
     void 홈은_이음쌤_토큰이면_403() throws Exception {
         mockMvc.perform(get("/api/v1/home").header("Authorization", bearer(2L, Role.TEACHER)))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 실제_연동_모드의_이음쌤_API는_목업_학습자를_노출하지_않는다() throws Exception {
+        String teacher = bearer(2L, Role.TEACHER);
+
+        mockMvc.perform(get("/api/v1/teacher/summary").header("Authorization", teacher))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.studentCount").value(0))
+                .andExpect(jsonPath("$.waitingThreadCount").value(0))
+                .andExpect(jsonPath("$.openSignalCount").value(0));
+        mockMvc.perform(get("/api/v1/teacher/students").header("Authorization", teacher))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isEmpty());
+        mockMvc.perform(get("/api/v1/teacher/threads").header("Authorization", teacher))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isEmpty());
+        mockMvc.perform(get("/api/v1/teacher/signals").header("Authorization", teacher))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isEmpty());
     }
 
     private String bearer(long id, Role role) { return "Bearer " + jwtProvider.issue(id, role); }

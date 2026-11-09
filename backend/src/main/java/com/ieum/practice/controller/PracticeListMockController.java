@@ -35,7 +35,7 @@ public class PracticeListMockController {
                                     @RequestParam(required = false) String level,
                                     @RequestParam(required = false) String q) {
         MockSupport.requireStudent(user);
-        MockSupport.checkAllowed("area", area, Set.of("SAFETY", "HELP", "EMOTION"));
+        MockSupport.checkAllowed("area", area, Set.of("SAFETY", "RELATION", "MIND", "LIFE", "INDEPENDENCE"));
         Integer levelValue = null;
         if (level != null) {
             try {
@@ -50,11 +50,11 @@ public class PracticeListMockController {
                         "title", "안전·자기 보호",
                         "summary", "랜선 연애와 그루밍, 낯선 사람, 또래의 비행 권유에서 멈추는 연습이에요.",
                         "estMinutes", 10, "myStatus", "DONE"),
-                obj("id", 2, "type", "SCENARIO", "area", "HELP", "topic", "시나리오 연습", "level", 1,
+                obj("id", 2, "type", "SCENARIO", "area", "RELATION", "topic", "시나리오 연습", "level", 1,
                         "title", "온라인에서 받은 비밀 부탁",
                         "summary", "정해진 답 없이 상황을 고르고, 내가 편한 말로 대답해 보는 연습이에요.",
                         "estMinutes", 10, "myStatus", "IN_PROGRESS"),
-                obj("id", 3, "type", "EMOTION", "area", "EMOTION", "topic", "감정 읽기", "level", 1,
+                obj("id", 3, "type", "EMOTION", "area", "MIND", "topic", "감정 읽기", "level", 1,
                         "title", "혼자 떨어져 앉은 친구",
                         "summary", "짧은 장면을 보고 뚜렷한 단서로 마음을 고르는 연습이에요.",
                         "estMinutes", 10, "myStatus", "NONE"));
