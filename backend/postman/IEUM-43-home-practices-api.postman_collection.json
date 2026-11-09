@@ -8,7 +8,9 @@
     { "key": "baseUrl", "value": "http://localhost:8080/api/v1" },
     { "key": "loginId", "value": "learn4321" },
     { "key": "password", "value": "password123" },
-    { "key": "token", "value": "" }
+    { "key": "token", "value": "" },
+    { "key": "teacherLoginId", "value": "teach4321" },
+    { "key": "teacherToken", "value": "" }
   ],
   "item": [
     {
@@ -41,7 +43,7 @@
         "pm.test('필드', () => { pm.expect(b).to.have.keys('nickname','unreadMessages','doneTotal','resume','inProgress','areas','recent'); });",
         "pm.test('areas 3개(SAFETY·HELP·EMOTION)', () => pm.expect(b.areas.map(a => a.area)).to.eql(['SAFETY','HELP','EMOTION']));",
         "pm.test('inProgress 최대 2개, recent 최대 3개', () => { pm.expect(b.inProgress.length).to.be.at.most(2); pm.expect(b.recent.length).to.be.at.most(3); });",
-        "pm.test('resume은 기준서 모양 또는 null', () => { if (b.resume) pm.expect(b.resume).to.have.keys('practiceId','title','type','area','level','estMinutes','status'); });",
+        "pm.test('resume은 기준서 모양 또는 null', () => { if (b.resume) pm.expect(b.resume).to.have.keys('practiceId','title','type','area','level','estMinutes','myStatus'); });",
         "pm.test('areas 항목은 area·doneCount', () => b.areas.forEach(a => pm.expect(a).to.have.keys('area','doneCount')));",
         "pm.test('inProgress 항목 모양', () => b.inProgress.forEach(i => pm.expect(i).to.have.keys('practiceId','title','area','level')));",
         "pm.test('recent 항목 모양, completedAt은 +09:00', () => b.recent.forEach(i => { pm.expect(i).to.have.keys('practiceId','title','area','completedAt'); pm.expect(i.completedAt).to.match(/[+]09:00$/); }));"
@@ -119,6 +121,44 @@
       "name": "08 토큰 없이 목록 조회 (401)",
       "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('401', () => pm.response.to.have.status(401));"] } }],
       "request": { "method": "GET", "url": "{{baseUrl}}/practices" }
+    },
+    {
+      "name": "09 사전 - 이음쌤 가입 (이미 있으면 409여도 괜찮음)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": { "mode": "raw", "raw": "{\n  \"role\": \"TEACHER\",\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"김쌤\",\n  \"nickname\": \"김 이음쌤\",\n  \"birthDate\": \"1990-05-20\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}" }
+      }
+    },
+    {
+      "name": "09 사전 - 이음쌤 로그인 (teacherToken 자동 저장)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.collectionVariables.set('teacherToken', pm.response.json().token);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": { "mode": "raw", "raw": "{\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{password}}\"\n}" }
+      }
+    },
+    {
+      "name": "07 이음쌤 토큰으로 홈 조회 (403)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('403', () => pm.response.to.have.status(403));",
+        "pm.test('FORBIDDEN', () => pm.expect(pm.response.json().code).to.eql('FORBIDDEN'));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{teacherToken}}" }], "url": "{{baseUrl}}/home" }
+    },
+    {
+      "name": "08 이음쌤 토큰으로 목록 조회 (403)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('403', () => pm.response.to.have.status(403));",
+        "pm.test('FORBIDDEN', () => pm.expect(pm.response.json().code).to.eql('FORBIDDEN'));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{teacherToken}}" }], "url": "{{baseUrl}}/practices" }
     }
   ]
 }

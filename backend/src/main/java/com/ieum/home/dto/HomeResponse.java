@@ -16,9 +16,9 @@ public record HomeResponse(String nickname, long unreadMessages, long doneTotal,
                            Resume resume, List<InProgressItem> inProgress,
                            List<AreaProgress> areas, List<RecentItem> recent) {
 
-    /** [역할] 이어서 할 연습. status는 기록이 없으면 NONE, 하는 중이면 IN_PROGRESS다. */
+    /** [역할] 이어서 할 연습. myStatus는 기록이 없으면 NONE, 하는 중이면 IN_PROGRESS다. */
     public record Resume(Long practiceId, String title, PracticeType type, PracticeArea area,
-                         int level, int estMinutes, MyStatus status) {}
+                         int level, int estMinutes, MyStatus myStatus) {}
 
     /** [역할] 하는 중인 연습 한 건. */
     public record InProgressItem(Long practiceId, String title, PracticeArea area, int level) {}

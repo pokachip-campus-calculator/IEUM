@@ -1,0 +1,8 @@
+body{margin:0}
+
+/* 전체 UI 배율: 브라우저 확대/축소는 건드리지 않고, 앱 전체(#root)를 한 번에 줄여요.
+   zoom 은 레이아웃·스크롤·클릭 좌표가 함께 줄어들어 transform:scale 보다 안전해요.
+   vh/dvh 단위는 zoom 에 반영되지 않으므로 ie.css 에서 var(--ie-ui) 로 나눠 화면 높이에 딱 맞춰요. */
+:root{--ie-ui:.88}
+@supports not (zoom:1){:root{--ie-ui:1}}
+#root{zoom:var(--ie-ui)}
