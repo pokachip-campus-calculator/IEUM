@@ -1,0 +1,25 @@
+.ie-main .ie-bubble {
+  border-radius: 20px;
+  box-shadow: 0 3px 10px -6px rgba(40, 51, 76, 0.26);
+  backdrop-filter: none;
+}
+.ie-main .ie-story {
+  gap: 36px;
+}
+.ie-main .ie-ask-saved {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #e3ddfb;
+}
+.ie-main .ie-saved-note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f6f3ff;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

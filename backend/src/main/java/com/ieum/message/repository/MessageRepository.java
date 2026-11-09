@@ -22,4 +22,9 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             + "where m.threadId in :threadIds and m.senderRole = :senderRole and m.readAt is null")
     List<Long> findThreadIdsWithUnread(@Param("threadIds") Collection<Long> threadIds,
                                        @Param("senderRole") SenderRole senderRole);
+
+    // 학습자가 아직 읽지 않은 이음쌤 답장 수(홈의 unreadMessages)
+    @Query("select count(m) from Message m where m.senderRole = :sender and m.readAt is null "
+            + "and m.threadId in (select t.id from MessageThread t where t.studentId = :studentId)")
+    long countUnreadReplies(@Param("studentId") Long studentId, @Param("sender") SenderRole sender);
 }

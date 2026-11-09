@@ -1,0 +1,22 @@
+input[type="range"] {
+  accent-color: #5366af;
+}
+.ie-main .ie-qcard::before,
+.ie-main .ie-qcard:nth-of-type(n)::before {
+  background: linear-gradient(#bfe5d4, #7ccbae);
+}
+.ie-main .ie-qcard > .ie-tile,
+.ie-main .ie-qcard:nth-of-type(n) > .ie-tile {
+  background: var(--ie-grad-mint);
+  color: #2a6a52;
+}
+.ie-main .ie-learnpanel {
+  border-radius: 20px;
+  background: linear-gradient(150deg, #f7fcf9, #e9f6ef);
+  border: 1px solid #cde9dc;
+  box-shadow: 0 2px 8px -5px rgba(60, 72, 130, 0.16);
+  margin: 10px 0 14px;
+}
+.ie-main .ie-learnpanel::before {
+  background: linear-gradient(#bfe5d4, #7ccbae);
+}

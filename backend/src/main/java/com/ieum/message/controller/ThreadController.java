@@ -1,5 +1,6 @@
 package com.ieum.message.controller;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import com.ieum.auth.jwt.AuthUser;
 import com.ieum.common.ApiException;
 import com.ieum.message.dto.CreateThreadRequest;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
  * [주의] 실제 주소는 /api/v1/threads 이다. 학습자만 쓸 수 있고 이음쌤이 부르면 서비스가 FORBIDDEN을 낸다.
  */
 @RestController
+@ConditionalOnProperty(name = "mock.learning.enabled", havingValue = "false")   // 기본은 mock. 실제 12·13을 쓰려면 mock.learning.enabled=false
 @RequestMapping("/threads")
 public class ThreadController {
 

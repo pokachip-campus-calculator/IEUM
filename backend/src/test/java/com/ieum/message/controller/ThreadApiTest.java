@@ -41,7 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** [역할] /api/v1/threads 주소의 로그인 필요 여부, 응답 모양, 상태 코드(200·201·400·403·409)를 확인한다. */
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource(properties = "jwt.secret=test-secret-test-secret-test-secret-1234")
+@TestPropertySource(properties = {"jwt.secret=test-secret-test-secret-test-secret-1234", "mock.learning.enabled=false"})
 class ThreadApiTest {
 
     private static final LocalDateTime T = LocalDateTime.of(2026, 11, 4, 10, 30);
