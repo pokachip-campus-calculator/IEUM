@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "IEUM #46 쪽지 보내기·목록 API (12·13)",
-    "description": "실행 전: MySQL에 db/ 스키마·시드, .env의 JWT_SECRET, 서버(localhost:8080).\n순서: 00 사전(학습자 가입·로그인) → 12-A(이음쌤이 DB에 없을 때만 409) → 12-A2 이음쌤 가입 → 12-A3 이음쌤 로그인 → 12-B 이후. 이음쌤은 이 컬렉션에서 가입하므로 DB에 직접 넣지 않아도 된다.\n12-A는 이음쌤이 한 명도 없어야 통과한다. 이미 있으면 12-A만 실패하니 건너뛴다.\n신호 검사(#47)·알림(#49)은 아직 빈 구현이라 signal_events·notifications에는 행이 생기지 않는다.",
+    "description": "실행 전: MySQL에 db/ 스키마·시드, .env의 JWT_SECRET, 서버(localhost:8080).\n순서: 00 사전(학습자 가입·로그인) → 12-A(이음쌤이 DB에 없을 때만 409) → 12-A2 이음쌤 가입 → 12-A3 이음쌤 로그인 → 12-B 이후. 이음쌤은 이 컬렉션에서 가입하므로 DB에 직접 넣지 않아도 된다.\n배정 규칙 확인: 맨 아래 14번을 Runner로 여러 번 반복(Iterations 4~6)하면 매번 새 학생을 만들어 쪽지를 보내고, 배정된 이음쌤 id 순서를 Postman Console에 출력한다. 실행 전 DB에서 이음쌤별 맡은 학생 수를 먼저 확인해 둔다.\n12-A는 이음쌤이 한 명도 없어야 통과한다. 이미 있으면 12-A만 실패하니 건너뛴다.\n신호 검사(#47)·알림(#49)은 아직 빈 구현이라 signal_events·notifications에는 행이 생기지 않는다.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -14,7 +14,10 @@
     { "key": "token", "value": "" },
     { "key": "teacherToken", "value": "" },
     { "key": "threadId", "value": "" },
-    { "key": "longBody", "value": "" }
+    { "key": "longBody", "value": "" },
+    { "key": "asgToken", "value": "" },
+    { "key": "asgLoginId", "value": "" },
+    { "key": "assignLog", "value": "" }
   ],
   "item": [
     {
@@ -230,6 +233,73 @@
       "name": "13 이음쌤 토큰으로 조회 (403)",
       "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('403', () => pm.response.to.have.status(403));"] } }],
       "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{teacherToken}}" }], "url": "{{baseUrl}}/threads" }
+    },
+    {
+      "name": "14 배정 확인 - 새 학생 1명 만들어 쪽지 보내기 (Runner로 여러 번 반복)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.collectionVariables.get('baseUrl');",
+              "const loginId = 'asg' + Date.now().toString(36);",
+              "const password = pm.collectionVariables.get('password');",
+              "const json = (url, body) => ({ url, method: 'POST', header: { 'Content-Type': 'application/json' }, body: { mode: 'raw', raw: JSON.stringify(body) } });",
+              "pm.collectionVariables.set('asgLoginId', loginId);",
+              "pm.sendRequest(json(base + '/auth/signup', {",
+              "  role: 'STUDENT', loginId, password, name: '배정테스트', nickname: '배정확인',",
+              "  birthDate: '2000-01-01', agreeTerms: true, agreePrivacy: true",
+              "}), (e1, r1) => {",
+              "  if (e1 || r1.code !== 201) { throw new Error('학생 가입 실패: ' + (e1 || r1.code + ' ' + r1.text())); }",
+              "  pm.sendRequest(json(base + '/auth/login', { loginId, password }), (e2, r2) => {",
+              "    if (e2 || r2.code !== 200) { throw new Error('학생 로그인 실패: ' + (e2 || r2.code + ' ' + r2.text())); }",
+              "    pm.collectionVariables.set('asgToken', r2.json().token);",
+              "  });",
+              "});"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201', () => pm.response.to.have.status(201));",
+              "pm.sendRequest({",
+              "  url: pm.collectionVariables.get('baseUrl') + '/me',",
+              "  method: 'GET',",
+              "  header: { Authorization: 'Bearer ' + pm.collectionVariables.get('asgToken') }",
+              "}, (err, res) => {",
+              "  const t = res.json().teacher;",
+              "  pm.test('이음쌤이 배정됨', () => pm.expect(t).to.not.be.null);",
+              "  const log = pm.collectionVariables.get('assignLog');",
+              "  const next = (log ? log + ', ' : '') + t.id;",
+              "  pm.collectionVariables.set('assignLog', next);",
+              "  console.log('학생 ' + pm.collectionVariables.get('asgLoginId') + ' → 이음쌤 id ' + t.id + ' (' + t.nickname + ')  | 배정 순서: ' + next);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{asgToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/threads",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"topic\": \"ONLINE\",\n  \"body\": \"배정 확인용 쪽지\"\n}"
+        }
+      }
     }
   ]
 }
