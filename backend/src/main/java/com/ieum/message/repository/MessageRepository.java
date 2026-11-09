@@ -12,6 +12,9 @@ import java.util.List;
 /** [역할] messages 테이블 조회·저장 통로. 목록은 쪽지마다 따로 묻지 않고 한 번에 묶어서 가져온다. */
 public interface MessageRepository extends JpaRepository<Message, Long> {
 
+    // 쪽지 상세용: 한 묶음의 메시지를 보낸 순서대로
+    List<Message> findByThreadIdOrderByIdAsc(Long threadId);
+
     // 각 쪽지 묶음의 첫 메시지(목록 preview용)
     @Query("select m from Message m where m.id in "
             + "(select min(f.id) from Message f where f.threadId in :threadIds group by f.threadId)")

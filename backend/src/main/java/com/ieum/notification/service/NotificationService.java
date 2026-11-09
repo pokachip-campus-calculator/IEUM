@@ -16,6 +16,16 @@ public class NotificationService {
         // #49에서 구현
     }
 
+    // NOTE_READ: 학습자에게 "이음쌤이 쪽지를 읽었어요" (누르면 쪽지 묶음)
+    public void noteRead(Long studentId, Long threadId) {
+        // #49에서 구현
+    }
+
+    // REPLY_ARRIVED: 학습자에게 "이음쌤의 답이 도착했어요" (누르면 쪽지 묶음)
+    public void replyArrived(Long studentId, Long threadId) {
+        // #49에서 구현
+    }
+
     // TEACHER_ASSIGNED: 학습자에게 "담당 이음쌤이 정해졌어요" (누르면 내 정보)
     public void teacherAssigned(Long studentId) {
         // #49에서 구현
