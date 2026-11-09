@@ -8,6 +8,10 @@ MySQL 8.0, InnoDB, utf8mb4(`utf8mb4_0900_ai_ci`). 테이블은 8개이고 스키
 
 `users`에서 학습 기록과 쪽지·신호 두 줄기가 갈라진다. `users.teacher_id`, `message_threads.student_id`·`teacher_id`는 모두 `users`를 가리킨다.
 
+![이음 ERD (테이블 8개, 전체 컬럼)](ERD.png)
+
+아래 Mermaid 그림은 같은 구조를 핵심 컬럼만 요약한 것이다. 전체 컬럼은 위 이미지와 2장 테이블 정의서를 본다.
+
 ```mermaid
 erDiagram
     users ||--o{ practice_records : "학습한다"
@@ -90,6 +94,7 @@ erDiagram
 | message_threads 1 : N messages | 쪽지 묶음 안에 쪽지가 쌓인다 |
 | messages 1 : 0..1 signal_events | 학습자 쪽지 1건당 신호 기록은 최대 1건이다 |
 | signal_keywords 1 : N signal_events | 신호가 나온 낱말을 가리킨다 |
+| users 1 : N signal_events | 신호가 나온 학습자를 가리킨다 (`student_id`, 학습자가 지워지면 신호도 함께 지워진다) |
 | users 1 : N notifications | 받는 사람(학습자·이음쌤)별 알림 |
 
 ## 2. 테이블 정의서
@@ -140,7 +145,7 @@ erDiagram
 | 컬럼명 | 데이터 타입 | Null 여부 | 제약 조건 | 기본값 | 설명 |
 |---|---|---|---|---|---|
 | id | BIGINT UNSIGNED | NOT NULL | PK | AUTO_INCREMENT | 기록 번호 (자동 증가) |
-| user_id | BIGINT UNSIGNED | NOT NULL |  |  | 학습자(users.id). 학습자가 지워지면 기록도 함께 지워진다 |
+| user_id | BIGINT UNSIGNED | NOT NULL | FK → users.id (ON DELETE CASCADE) |  | 학습자(users.id). 학습자가 지워지면 기록도 함께 지워진다 |
 | practice_id | BIGINT UNSIGNED | NOT NULL | FK → practices.id |  | 연습(practices.id) |
 | status | ENUM('IN_PROGRESS','DONE') | NOT NULL |  | IN_PROGRESS | 진행 상태. IN_PROGRESS 하는 중 / DONE 했어요 |
 | answers_json | JSON | NOT NULL |  |  | 학습자가 고른 답. JSON 형식은 type마다 다르다 |
@@ -154,8 +159,8 @@ erDiagram
 | 컬럼명 | 데이터 타입 | Null 여부 | 제약 조건 | 기본값 | 설명 |
 |---|---|---|---|---|---|
 | id | BIGINT UNSIGNED | NOT NULL | PK | AUTO_INCREMENT | 쪽지 묶음 번호 (자동 증가) |
-| student_id | BIGINT UNSIGNED | NOT NULL |  |  | 보낸 학습자(users.id) |
-| teacher_id | BIGINT UNSIGNED | NOT NULL |  |  | 담당 이음쌤(users.id) |
+| student_id | BIGINT UNSIGNED | NOT NULL | FK → users.id (ON DELETE CASCADE) |  | 보낸 학습자(users.id) |
+| teacher_id | BIGINT UNSIGNED | NOT NULL | FK → users.id |  | 담당 이음쌤(users.id) |
 | topic | ENUM('FRIEND','ONLINE','SCHOOL','HOME','ETC') | NOT NULL |  |  | 쪽지 주제. FRIEND 친구, ONLINE 온라인, SCHOOL 학교, HOME 집, ETC 기타 |
 | practice_id | BIGINT UNSIGNED | NULL | FK → practices.id (ON DELETE SET NULL) |  | 연결된 시나리오(practices.id). 없으면 NULL, 연습이 지워지면 NULL |
 | status | ENUM('WAITING','ANSWERED') | NOT NULL |  | WAITING | WAITING 답을 기다림 / ANSWERED 답함. 마지막으로 보낸 사람으로 정해진다 |
