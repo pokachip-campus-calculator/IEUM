@@ -28,89 +28,8 @@ export default class TeacherUpload extends Component<any, any> {
       hint: "",
       seq: 20,
       checks: [false, false, false],
-      cards: [
-        {
-          id: 1,
-          title: "“비밀이야”라는 말이 나오면",
-          text: "온라인에서 처음 만난 사람이 “비밀로 하자”고 하면 한 번 멈춰 봐요.",
-          file: "card-01.png",
-          size: "1.2MB",
-          status: "done",
-          err: "",
-          pct: 100,
-          img: 0,
-        },
-        {
-          id: 2,
-          title: "나에게 잘해 주는 것 같아도",
-          text: "선물, 칭찬, 특별한 관심이 갑자기 늘면 이유를 살펴봐요.",
-          file: "card-02.png",
-          size: "0.9MB",
-          status: "done",
-          err: "",
-          pct: 100,
-          img: 1,
-        },
-        {
-          id: 3,
-          title: "단톡방에서 온 부탁",
-          text: "어려운 부탁을 받았을 때 어떻게 말할지 미리 생각해 봐요.",
-          file: "card-03.jpg",
-          size: "1.6MB",
-          status: "done",
-          err: "",
-          pct: 100,
-          img: 2,
-        },
-        {
-          id: 4,
-          title: "",
-          text: "",
-          file: "card-04.png",
-          size: "2.1MB",
-          status: "up",
-          err: "",
-          pct: 62,
-          img: -1,
-        },
-        {
-          id: 5,
-          title: "",
-          text: "",
-          file: "card-05.pdf",
-          size: "12.4MB",
-          status: "err",
-          err: "파일이 너무 커요. 10MB 안으로 줄여서 다시 올려 주세요.",
-          pct: 0,
-          img: -1,
-        },
-      ],
-      videos: [
-        {
-          id: 11,
-          title: "“우리만 아는 사이”라는 말에 멈추기",
-          text: "특별하다는 말로 가까워진 뒤 비밀을 만들자고 하면 한 번 멈춰 봐요.",
-          file: "영상1_비밀.mp4",
-          size: "48MB",
-          dur: "02:40",
-          status: "done",
-          err: "",
-          pct: 100,
-          sub: true,
-        },
-        {
-          id: 12,
-          title: "단톡방에서 하고 싶지 않다고 말하기",
-          text: "",
-          file: "영상2_단톡방.mp4",
-          size: "61MB",
-          dur: "",
-          status: "up",
-          err: "",
-          pct: 38,
-          sub: false,
-        },
-      ],
+      cards: [],
+      videos: [],
     };
   }
   upd(key, id, patch) {
@@ -141,7 +60,7 @@ export default class TeacherUpload extends Component<any, any> {
       const ext = (f.name.split(".").pop() || "").toLowerCase();
       const okExt = isCard ? ["png", "jpg", "jpeg", "pdf"].indexOf(ext) >= 0 : ext === "mp4";
       const max = isCard ? 10 : 500;
-      let status = "done";
+      let status = "selected";
       let err = "";
       if (!okExt) {
         status = "err";
@@ -170,8 +89,10 @@ export default class TeacherUpload extends Component<any, any> {
     const s = this.state;
     const AREAS: any = [
       ["safe", "안전", "안전·자기 보호"],
-      ["help", "도움 구하기", "도움 구하기"],
-      ["emo", "감정 읽기", "감정 읽기"],
+      ["rel", "관계", "관계"],
+      ["mind", "마음", "마음"],
+      ["life", "생활", "생활"],
+      ["indep", "자립", "자립"],
     ];
     const LEVELS: any = [
       ["opal", "오팔"],
@@ -187,6 +108,7 @@ export default class TeacherUpload extends Component<any, any> {
     const levelName = LEVELS[s.level][1] + " · LEVEL " + (s.level + 1);
     const ST: any = {
       done: ["올렸어요", "ie-status ie-status--done"],
+      selected: ["올리기 전", "ie-status ie-status--new"],
       up: ["올리는 중", "ie-status ie-status--doing"],
       err: ["올리지 못했어요", "ie-status ie-status--wait"],
     };
@@ -235,10 +157,10 @@ export default class TeacherUpload extends Component<any, any> {
       problems.push("올리는 중인 자료가 있어요. 끝날 때까지 기다려 주세요.");
     if (items.some((x) => x.status === "err"))
       problems.push("올리지 못한 자료가 있어요. 다시 올리거나 지워 주세요.");
-    if (items.some((x) => x.status === "done" && x.title.trim() === ""))
+    if (items.some((x) => x.status === "selected" && x.title.trim() === ""))
       problems.push("제목이 비어 있는 자료가 있어요.");
     if (!s.checks.every(Boolean)) problems.push("확인 항목을 모두 눌러 주세요.");
-    const first = items.filter((x) => x.status === "done")[0] || null;
+    const first = items.find((x) => x.status === "selected" || x.status === "done") || null;
     const needLevelTab = s.level === 0 ? "card" : "video";
     const mismatch = s.tab !== needLevelTab;
     const cnt = isCard ? "카드 " + items.length + "장" : "영상 " + items.length + "편";
@@ -311,18 +233,28 @@ export default class TeacherUpload extends Component<any, any> {
           this.setState({ checks: s.checks.map((c, j) => (j === k ? !c : c)), msg: "", hint: "" }),
       })),
       publishOff: problems.length > 0,
-      publish: () => {
+      publish: async () => {
         if (problems.length > 0) {
           this.setState({ hint: problems.join(" "), msg: "" });
           return;
         }
-        void teacherService.publishMaterials({ tab: s.tab, area: s.area, level: s.level, items });
-        this.setState({ msg: "published", hint: "" });
+        this.setState({ hint: "", msg: "" });
+        try {
+          await teacherService.publishMaterials({ tab: s.tab, area: s.area, level: s.level, items });
+          this.setState({ msg: "published" });
+        } catch (error) {
+          this.setState({
+            hint: error instanceof Error ? error.message : "자료를 게시하지 못했어요.",
+          });
+        }
       },
-      saveDraft: () => this.setState({ msg: "draft", hint: "" }),
+      saveDraft: () =>
+        this.setState({
+          msg: "",
+          hint: "임시 저장 기능이 아직 연결되지 않아 자료가 저장되지 않았어요.",
+        }),
       showHint: s.hint !== "",
       hint: s.hint,
-      isDraft: s.msg === "draft",
       isPublished: s.msg === "published",
       pvEyebrow: isCard ? "학습 카드 1 / " + items.length : "영상 1 / " + items.length,
       pvTitle: first && first.title.trim() !== "" ? first.title : "제목을 적으면 여기에 보여요",
@@ -335,26 +267,7 @@ export default class TeacherUpload extends Component<any, any> {
             ? first.text
             : "영상 소개가 아직 없어요"
         : "올린 자료가 아직 없어요",
-      mine: [
-        {
-          name: "안전·자기 보호 · 오팔",
-          meta: "카드 5장 · 10월 27일",
-          status: "학습자에게 보여요",
-          cls: "ie-status ie-status--done",
-        },
-        {
-          name: "도움 구하기 · 아쿠아마린",
-          meta: "영상 3편 · 11월 3일",
-          status: "임시 저장",
-          cls: "ie-status ie-status--wait",
-        },
-        {
-          name: "감정 읽기 · 자수정",
-          meta: "영상 2편 · 11월 4일",
-          status: "학습자에게 보여요",
-          cls: "ie-status ie-status--done",
-        },
-      ],
+      mine: [],
     };
   }
 
@@ -1061,14 +974,6 @@ export default class TeacherUpload extends Component<any, any> {
                     {v.showHint ? (
                       <div className="ie-alert ie-alert--warm" role="alert">
                         <div>{v.hint}</div>
-                      </div>
-                    ) : null}{" "}
-                    {v.isDraft ? (
-                      <div className="ie-alert ie-alert--info" role="status">
-                        <div>
-                          <b>임시 저장했어요.</b>
-                          {" 학습자에게는 아직 보이지 않아요."}
-                        </div>
                       </div>
                     ) : null}{" "}
                     {v.isPublished ? (

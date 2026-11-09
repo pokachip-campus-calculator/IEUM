@@ -29,6 +29,46 @@ export interface Profile {
   notifications: boolean[];
 }
 
+/* ---------- 홈·연습 목록 ---------- */
+export type PracticeArea = "SAFETY" | "RELATION" | "MIND" | "LIFE" | "INDEPENDENCE";
+export type PracticeType = "UNIT" | "SCENARIO" | "EMOTION";
+export type PracticeStatus = "NONE" | "IN_PROGRESS" | "DONE";
+
+export interface PracticeItem {
+  id: number;
+  type: PracticeType;
+  area: PracticeArea;
+  topic: string;
+  level: number;
+  title: string;
+  summary: string;
+  estMinutes: number;
+  myStatus: PracticeStatus;
+}
+
+export interface HomeResponse {
+  nickname: string;
+  unreadMessages: number;
+  doneTotal: number;
+  resume: {
+    practiceId: number;
+    title: string;
+    type: PracticeType;
+    area: PracticeArea;
+    level: number;
+    estMinutes: number;
+    myStatus: PracticeStatus;
+  } | null;
+  inProgress: { practiceId: number; title: string; area: PracticeArea; level: number }[];
+  areas: { area: PracticeArea; doneCount: number }[];
+  recent: {
+    practiceId: number;
+    title: string;
+    area: PracticeArea;
+    completedAt: string;
+  }[];
+}
+
 /* ---------- 학습 콘텐츠 ---------- */
 /** [제목, 설명, 영역(emo|help|safe), 단계(0~4), 상태(done|doing|next), 이동 경로(없으면 ''), 분류 라벨] */
 export type PracticeRow = [
@@ -192,6 +232,8 @@ export interface SignalStudent {
   msgDate: string;
   msgText: string;
   word: string;
+  handled?: boolean;
+  memo?: string;
 }
 
 /* ---------- 요청(쓰기) 본문 ---------- */

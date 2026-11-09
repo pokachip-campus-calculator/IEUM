@@ -26,6 +26,7 @@ export default class Scenario extends Component<any, any> {
       feels: [],
       note: "",
       saved: false,
+      apiError: "",
     };
   }
   renderVals() {
@@ -100,14 +101,23 @@ export default class Scenario extends Component<any, any> {
       savedFeels: s.feels,
       isSaved: s.saved,
       notSaved: !s.saved,
-      save: () => {
-        void recordService.saveScenarioReflection({
-          scenario: s.sid,
-          choice: s.pick,
-          feelings: s.feels,
-          note: s.note,
-        });
-        this.setState({ saved: true });
+      apiError: s.apiError,
+      save: async () => {
+        this.setState({ apiError: "" });
+        try {
+          await recordService.saveScenarioReflection({
+            practiceId: this.props.practiceId,
+            scenario: s.sid,
+            choice: s.pick,
+            feelings: s.feels,
+            note: s.note,
+          });
+          this.setState({ saved: true });
+        } catch (error) {
+          this.setState({
+            apiError: error instanceof Error ? error.message : "기록을 저장하지 못했어요.",
+          });
+        }
       },
       editSaved: () => this.setState({ saved: false }),
       onNote: (e) => this.setState({ note: e.target.value, saved: false }),
@@ -416,6 +426,11 @@ export default class Scenario extends Component<any, any> {
                           </button>
                         </div>
                       ) : null}{" "}
+                      {v.apiError ? (
+                        <p className="ie-error-text" role="alert">
+                          {v.apiError}
+                        </p>
+                      ) : null}
                       {v.isSaved ? (
                         <div className="ie-ask-saved" role="status">
                           <svg

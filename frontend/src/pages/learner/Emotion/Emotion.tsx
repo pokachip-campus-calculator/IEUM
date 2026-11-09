@@ -24,6 +24,7 @@ export default class Emotion extends Component<any, any> {
       clues: ["표정 · 시선을 아래로 향해요"],
       feels: ["서운함", "걱정"],
       note: "",
+      apiError: "",
     };
   }
   renderVals() {
@@ -78,15 +79,27 @@ export default class Emotion extends Component<any, any> {
         toggle: () => toggleFeel(f),
       })),
       swapNote: s.note,
+      apiError: s.apiError,
       canNext: any,
       cantNext: !any,
       pickedClues: s.clues,
       pickedFeels: s.feels,
       noClues: s.clues.length === 0,
       noFeels: s.feels.length === 0,
-      toReflect: () => {
-        void recordService.saveEmotionReading({ clues: s.clues, feelings: s.feels });
-        this.setState({ phase: "reflect" });
+      toReflect: async () => {
+        this.setState({ apiError: "" });
+        try {
+          await recordService.saveEmotionReading({
+            practiceId: this.props.practiceId,
+            clues: s.clues,
+            feelings: s.feels,
+          });
+          this.setState({ phase: "reflect" });
+        } catch (error) {
+          this.setState({
+            apiError: error instanceof Error ? error.message : "기록을 저장하지 못했어요.",
+          });
+        }
       },
       back: () => this.setState({ phase: "pick" }),
     };
@@ -260,6 +273,11 @@ export default class Emotion extends Component<any, any> {
                             단서나 마음을 하나 이상 고르면 다음으로 갈 수 있어요.
                           </span>
                         </>
+                      ) : null}
+                      {v.apiError ? (
+                        <p className="ie-error-text" role="alert">
+                          {v.apiError}
+                        </p>
                       ) : null}
                     </div>
                   </div>

@@ -32,6 +32,7 @@ export default class UnitVideo extends Component<any, any> {
       rate: "1",
       paused: false,
       hint: "",
+      apiError: "",
     };
   }
   componentDidMount() {
@@ -158,14 +159,24 @@ export default class UnitVideo extends Component<any, any> {
       isPost: s.phase === "post",
       isCompare: s.phase === "compare",
       isDone: s.phase === "done",
-      finishUnit: () => {
-        void recordService.completeUnit({
-          kind: "video",
-          level: this.props.level,
-          pre: s.pre,
-          post: s.post,
-        });
-        this.setState({ phase: "done" });
+      apiError: s.apiError,
+      finishUnit: async () => {
+        this.setState({ apiError: "" });
+        try {
+          await recordService.completeUnit({
+            practiceId: this.props.practiceId,
+            kind: "video",
+            level: this.props.level,
+            pre: s.pre,
+            post: s.post,
+          });
+        } catch (error) {
+          this.setState({
+            apiError: error instanceof Error ? error.message : "학습 기록을 저장하지 못했어요.",
+          });
+        } finally {
+          this.setState({ phase: "done" });
+        }
       },
       preQs: mkQs("pre"),
       postQs: mkQs("post"),
@@ -1097,6 +1108,11 @@ export default class UnitVideo extends Component<any, any> {
                           {v.levelText}을 끝까지 해 봤어요. 점수는 없어요. 내 학습 기록에서 그때와
                           지금을 다시 볼 수 있어요.
                         </p>
+                        {v.apiError ? (
+                          <p className="ie-error-text" role="alert">
+                            {v.apiError}
+                          </p>
+                        ) : null}
                         <div
                           className="ie-grid-auto"
                           style={{
@@ -1104,14 +1120,6 @@ export default class UnitVideo extends Component<any, any> {
                             gridTemplateColumns: "repeat(auto-fit,minmax(min(200px,100%),1fr))",
                           }}
                         >
-                          <A
-                            className="ie-card"
-                            href={ROUTES.areas}
-                            style={{ gap: "6px", textDecoration: "none", color: "inherit" }}
-                          >
-                            <b className="ie-body ie-strong">다음 연습 고르기</b>
-                            <span className="ie-body ie-sub">마음이 가는 연습부터 골라요.</span>
-                          </A>{" "}
                           <A
                             className="ie-card"
                             href={ROUTES.talk}
@@ -1153,6 +1161,9 @@ export default class UnitVideo extends Component<any, any> {
                           <button type="button" className="ie-btn ie-btn--text" onClick={v.again}>
                             이 단위 다시 해 보기
                           </button>
+                          <A className="ie-btn ie-btn--primary ie-btn--lg" href={ROUTES.areas}>
+                            다음 연습 고르기
+                          </A>
                           <A className="ie-btn ie-btn--outline" href={ROUTES.home}>
                             홈으로 돌아가기
                           </A>

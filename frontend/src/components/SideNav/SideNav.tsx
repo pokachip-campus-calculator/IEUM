@@ -5,10 +5,36 @@
 import { Component, Fragment } from "react";
 import { A } from "@/lib/A";
 import { ROUTES } from "@/routes";
+import {
+  badgeService,
+  type BadgeCounts,
+} from "@/api/services/badgeService";
+import { BADGE_COUNTS_CHANGED } from "@/api/services/badgeEvents";
 import "./SideNav.css";
 
 export default class SideNav extends Component<any, any> {
   [key: string]: any;
+
+  constructor(props) {
+    super(props);
+    this.state = { unreadNotifications: 0, unreadReplies: 0 };
+  }
+
+  componentDidMount() {
+    window.addEventListener(BADGE_COUNTS_CHANGED, this.refreshBadges);
+    this.refreshBadges();
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener(BADGE_COUNTS_CHANGED, this.refreshBadges);
+  }
+
+  refreshBadges = () => {
+    badgeService.getCounts().then(
+      (counts: BadgeCounts) => this.setState(counts),
+      (error) => console.error("메뉴 배지 정보를 불러오지 못했습니다:", error),
+    );
+  }
 
   renderVals() {
     const a = this.props.active ?? "home";
@@ -28,7 +54,14 @@ export default class SideNav extends Component<any, any> {
       t[k] = tOn ? "ie-sn-tab is-on" : "ie-sn-tab";
       tcur[k] = a === k ? "page" : tOn ? "true" : "false";
     });
-    return { cur, c, t, tcur };
+    return {
+      cur,
+      c,
+      t,
+      tcur,
+      unreadNotifications: this.state.unreadNotifications,
+      unreadReplies: this.state.unreadReplies,
+    };
   }
 
   render() {
@@ -138,6 +171,11 @@ export default class SideNav extends Component<any, any> {
                     </svg>
                   </span>
                   <span className="ie-sn-txt">이음상담소</span>
+                  {v.unreadReplies > 0 ? (
+                    <span className="ie-newtag" aria-label={`새 답변 ${v.unreadReplies}개`}>
+                      {v.unreadReplies}
+                    </span>
+                  ) : null}
                 </A>
               </li>
               <li>
@@ -180,9 +218,14 @@ export default class SideNav extends Component<any, any> {
                     </svg>
                   </span>
                   <span className="ie-sn-txt">알림</span>
-                  <span className="ie-newtag" aria-label="안 읽은 알림 3개">
-                    3
-                  </span>
+                  {v.unreadNotifications > 0 ? (
+                    <span
+                      className="ie-newtag"
+                      aria-label={`안 읽은 알림 ${v.unreadNotifications}개`}
+                    >
+                      {v.unreadNotifications}
+                    </span>
+                  ) : null}
                 </A>
               </li>
             </ul>
@@ -301,6 +344,11 @@ export default class SideNav extends Component<any, any> {
               </svg>
             </span>
             <span className="ie-sn-ttx">이음상담소</span>
+            {v.unreadReplies > 0 ? (
+              <span className="ie-newtag" aria-label={`새 답변 ${v.unreadReplies}개`}>
+                {v.unreadReplies}
+              </span>
+            ) : null}
           </A>{" "}
           <A className={v.t.noti} href={ROUTES.notifications} aria-current={v.tcur.noti}>
             <span className="ie-sn-tic">
@@ -315,9 +363,14 @@ export default class SideNav extends Component<any, any> {
                   fill="currentColor"
                 />
               </svg>
-              <span className="ie-newtag" aria-label="안 읽은 알림 3개">
-                3
-              </span>
+              {v.unreadNotifications > 0 ? (
+                <span
+                  className="ie-newtag"
+                  aria-label={`안 읽은 알림 ${v.unreadNotifications}개`}
+                >
+                  {v.unreadNotifications}
+                </span>
+              ) : null}
             </span>
             <span className="ie-sn-ttx">알림</span>
           </A>

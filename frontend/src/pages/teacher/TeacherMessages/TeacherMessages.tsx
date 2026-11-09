@@ -14,7 +14,14 @@ export default class TeacherMessages extends Component<any, any> {
 
   constructor(props) {
     super(props);
-    this.state = { f: "need", sel: "t2", reply: "", tried: false, unsent: false };
+    this.state = {
+      f: "need",
+      sel: props.messages?.[0]?.id ?? "t2",
+      reply: "",
+      tried: false,
+      unsent: false,
+      apiError: "",
+    };
   }
   renderVals() {
     const s = this.state;
@@ -73,14 +80,22 @@ export default class TeacherMessages extends Component<any, any> {
       rBad: bad,
       rCls: bad ? "ie-textarea is-error" : "ie-textarea",
       unsent: s.unsent,
+      apiError: s.apiError,
       onReply: (e) => this.setState({ reply: e.target.value, unsent: false }),
-      send: () => {
+      send: async () => {
         if (s.reply.trim() === "") {
           this.setState({ tried: true, unsent: false });
           return;
         }
-        void teacherService.sendReply(s.sel, s.reply);
-        this.setState({ tried: false, reply: "", unsent: true });
+        this.setState({ apiError: "" });
+        try {
+          await teacherService.sendReply(s.sel, s.reply);
+          this.setState({ tried: false, reply: "", unsent: true });
+        } catch (error) {
+          this.setState({
+            apiError: error instanceof Error ? error.message : "답장을 보내지 못했어요.",
+          });
+        }
       },
     };
   }
@@ -256,6 +271,11 @@ export default class TeacherMessages extends Component<any, any> {
                     </div>
                     {v.rBad ? (
                       <span className="ie-error-text">답장 내용을 적어 주세요.</span>
+                    ) : null}
+                    {v.apiError ? (
+                      <span className="ie-error-text" role="alert">
+                        {v.apiError}
+                      </span>
                     ) : null}
                   </div>
                   {v.unsent ? (
