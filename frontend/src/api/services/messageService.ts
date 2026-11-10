@@ -108,7 +108,11 @@ export const messageService = {
     if (USE_MOCK) return;
     const topic = topicValues[req.topic];
     if (!topic) throw new Error("유효한 쪽지 주제를 선택해 주세요.");
-    await http("POST", "/threads", { topic, body: req.body });
+    await http("POST", "/threads", {
+      topic,
+      body: req.body,
+      ...(req.practiceId ? { practiceId: req.practiceId } : {}),
+    });
     notifyBadgeCountsChanged();
   },
   /** POST /threads/{id}/messages — 받은 답변에 이어서 쓰기 */

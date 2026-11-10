@@ -492,6 +492,12 @@ export default class Scenario extends Component<any, any> {
                         </A>{" "}
                         <A className="ie-btn ie-btn--outline ie-btn--lg" href={ROUTES.areas}>
                           다음 연습 고르기
+                        </A>{" "}
+                        <A
+                          className="ie-btn ie-btn--outline ie-btn--lg"
+                          href={`${ROUTES.talk}?practiceId=${this.props.practiceId}`}
+                        >
+                          이음쌤에게 쪽지 쓰기
                         </A>
                       </div>
                     </section>

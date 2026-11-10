@@ -289,6 +289,8 @@ export interface GuardianConsentRequest {
 export interface NoteRequest {
   topic: string;
   body: string;
+  /** 시나리오 연습에서 이어서 쓰는 쪽지면 그 연습 번호(이음쌤 화면의 "연결된 시나리오"가 돼요) */
+  practiceId?: number;
 }
 export interface PublishMaterialsRequest {
   tab: string;

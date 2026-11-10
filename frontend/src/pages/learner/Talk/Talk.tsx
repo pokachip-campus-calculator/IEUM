@@ -48,7 +48,12 @@ export default class Talk extends Component<any, any> {
         }
         this.setState({ apiError: "" });
         try {
-          await messageService.sendNote({ topic: cur.topic, body: cur.body });
+          await messageService.sendNote({
+            topic: cur.topic,
+            body: cur.body,
+            // 시나리오 연습에서 넘어왔으면 그 연습과 이어서 보내요(이음쌤 화면의 "연결된 시나리오")
+            practiceId: this.props.practiceId,
+          });
           this.setState({ tried: false, sent: true, popup: true });
         } catch (error) {
           this.setState({
@@ -85,6 +90,13 @@ export default class Talk extends Component<any, any> {
                 <p className="ie-body-lg ie-sub">
                   이음쌤에게 쪽지를 보낼 수 있어요. 짧게 적어도 괜찮아요.
                 </p>
+                {this.props.practiceId ? (
+                  <p className="ie-body ie-sub" style={{ marginTop: "6px" }}>
+                    {this.props.practiceTitle
+                      ? `‘${this.props.practiceTitle}’ 연습과 이어서 보내요.`
+                      : "방금 한 연습과 이어서 보내요."}
+                  </p>
+                ) : null}
                 <div className="ie-banner-actions">
                   <span className={v.statusCls}>{v.statusLabel}</span>
                   <A className="ie-btn ie-btn--outline" href={ROUTES.messages}>

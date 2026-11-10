@@ -43,6 +43,18 @@ export const practiceService = {
     return http("GET", `/practices/${id}`);
   },
 
+  /** 연습 제목만 필요할 때(쪽지 보내기 화면의 "연결된 연습" 안내). 못 가져오면 null 이에요. */
+  async getPracticeTitle(id: number): Promise<string | null> {
+    // 목업의 연습 번호와 제목은 서버처럼 짝이 맞지 않아서, 엉뚱한 제목을 보여 주지 않도록 비워 둬요.
+    if (USE_MOCK) return null;
+    try {
+      const detail = await http<{ title: string }>("GET", `/practices/${id}`);
+      return detail.title ?? null;
+    } catch {
+      return null;
+    }
+  },
+
   /** GET /practices?area=&level=&q= */
   async getPractices(filters: { area?: PracticeArea; level?: number; q?: string } = {}): Promise<PracticeItem[]> {
     if (USE_MOCK) {
