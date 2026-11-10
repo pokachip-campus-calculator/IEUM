@@ -1,11 +1,11 @@
 import { USE_MOCK, http } from "../client";
-import type { LearningRecord } from "../types";
+import type { LearningRecord, PracticeArea } from "../types";
 import * as records from "../mock/records";
 
 interface ApiLearningRecord {
   practiceId: number;
   title: string;
-  area: "SAFETY" | "RELATION" | "MIND" | "LIFE" | "INDEPENDENCE";
+  area: PracticeArea;
   level: number;
   status: "DONE" | "IN_PROGRESS";
   completedAt: string | null;
@@ -20,6 +20,8 @@ interface ApiLearningRecordsResponse {
 
 const areaLabel = {
   SAFETY: "safe",
+  HELP: "rel",
+  EMOTION: "mind",
   RELATION: "rel",
   MIND: "mind",
   LIFE: "life",

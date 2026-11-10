@@ -1,7 +1,7 @@
 import type { HomeResponse } from "../types";
 
 export const home: HomeResponse = {
-  nickname: "하늘",
+  nickname: "친구",
   unreadMessages: 1,
   doneTotal: 4,
   resume: {

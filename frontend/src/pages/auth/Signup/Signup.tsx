@@ -57,6 +57,7 @@ export default class Signup extends Component<any, any> {
       uid: "",
       nick: "",
       pw: "",
+      pwConfirm: "",
       email: "",
       org: "",
       birth: "",
@@ -162,6 +163,7 @@ export default class Signup extends Component<any, any> {
       uid: s.uid.trim().length < 4,
       nick: s.nick.trim() === "",
       pw: s.pw.length < 8,
+      pwConfirm: s.pwConfirm === "" || s.pwConfirm !== s.pw,
       birth: !birthOk,
       phone: !/^0[0-9]{9,10}$/.test(s.phone.replace(/[^0-9]/g, "")),
       mail: s.mail !== "verified",
@@ -258,6 +260,7 @@ export default class Signup extends Component<any, any> {
       uid: s.uid,
       nick: s.nick,
       pw: s.pw,
+      pwConfirm: s.pwConfirm,
       email: s.email,
       org: s.org,
       submitLabel: under14 ? "다음 · 보호자 동의" : "가입하기",
@@ -265,6 +268,7 @@ export default class Signup extends Component<any, any> {
       idBad: bad.uid,
       nickBad: bad.nick,
       pwBad: bad.pw,
+      pwConfirmBad: s.tried && (s.pwConfirm === "" || s.pwConfirm !== s.pw),
       birthBad: bad.birth,
       phoneBad: bad.phone,
       birthMsg,
@@ -278,6 +282,7 @@ export default class Signup extends Component<any, any> {
         ["uid", "아이디"],
         ["nick", "닉네임"],
         ["pw", "비밀번호"],
+        ["pwConfirm", "비밀번호 재확인"],
         ["birth", "생년월일"],
         ["phone", "연락처"],
         ["mail", "이메일 인증"],
@@ -326,10 +331,14 @@ export default class Signup extends Component<any, any> {
       idCls: cls(bad.uid),
       nickCls: cls(bad.nick),
       pwCls: cls(bad.pw),
+      pwConfirmCls: cls(
+        s.tried && (s.pwConfirm === "" || s.pwConfirm !== s.pw),
+      ),
       onName: (e) => this.setState({ name: e.target.value }),
       onUid: (e) => this.setState({ uid: e.target.value }),
       onNick: (e) => this.setState({ nick: e.target.value }),
       onPw: (e) => this.setState({ pw: e.target.value }),
+      onPwConfirm: (e) => this.setState({ pwConfirm: e.target.value }),
       onBirth: (e) => this.setState({ birth: e.target.value }),
       onPhone: (e) => this.setState({ phone: e.target.value }),
       onEmail: (e) =>
@@ -356,6 +365,7 @@ export default class Signup extends Component<any, any> {
           uid: g("su-id", s.uid),
           nick: g("su-nick", s.nick),
           pw: g("su-pw", s.pw),
+          pwConfirm: g("su-pw-confirm", s.pwConfirm),
           birth: g("su-birth", s.birth),
           phone: g("su-phone", s.phone),
           email: g("su-mail", s.email),
@@ -381,6 +391,7 @@ export default class Signup extends Component<any, any> {
           uid: v.uid.trim().length < 4,
           nick: v.nick.trim() === "",
           pw: v.pw.length < 8,
+          pwConfirm: v.pwConfirm === "" || v.pwConfirm !== v.pw,
           birth: !okBirth,
           phone: !/^0[0-9]{9,10}$/.test(v.phone.replace(/[^0-9]/g, "")),
           mail: s.mail !== "verified",
@@ -391,6 +402,7 @@ export default class Signup extends Component<any, any> {
             ["uid", "su-id"],
             ["nick", "su-nick"],
             ["pw", "su-pw"],
+            ["pwConfirm", "su-pw-confirm"],
             ["birth", "su-birth"],
             ["phone", "su-phone"],
             ["mail", "su-mail"],
@@ -770,6 +782,32 @@ export default class Signup extends Component<any, any> {
                       {v.pwBad ? (
                         <span id="su-pw-e" className="ie-error-text">
                           비밀번호를 8자 이상으로 적어 주세요.
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="ie-field">
+                      <label className="ie-label" htmlFor="su-pw-confirm">
+                        {"비밀번호 재확인 "}
+                        <span className="ie-req">필수</span>
+                      </label>{" "}
+                      <input
+                        id="su-pw-confirm"
+                        className={v.pwConfirmCls}
+                        type="password"
+                        autoComplete="new-password"
+                        value={v.pwConfirm}
+                        onChange={v.onPwConfirm}
+                        aria-invalid={v.pwConfirmBad}
+                        aria-describedby="su-pw-confirm-h su-pw-confirm-e"
+                      />{" "}
+                      <span id="su-pw-confirm-h" className="ie-help">
+                        비밀번호를 한 번 더 적어 주세요.
+                      </span>{" "}
+                      {v.pwConfirmBad ? (
+                        <span id="su-pw-confirm-e" className="ie-error-text">
+                          {v.pwConfirm === ""
+                            ? "비밀번호를 다시 적어 주세요."
+                            : "비밀번호가 서로 달라요. 다시 확인해 주세요."}
                         </span>
                       ) : null}
                     </div>
