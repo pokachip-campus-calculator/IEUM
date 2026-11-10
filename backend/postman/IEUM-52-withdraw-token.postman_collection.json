@@ -1,0 +1,661 @@
+{
+  "info": {
+    "name": "IEUM #52 통합 점검: 탈퇴한 계정의 토큰으로 학습자 API 전체 호출 (모두 401이어야 한다)",
+    "description": "위에서 아래로 순서대로 실행한다(Runner로 한 번에 돌려도 된다). #52 통합 점검의 \"탈퇴\" 항목용이다.\n\n무엇을 보나: 학습자를 만들고 쪽지를 보낸 뒤 탈퇴시킨다. 그 학습자의 토큰은 만료(최대 1시간) 전이라 필터는 통과한다. 이 토큰으로 학습자 API 03~15, 22~24를 모두 불러서 401이 오는지 본다. 401이 아닌 응답(200, 404, 500)이 나오는 API가 있으면 그 API는 탈퇴한 계정을 막지 못하는 곳이다. 그 항목이 이 점검의 결과물이다.\n\n준비: MySQL에 db/ 스키마·시드, 서버(localhost:8080). 이음쌤(ieumtea01)은 이 컬렉션이 가입시킨다(이미 있으면 409여도 괜찮음).\n\n주의: 학습자 계정(wd + 8자리 숫자)은 실행할 때마다 새로 만들고 마지막에 이미 탈퇴한 상태다. 이음쌤 쪽 알림은 남는다.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "password",
+      "value": "ieumtest1234"
+    },
+    {
+      "key": "teacherLoginId",
+      "value": "ieumtea01"
+    },
+    {
+      "key": "teacherPassword",
+      "value": "ieumteach1234"
+    },
+    {
+      "key": "runId",
+      "value": ""
+    },
+    {
+      "key": "studentToken",
+      "value": ""
+    },
+    {
+      "key": "threadId",
+      "value": ""
+    },
+    {
+      "key": "notiId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 학습자 가입 (실행할 때마다 새 계정, 201)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('runId', String(Date.now()).slice(-8));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201', () => pm.response.to.have.status(201));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"STUDENT\",\n  \"loginId\": \"wd{{runId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"테스트\",\n  \"nickname\": \"탈퇴{{runId}}\",\n  \"birthDate\": \"2008-01-01\",\n  \"phone\": \"01012345678\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "02 학습자 로그인 (토큰 자동 저장)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('studentToken', pm.response.json().token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loginId\": \"wd{{runId}}\",\n  \"password\": \"{{password}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "00 사전 - 이음쌤 가입 (이미 있으면 409여도 괜찮음)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"TEACHER\",\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{teacherPassword}}\",\n  \"name\": \"김쌤\",\n  \"nickname\": \"테스트 이음쌤\",\n  \"birthDate\": \"1990-05-20\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "00 사전 - 쪽지 한 건 보내기 (201, 탈퇴하면 지워질 데이터 만들기)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('threadId', pm.response.json().id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/threads",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"topic\": \"ONLINE\",\n  \"body\": \"탈퇴 점검용 쪽지입니다\"\n}"
+        }
+      }
+    },
+    {
+      "name": "00 사전 - 내 알림에서 알림 id 하나 저장 (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const i = pm.response.json().items; if (i && i.length) pm.collectionVariables.set('notiId', i[0].id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications"
+      }
+    },
+    {
+      "name": "06 탈퇴 (204)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('204', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/me/withdraw"
+      }
+    },
+    {
+      "name": "03 탈퇴 뒤 토큰: 내 정보 조회 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/me"
+      }
+    },
+    {
+      "name": "04 탈퇴 뒤 토큰: 내 정보 수정 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/me",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nickname\": \"수정\"\n}"
+        }
+      }
+    },
+    {
+      "name": "05 탈퇴 뒤 토큰: 비밀번호 변경 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/me/password",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"currentPassword\": \"{{password}}\",\n  \"newPassword\": \"newpass1234\"\n}"
+        }
+      }
+    },
+    {
+      "name": "06 탈퇴 뒤 토큰: 다시 탈퇴 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/me/withdraw"
+      }
+    },
+    {
+      "name": "07 탈퇴 뒤 토큰: 홈 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/home"
+      }
+    },
+    {
+      "name": "08 탈퇴 뒤 토큰: 연습 목록 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/practices"
+      }
+    },
+    {
+      "name": "09 탈퇴 뒤 토큰: 연습 상세 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/practices/1"
+      }
+    },
+    {
+      "name": "10 탈퇴 뒤 토큰: 진행 저장 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/practices/1/record",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"answers\": {\n    \"cardsRead\": [\n      1\n    ]\n  },\n  \"done\": false\n}"
+        }
+      }
+    },
+    {
+      "name": "11 탈퇴 뒤 토큰: 내 학습 기록 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/records"
+      }
+    },
+    {
+      "name": "12 탈퇴 뒤 토큰: 쪽지 보내기 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/threads",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"topic\": \"ONLINE\",\n  \"body\": \"탈퇴한 계정의 쪽지\"\n}"
+        }
+      }
+    },
+    {
+      "name": "13 탈퇴 뒤 토큰: 쪽지함 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/threads"
+      }
+    },
+    {
+      "name": "14 탈퇴 뒤 토큰: 쪽지 상세 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/threads/{{threadId}}"
+      }
+    },
+    {
+      "name": "15 탈퇴 뒤 토큰: 이어쓰기 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/threads/{{threadId}}/messages",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"body\": \"탈퇴한 계정의 이어쓰기\"\n}"
+        }
+      }
+    },
+    {
+      "name": "22 탈퇴 뒤 토큰: 알림 목록 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications"
+      }
+    },
+    {
+      "name": "23 탈퇴 뒤 토큰: 알림 읽음 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/{{notiId}}/read"
+      }
+    },
+    {
+      "name": "24 탈퇴 뒤 토큰: 알림 모두 읽음 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/read-all"
+      }
+    },
+    {
+      "name": "02 탈퇴한 계정으로 다시 로그인 (401 BAD_CREDENTIALS)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));",
+              "pm.test('BAD_CREDENTIALS', () => pm.expect(pm.response.json().code).to.eql('BAD_CREDENTIALS'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loginId\": \"wd{{runId}}\",\n  \"password\": \"{{password}}\"\n}"
+        }
+      }
+    }
+  ]
+}
