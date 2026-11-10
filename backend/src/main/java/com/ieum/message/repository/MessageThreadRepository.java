@@ -12,4 +12,9 @@ public interface MessageThreadRepository extends JpaRepository<MessageThread, Lo
     List<MessageThread> findByStudentIdOrderByLastMessageAtDescIdDesc(Long studentId);
 
     List<MessageThread> findByStudentIdAndStatusOrderByLastMessageAtDescIdDesc(Long studentId, ThreadStatus status);
+
+    // 이음쌤 한 명의 모든 쪽지 묶음(N+1 금지). 호출 쪽에서 studentId별로 묶어 집계한다
+    List<MessageThread> findByTeacherId(Long teacherId);
+
+    long countByTeacherIdAndStatus(Long teacherId, ThreadStatus status);
 }

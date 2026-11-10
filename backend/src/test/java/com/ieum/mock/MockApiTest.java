@@ -134,15 +134,10 @@ class MockApiTest {
     }
 
     @Test
-    void 이음쌤_API_16_21은_이음쌤만_열린다() throws Exception {
-        mockMvc.perform(get("/api/v1/teacher/summary").header("Authorization", student()))
+    void 이음쌤_API_19_21은_이음쌤만_열린다() throws Exception {
+        // 16~18(요약·학습자 목록·상세)은 TeacherController가 실제로 구현해서 TeacherHomeApiTest가 맡는다
+        mockMvc.perform(get("/api/v1/teacher/threads").header("Authorization", student()))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/v1/teacher/summary").header("Authorization", teacher()))
-                .andExpect(jsonPath("$.studentCount").value(5));
-        mockMvc.perform(get("/api/v1/teacher/students").param("q", "하").header("Authorization", teacher()))
-                .andExpect(jsonPath("$.items.length()").value(1));
-        mockMvc.perform(get("/api/v1/teacher/students/12").header("Authorization", teacher()))
-                .andExpect(jsonPath("$.records[1].emotion.feelings[0]").value("서운함"));
         mockMvc.perform(get("/api/v1/teacher/threads").param("status", "WAITING").header("Authorization", teacher()))
                 .andExpect(jsonPath("$.items.length()").value(1));
         mockMvc.perform(get("/api/v1/teacher/signals").param("status", "OPEN").header("Authorization", teacher()))
