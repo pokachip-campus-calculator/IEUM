@@ -186,9 +186,6 @@ export default class Profile extends Component<any, any> {
                   닉네임과 비밀번호를 바꾸고, 이음쌤 배정을 확인해요.
                 </p>
                 <div className="ie-banner-actions">
-                  <A className="ie-btn ie-btn--text" href={ROUTES.terms}>
-                    약관 보기
-                  </A>
                   <A
                     className="ie-btn ie-btn--outline"
                     href={ROUTES.landing}
