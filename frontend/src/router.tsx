@@ -232,7 +232,7 @@ const pageRoutes: RouteObject[] = [
     path: ROUTES.profile,
     element: <Page C={Profile} />,
     loader: async () => ({
-      profile: await loadLearnerData(() => profileService.getProfile()),
+      profile: await loadSharedData(() => profileService.getProfile()),
     }),
   },
   {

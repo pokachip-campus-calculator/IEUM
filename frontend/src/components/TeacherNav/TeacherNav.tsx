@@ -45,7 +45,7 @@ export default class TeacherNav extends Component<any, any> {
       c: any = {},
       t: any = {},
       tcur: any = {};
-    ["teacher", "tupl", "tmsg", "tsig", "noti"].forEach((k) => {
+    ["teacher", "tupl", "tmsg", "tsig", "noti", "profile"].forEach((k) => {
       cur[k] = a === k ? "page" : "false";
       c[k] = a === k ? "ie-sn-link is-on" : "ie-sn-link";
       t[k] = a === k ? "ie-sn-tab is-on" : "ie-sn-tab";
@@ -199,8 +199,42 @@ export default class TeacherNav extends Component<any, any> {
               </li>
             </ul>
           </div>
+          <div className="ie-sn-group">
+            <p className="ie-sn-label" aria-hidden="true">
+              SUPPORT
+            </p>
+            <ul className="ie-sn-list" aria-label="지원">
+              <li>
+                <A
+                  className={v.c.profile}
+                  href={ROUTES.profile}
+                  aria-current={v.cur.profile}
+                  data-label="내 정보"
+                >
+                  <span className="ie-sn-ic">
+                    <svg width="22" height="22" viewBox="0 0 256 256" aria-hidden="true">
+                      <path
+                        d="M192,96a64,64,0,1,1-64-64A64,64,0,0,1,192,96Z"
+                        fill="currentColor"
+                        opacity=".26"
+                      />
+                      <path
+                        d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </span>
+                  <span className="ie-sn-txt">내 정보</span>
+                </A>
+              </li>
+            </ul>
+          </div>
         </nav>
-        <nav className="ie-sn-tabs" aria-label="하단 메뉴">
+        <nav
+          className="ie-sn-tabs"
+          aria-label="하단 메뉴"
+          style={{ gridTemplateColumns: "repeat(6, minmax(0, 1fr))" }}
+        >
           <A className={v.t.teacher} href={ROUTES.teacher} aria-current={v.tcur.teacher}>
             <span className="ie-sn-tic">
               <svg width="24" height="24" viewBox="0 0 256 256" aria-hidden="true">
@@ -285,6 +319,23 @@ export default class TeacherNav extends Component<any, any> {
               ) : null}
             </span>
             <span className="ie-sn-ttx">알림</span>
+          </A>
+          {" "}
+          <A className={v.t.profile} href={ROUTES.profile} aria-current={v.tcur.profile}>
+            <span className="ie-sn-tic">
+              <svg width="24" height="24" viewBox="0 0 256 256" aria-hidden="true">
+                <path
+                  d="M192,96a64,64,0,1,1-64-64A64,64,0,0,1,192,96Z"
+                  fill="currentColor"
+                  opacity=".26"
+                />
+                <path
+                  d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </span>
+            <span className="ie-sn-ttx">내 정보</span>
           </A>
         </nav>
       </div>

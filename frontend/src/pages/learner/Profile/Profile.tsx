@@ -3,13 +3,14 @@
  * (원본 디자인: Profile.dc.html)
  */
 import { Component, Fragment } from "react";
-import { clearSessionUser, profileService } from "@/api";
+import { clearSessionUser, profileService, session } from "@/api";
 import { A } from "@/lib/A";
 import type { CSSProperties } from "react";
 import { img } from "@/assets";
 import { ROUTES } from "@/routes";
 import Header from "@/components/Header/Header";
 import SideNav from "@/components/SideNav/SideNav";
+import TeacherNav from "@/components/TeacherNav/TeacherNav";
 
 export default class Profile extends Component<any, any> {
   [key: string]: any;
@@ -163,14 +164,16 @@ export default class Profile extends Component<any, any> {
 
   render() {
     const v: any = this.renderVals();
+    // 이음쌤도 같은 화면을 써요(이음쌤 배정·탈퇴는 학습자 전용이라 이음쌤에게는 숨겨요)
+    const isTeacher = session.user.role === "teacher";
     return (
       <div className="ie-root ie-shell">
         <div className="ie-header-slot">
-          <Header active="profile" />
+          <Header active="profile" role={isTeacher ? "teacher" : undefined} />
         </div>
         <div className="ie-body-row">
           <div className="ie-side-slot">
-            <SideNav active="profile" />
+            {isTeacher ? <TeacherNav active="profile" /> : <SideNav active="profile" />}
           </div>
           <main className="ie-main">
             <section className="ie-banner ie-banner--lav ie-in" aria-labelledby="pf-h">
@@ -183,7 +186,9 @@ export default class Profile extends Component<any, any> {
                   내 정보
                 </h1>
                 <p className="ie-body-lg ie-sub">
-                  닉네임과 비밀번호를 바꾸고, 이음쌤 배정을 확인해요.
+                  {isTeacher
+                    ? "닉네임과 비밀번호를 바꿔요."
+                    : "닉네임과 비밀번호를 바꾸고, 이음쌤 배정을 확인해요."}
                 </p>
                 <div className="ie-banner-actions">
                   <A
@@ -373,7 +378,7 @@ export default class Profile extends Component<any, any> {
                   </div>
                 </section>
               </div>
-              <aside aria-label="내 정보 요약">
+              <aside aria-label="내 정보 요약" style={isTeacher ? { alignSelf: "start" } : undefined}>
                 <section
                   className="ie-profcard ie-pop"
                   aria-label="내 프로필 요약"
@@ -387,6 +392,7 @@ export default class Profile extends Component<any, any> {
                   </b>
                   <span className="ie-body ie-sub">{v.loginId}</span>
                 </section>
+                {isTeacher ? null : (
                 <section
                   className="ie-card ie-card--mint ie-tcard ie-pop"
                   aria-labelledby="pf-teacher"
@@ -425,6 +431,8 @@ export default class Profile extends Component<any, any> {
                   </div>
                   <p className="ie-help">이음쌤 없이도 학습은 끝까지 할 수 있어요.</p>
                 </section>
+                )}
+                {isTeacher ? null : (
                 <section
                   className="ie-card ie-danger-zone"
                   aria-labelledby="pf-out"
@@ -488,6 +496,7 @@ export default class Profile extends Component<any, any> {
                     </div>
                   ) : null}
                 </section>
+                )}
               </aside>
             </div>
           </main>
