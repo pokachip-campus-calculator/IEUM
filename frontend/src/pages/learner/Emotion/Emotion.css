@@ -1,8 +1,0 @@
-.ie-main .ie-bubble {
-  border-radius: 20px;
-  box-shadow: 0 3px 10px -6px rgba(40, 51, 76, 0.26);
-  backdrop-filter: none;
-}
-.ie-main .ie-story {
-  gap: 36px;
-}
