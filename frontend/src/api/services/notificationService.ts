@@ -23,6 +23,11 @@ interface ApiNotificationsResponse {
 
 type ApiNotificationsPayload = ApiNotificationsResponse | ApiNotification[];
 
+/** 알림이 가리키는 쪽지·학습자를 화면이 처음부터 선택하도록 ?키=id 를 붙입니다. */
+function withId(path: string, key: string, id: number | null): string {
+  return id === null ? path : `${path}?${key}=${id}`;
+}
+
 function mapNotification(notification: ApiNotification): AppNotification {
   const date = notification.createdAt.slice(0, 10);
   const [, month, day] = date.split("-");
@@ -42,10 +47,12 @@ function mapNotification(notification: ApiNotification): AppNotification {
       : notification.linkType === "SIGNAL"
         ? ROUTES.teacherSignal
         : notification.linkType === "STUDENT"
-          ? ROUTES.teacher
-          : session.user.role === "teacher"
-            ? ROUTES.teacherMessages
-            : ROUTES.messages;
+          ? withId(ROUTES.teacher, "student", notification.linkId)
+          : withId(
+              session.user.role === "teacher" ? ROUTES.teacherMessages : ROUTES.messages,
+              "thread",
+              notification.linkType === "THREAD" ? notification.linkId : null,
+            );
 
   return {
     id: String(notification.id),

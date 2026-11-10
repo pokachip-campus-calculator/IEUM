@@ -11,6 +11,7 @@ import Header from "@/components/Header/Header";
 import SideNav from "@/components/SideNav/SideNav";
 import PageStyle from "@/lib/PageStyle";
 import pageCss from "./Messages.css?inline";
+import { queryId } from "@/lib/query";
 
 export default class Messages extends Component<any, any> {
   [key: string]: any;
@@ -19,7 +20,10 @@ export default class Messages extends Component<any, any> {
     super(props);
     this.state = {
       f: "all",
-      sel: props.messages?.[0]?.id ?? "m3",
+      sel:
+        queryId("thread", (props.messages ?? []).map((m) => m.id)) ??
+        props.messages?.[0]?.id ??
+        "m3",
       messages: props.messages ?? [],
       add: "",
       tried: false,
