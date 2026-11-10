@@ -66,8 +66,13 @@ export default class TeacherMessages extends Component<any, any> {
             scenario: cur.scenario,
             picked: cur.picked,
             sig: cur.sig,
-            sigLabel: cur.sig ? "확인이 필요한 신호 있음" : "신호 없음",
-            sigCls: cur.sig ? "ie-status ie-status--wait" : "ie-status ie-status--new",
+            // 신호 없음: 아무것도 안 띄워요 · OPEN: 경고 색 · HANDLED: 청록색
+            hasSigLabel: cur.sig,
+            sigLabel: cur.sigStatus === "HANDLED" ? "신호를 확인했어요" : "확인이 필요한 신호가 있어요",
+            sigCls:
+              cur.sigStatus === "HANDLED"
+                ? "ie-status ie-status--done"
+                : "ie-status ie-status--wait",
             thread: cur.thread.map((n) => ({
               cls: n[0] === "l" ? "ie-chat-row" : "ie-chat-row is-me",
               av: n[0] === "l" ? cur.nick.slice(0, 1) : "쌤",
@@ -75,7 +80,7 @@ export default class TeacherMessages extends Component<any, any> {
               text: n[2],
             })),
           }
-        : { nick: "", scenario: "", picked: "", sig: false, sigLabel: "", sigCls: "", thread: [] },
+        : { nick: "", scenario: "", picked: "", sig: false, hasSigLabel: false, sigLabel: "", sigCls: "", thread: [] },
       starters: S.map((x) => ({
         label: x,
         pick: () => this.setState({ reply: (s.reply ? s.reply + " " : "") + x, unsent: false }),
@@ -215,7 +220,7 @@ export default class TeacherMessages extends Component<any, any> {
                       {v.cur.nick}
                       님의 쪽지
                     </h2>
-                    <span className={v.cur.sigCls}>{v.cur.sigLabel}</span>
+                    {v.cur.hasSigLabel ? <span className={v.cur.sigCls}>{v.cur.sigLabel}</span> : null}
                   </div>
                   <div className="ie-card ie-card--flat" style={{ gap: "6px" }}>
                     <span className="ie-eyebrow">연결된 시나리오</span>

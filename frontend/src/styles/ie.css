@@ -1426,7 +1426,7 @@ a.ie-card:hover,.ie-card--link:hover,.ie-pcard3:hover{
   background:linear-gradient(170deg,#DCEDFF 0%,#EAE6FF 48%,#FFEEE5 100%);
   box-shadow:0 30px 60px -28px rgba(60,72,150,.3),var(--ie-shadow-1);
   height:calc(calc(100dvh / var(--ie-ui)) - var(--ie-header-h) - 28px);min-height:620px}
-.ie-w3sky{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.ie-w3sky{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;object-fit:cover;object-position:center;user-select:none;-webkit-user-select:none}
 @keyframes ie-w3cl{from{transform:translateX(-300px)}to{transform:translateX(1500px)}}
 .ie-w3cl{animation:ie-w3cl 120s linear infinite}
 .ie-w3cl--b{animation-duration:150s;animation-delay:-60s}.ie-w3cl--c{animation-duration:135s;animation-delay:-95s}.ie-w3cl--d{animation-duration:180s;animation-delay:-30s}.ie-w3cl--a{animation-delay:-20s}

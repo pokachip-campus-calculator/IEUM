@@ -23,6 +23,7 @@ interface ApiThread {
   student: { id: number; nickname: string };
   linkedPractice: { title: string } | null;
   hasSignal: boolean;
+  signalStatus?: "OPEN" | "HANDLED" | null;
 }
 
 interface ApiThreadDetail {
@@ -116,6 +117,8 @@ function mapTeacherMessage(
     nick: summary.student.nickname,
     date: monthDay(summary.lastMessageAt),
     sig: summary.hasSignal,
+    // 신호가 있는데 상태가 안 내려오면(옛 응답) 확인이 필요한 쪽으로 보여 줘요.
+    sigStatus: summary.hasSignal ? (summary.signalStatus ?? "OPEN") : null,
     scenario: summary.linkedPractice?.title ?? topicLabels[summary.topic] ?? summary.topic,
     picked: detail.linkedPractice?.pickedChoice
       ? `고른 것: ${detail.linkedPractice.pickedChoice}`
