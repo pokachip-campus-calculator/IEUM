@@ -169,6 +169,7 @@ export default class UnitVideo extends Component<any, any> {
             level: this.props.level,
             pre: s.pre,
             post: s.post,
+            cardCount: this.props.cardCount,
           });
         } catch (error) {
           this.setState({

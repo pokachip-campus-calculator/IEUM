@@ -151,6 +151,8 @@ export interface UnitContent {
 export interface UnitVideoContent {
   questions: UnitQuestion[];
   videos: UnitVideoItem[];
+  /** 서버 연습의 카드 수. 영상 단위를 마칠 때 카드를 모두 읽은 것으로 저장하려면 필요해요. */
+  cardCount?: number;
 }
 
 /* ---------- 학습 기록 ---------- */

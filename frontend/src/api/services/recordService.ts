@@ -151,15 +151,16 @@ export const recordService = {
     level?: string;
     pre: Record<number, number>;
     post: Record<number, number>;
+    /** 서버 연습의 카드 수(영상 단위용). 없으면 카드 학습처럼 5장으로 봐요. */
+    cardCount?: number;
   }): Promise<void> {
-    if (req.kind === "video") {
-      throw new Error("영상 연습 기록 저장 API는 아직 제공되지 않아 이 학습은 화면에만 표시돼요.");
-    }
+    // 영상 단위도 서버에서는 같은 학습 단위(UNIT) 기록이에요. 마칠 때는 사전·사후 답과 카드를 모두 읽은 것으로 보내요.
+    const cards = req.kind === "video" ? (req.cardCount ?? 0) : 5;
     return this.saveUnitProgress({
       practiceId: req.practiceId,
       pre: req.pre,
       post: req.post,
-      cardsRead: [1, 2, 3, 4, 5],
+      cardsRead: Array.from({ length: cards }, (_, i) => i + 1),
       done: true,
     });
   },
