@@ -1,39 +1,23 @@
 {
   "info": {
     "name": "IEUM #50 이음쌤 홈 API (16~18)",
-    "description": "위에서 아래로 순서대로 실행한다.\n\n준비: 00 사전 요청으로 이음쌤 1명과 학습자 2명을 만든 뒤, 담당 배정은 아직 자동(12번 쪽지 보내기)이 없으므로 DB에서 한 번만 연결한다.\n\nUPDATE users s JOIN users t ON t.login_id = 'teach5000'\nSET s.teacher_id = t.id, s.teacher_assigned_at = NOW()\nWHERE s.login_id IN ('learn5001', 'learn5002');\n\n확인할 것: 담당인 학습자만 보이고(비담당은 403, 없는 id는 404), 응답에 점수·신호 등급·my_note·answers가 없다.",
+    "description": "위에서 아래로 순서대로 실행한다.\n\n준비: DB에 이음쌤(TEACHER, ACTIVE) 2명이 있어야 한다. 이 컬렉션은 이음쌤을 가입시키지 않는다. teacherLoginId·teacherPassword와 otherTeacherLoginId·otherTeacherPassword를 DB에 있는 이음쌤 2명으로 채운다. 00 사전 요청으로 학습자 2명을 만든 뒤, 담당 배정은 아직 자동(12번 쪽지 보내기)이 없으므로 DB에서 한 번만 연결한다.\n\nUPDATE users s JOIN users t ON t.login_id = '<teacherLoginId>'\nSET s.teacher_id = t.id, s.teacher_assigned_at = NOW()\nWHERE s.login_id IN ('learn5001', 'learn5002');\n\n확인할 것: 담당인 학습자만 보이고(비담당은 403, 없는 id는 404), 응답에 점수·신호 등급·my_note·answers가 없다.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:8080/api/v1" },
     { "key": "password", "value": "password123" },
-    { "key": "teacherLoginId", "value": "teach5000" },
+    { "key": "teacherLoginId", "value": "여기에이음쌤아이디" },
+    { "key": "teacherPassword", "value": "여기에이음쌤비밀번호" },
     { "key": "teacherToken", "value": "" },
-    { "key": "otherTeacherLoginId", "value": "teach5009" },
+    { "key": "otherTeacherLoginId", "value": "여기에다른이음쌤아이디" },
+    { "key": "otherTeacherPassword", "value": "여기에다른이음쌤비밀번호" },
     { "key": "otherTeacherToken", "value": "" },
     { "key": "studentLoginId", "value": "learn5001" },
     { "key": "studentToken", "value": "" },
     { "key": "studentId", "value": "" }
   ],
   "item": [
-    {
-      "name": "00 사전 - 이음쌤 가입 (이미 있으면 409여도 괜찮음)",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "url": "{{baseUrl}}/auth/signup",
-        "body": { "mode": "raw", "raw": "{\n  \"role\": \"TEACHER\",\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"김쌤\",\n  \"nickname\": \"김 이음쌤\",\n  \"birthDate\": \"1990-05-20\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}" }
-      }
-    },
-    {
-      "name": "00 사전 - 다른 이음쌤 가입 (이미 있으면 409여도 괜찮음)",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "url": "{{baseUrl}}/auth/signup",
-        "body": { "mode": "raw", "raw": "{\n  \"role\": \"TEACHER\",\n  \"loginId\": \"{{otherTeacherLoginId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"박쌤\",\n  \"nickname\": \"박 이음쌤\",\n  \"birthDate\": \"1988-03-10\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}" }
-      }
-    },
     {
       "name": "00 사전 - 학습자 하늘 가입 (이미 있으면 409여도 괜찮음)",
       "request": {
@@ -53,7 +37,7 @@
       }
     },
     {
-      "name": "00 사전 - 이음쌤 로그인 (teacherToken 자동 저장)",
+      "name": "00 사전 - 이음쌤 로그인 (DB에 있는 이음쌤 계정, teacherToken 자동 저장)",
       "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
         "pm.test('200', () => pm.response.to.have.status(200));",
         "pm.collectionVariables.set('teacherToken', pm.response.json().token);"
@@ -62,11 +46,11 @@
         "method": "POST",
         "header": [{ "key": "Content-Type", "value": "application/json" }],
         "url": "{{baseUrl}}/auth/login",
-        "body": { "mode": "raw", "raw": "{\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{password}}\"\n}" }
+        "body": { "mode": "raw", "raw": "{\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{teacherPassword}}\"\n}" }
       }
     },
     {
-      "name": "00 사전 - 다른 이음쌤 로그인 (otherTeacherToken 자동 저장)",
+      "name": "00 사전 - 다른 이음쌤 로그인 (DB에 있는 다른 이음쌤 계정, otherTeacherToken 자동 저장)",
       "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
         "pm.test('200', () => pm.response.to.have.status(200));",
         "pm.collectionVariables.set('otherTeacherToken', pm.response.json().token);"
@@ -75,7 +59,7 @@
         "method": "POST",
         "header": [{ "key": "Content-Type", "value": "application/json" }],
         "url": "{{baseUrl}}/auth/login",
-        "body": { "mode": "raw", "raw": "{\n  \"loginId\": \"{{otherTeacherLoginId}}\",\n  \"password\": \"{{password}}\"\n}" }
+        "body": { "mode": "raw", "raw": "{\n  \"loginId\": \"{{otherTeacherLoginId}}\",\n  \"password\": \"{{otherTeacherPassword}}\"\n}" }
       }
     },
     {
