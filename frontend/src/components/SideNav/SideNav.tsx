@@ -11,6 +11,7 @@ import {
 } from "@/api/services/badgeService";
 import { BADGE_COUNTS_CHANGED } from "@/api/services/badgeEvents";
 import "./SideNav.css";
+import { startFloatFollow } from "@/lib/floatFollow";
 
 export default class SideNav extends Component<any, any> {
   [key: string]: any;
@@ -23,10 +24,14 @@ export default class SideNav extends Component<any, any> {
   componentDidMount() {
     window.addEventListener(BADGE_COUNTS_CHANGED, this.refreshBadges);
     this.refreshBadges();
+    // 메뉴 칸이 스크롤을 부드럽게 따라오게 해요(햄버거 서랍 안에서는 칸이 없어서 건너뛰어요)
+    const slot = this.rootEl && (this.rootEl.closest(".ie-side-slot") as HTMLElement | null);
+    if (slot) this.stopFloat = startFloatFollow(slot);
   }
 
   componentWillUnmount() {
     window.removeEventListener(BADGE_COUNTS_CHANGED, this.refreshBadges);
+    if (this.stopFloat) this.stopFloat();
   }
 
   refreshBadges = () => {
@@ -67,7 +72,13 @@ export default class SideNav extends Component<any, any> {
   render() {
     const v: any = this.renderVals();
     return (
-      <div className="ie-root ie-sn-root" style={{ background: "transparent", width: "100%" }}>
+      <div
+        className="ie-root ie-sn-root"
+        style={{ background: "transparent", width: "100%" }}
+        ref={(el) => {
+          this.rootEl = el;
+        }}
+      >
         <nav className="ie-sn ie-sn-full" aria-label="주요 메뉴">
           <div className="ie-sn-group">
             <p className="ie-sn-label" aria-hidden="true">
