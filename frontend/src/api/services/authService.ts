@@ -1,5 +1,11 @@
 import { ApiError, USE_MOCK, http } from "../client";
-import type { GuardianConsentRequest, LoginRequest, LoginResponse, SignupRequest } from "../types";
+import type {
+  GuardianConsentRequest,
+  LoginRequest,
+  LoginResponse,
+  SignupRequest,
+  SignupResponse,
+} from "../types";
 
 /** 로그인 · 회원 가입 */
 export const authService = {
@@ -28,18 +34,13 @@ export const authService = {
     }
   },
   /** POST /auth/signup  (14세 미만이면 이어서 requestGuardianConsent) */
-  async signup(req: SignupRequest): Promise<void> {
-    if (USE_MOCK) return;
-    return http("POST", "/auth/signup", req);
+  async signup(req: SignupRequest): Promise<SignupResponse> {
+    if (USE_MOCK) return { status: req.guardian ? "PENDING_GUARDIAN" : "ACTIVE" };
+    return http<SignupResponse>("POST", "/auth/signup", req);
   },
   /** POST /auth/guardian-consent */
   async requestGuardianConsent(req: GuardianConsentRequest): Promise<void> {
     if (USE_MOCK) return;
     return http("POST", "/auth/guardian-consent", req);
-  },
-  /** POST /auth/email-code — 이메일 인증번호 보내기 */
-  async sendEmailCode(email: string): Promise<void> {
-    if (USE_MOCK) return;
-    return http("POST", "/auth/email-code", { email });
   },
 };
