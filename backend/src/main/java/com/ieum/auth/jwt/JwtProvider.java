@@ -33,9 +33,9 @@ public class JwtProvider {
     private final Duration validity;
 
     public JwtProvider(@Value("${jwt.secret:}") String secret,
-                       @Value("${jwt.expiration-days:7}") long expirationDays) {
+                       @Value("${jwt.expiration-minutes:60}") long expirationMinutes) {
         this.key = Keys.hmacShaKeyFor(resolveSecret(secret));
-        this.validity = Duration.ofDays(expirationDays);
+        this.validity = Duration.ofMinutes(expirationMinutes);
     }
 
     // 비밀키는 32바이트 이상이어야 서명할 수 있다

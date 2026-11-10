@@ -61,6 +61,19 @@ public class SignalEvent {
         this.handledAt = at;
     }
 
+    // 21번: handled=true면 HANDLED, false면 OPEN. memo가 null이면 기존 메모를 그대로 둔다
+    // 처음 처리한 시각만 handledAt에 남긴다. 이미 시각이 있으면(다시 눌렀거나 false 뒤에 다시 눌러도) 바꾸지 않는다.
+    // OPEN으로 되돌려도 지우지 않으므로, 응답에는 HANDLED일 때만 내보낸다
+    public void updateHandling(boolean handled, String memo, LocalDateTime at) {
+        this.status = handled ? SignalStatus.HANDLED : SignalStatus.OPEN;
+        if (handled && this.handledAt == null) {
+            this.handledAt = at;
+        }
+        if (memo != null) {
+            this.responseMemo = memo;
+        }
+    }
+
     public Long getId() { return id; }
     public Long getStudentId() { return studentId; }
     public Long getMessageId() { return messageId; }

@@ -2,6 +2,7 @@ package com.ieum.practice.controller;
 
 import com.ieum.auth.jwt.AuthUser;
 import com.ieum.mock.MockSupport;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,14 +21,15 @@ import static com.ieum.mock.MockSupport.obj;
 /**
  * [역할] 학습 기록 11 GET /records의 가짜 응답을 내린다.
  * [동작] DB 없이 샘플 2건(마친 UNIT, 하는 중인 SCENARIO)을 고정값으로 돌려준다.
- * [연결] 화면 S10 / 실제 구현 이슈 #45 (09·10은 PracticeDetailMockController)
- * [주의] 학습자만 호출할 수 있다(이음쌤은 403).
+ * [연결] 화면 S10 / 실제 구현은 RecordController(#45) (09·10은 PracticeDetailMockController)
+ * [주의] mock.learning.enabled=true(기본)일 때만 켜진다. false로 바꾸면 이 파일을 지운다. 학습자만 호출할 수 있다(이음쌤은 403).
  */
 @RestController
 @RequestMapping
+@ConditionalOnProperty(name = "mock.learning.enabled", havingValue = "true", matchIfMissing = true)
 public class PracticeMockController {
 
-    // TODO: 실제 구현으로 교체 (#45) — practice_records × practices 조회, UNIT은 사전·사후 답으로 compare 계산
+    // TODO: 실제 구현으로 교체 (#45) — RecordController·RecordService 사용
     @GetMapping("/records")
     public Map<String, Object> records(@AuthenticationPrincipal AuthUser user,
                                        @RequestParam(required = false) String status,

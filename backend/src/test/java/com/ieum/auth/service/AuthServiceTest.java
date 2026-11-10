@@ -48,7 +48,7 @@ class AuthServiceTest {
     void setUp() {
         userRepository = mock(UserRepository.class);
         encoder = new BCryptPasswordEncoder();
-        JwtProvider jwt = new JwtProvider("test-secret-test-secret-test-secret-1234", 7);
+        JwtProvider jwt = new JwtProvider("test-secret-test-secret-test-secret-1234", 60);
         service = new AuthService(userRepository, encoder, jwt, CLOCK);
     }
 
@@ -174,7 +174,7 @@ class AuthServiceTest {
         assertThat(res.user().nickname()).isEqualTo("길동");
         assertThat(res.user().role()).isEqualTo(Role.STUDENT);
         assertThat(res.expiresAt().getOffset().getTotalSeconds()).isEqualTo(9 * 3600);
-        assertThat(new JwtProvider("test-secret-test-secret-test-secret-1234", 7).parse(res.token()))
+        assertThat(new JwtProvider("test-secret-test-secret-test-secret-1234", 60).parse(res.token()))
                 .contains(new AuthUser(11L, Role.STUDENT));
         assertThat(user.getLastLoginAt()).isEqualTo(LocalDateTime.of(2026, 11, 6, 12, 0));
     }

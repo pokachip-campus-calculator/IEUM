@@ -1,6 +1,7 @@
 package com.ieum.notification.controller;
 
 import com.ieum.mock.MockSupport;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -20,9 +21,10 @@ import static com.ieum.mock.MockSupport.obj;
  * [역할] 알림 22 GET /notifications, 23 PATCH /notifications/{id}/read, 24 PATCH /notifications/read-all의 가짜 응답을 내린다.
  * [동작] DB 없이 알림 4개(41~44, 안 읽음 3개)를 고정값으로 돌려준다. 읽음 처리는 저장하지 않으니 다시 불러도 그대로다.
  * [연결] 화면 S15와 사이드 메뉴 배지 / 실제 구현 이슈 #49
- * [주의] 학습자·이음쌤이 같은 API를 쓴다. 알림 제목·본문은 고정 문구뿐이다(쪽지 내용·찾은 낱말 없음).
+ * [주의] mock.learning.enabled=true(기본)일 때만 켜진다. false로 바꾸면 이 파일을 지운다. 학습자·이음쌤이 같은 API를 쓴다. 알림 제목·본문은 고정 문구뿐이다(쪽지 내용·찾은 낱말 없음).
  */
 @RestController
+@ConditionalOnProperty(name = "mock.learning.enabled", havingValue = "true", matchIfMissing = true)
 @RequestMapping("/notifications")
 public class NotificationMockController {
 

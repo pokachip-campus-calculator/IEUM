@@ -48,9 +48,9 @@
 | 13 | 내 쪽지함 | GET | /threads | 학습자 | mock | #46 |
 | 14 | 쪽지 상세 | GET | /threads/{id} | 학습자(본인), 이음쌤(담당) | mock | #48 |
 | 15 | 이어쓰기·답장 | POST | /threads/{id}/messages | 학습자(본인), 이음쌤(담당) | mock | #48 |
-| 16 | 이음쌤 요약 | GET | /teacher/summary | 이음쌤 | mock | #50 |
-| 17 | 담당 학습자 목록 | GET | /teacher/students | 이음쌤 | mock | #50 |
-| 18 | 담당 학습자 기록 | GET | /teacher/students/{id} | 이음쌤(담당) | mock | #50 |
+| 16 | 이음쌤 요약 | GET | /teacher/summary | 이음쌤 | 실제 | #50 |
+| 17 | 담당 학습자 목록 | GET | /teacher/students | 이음쌤 | 실제 | #50 |
+| 18 | 담당 학습자 기록 | GET | /teacher/students/{id} | 이음쌤(담당) | 실제 | #50 |
 | 19 | 받은 쪽지 목록 | GET | /teacher/threads | 이음쌤 | mock | #51 |
 | 20 | 신호 목록 | GET | /teacher/signals | 이음쌤 | mock | #51 |
 | 21 | 신호 대응 기록 | PATCH | /teacher/signals/{id} | 이음쌤(담당) | mock | #51 |
