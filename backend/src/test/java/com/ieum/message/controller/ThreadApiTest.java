@@ -8,6 +8,7 @@ import com.ieum.message.entity.ThreadStatus;
 import com.ieum.message.entity.ThreadTopic;
 import com.ieum.message.repository.MessageRepository;
 import com.ieum.message.repository.MessageThreadRepository;
+import com.ieum.notification.repository.NotificationRepository;
 import com.ieum.practice.repository.PracticeRepository;
 import com.ieum.record.repository.PracticeRecordRepository;
 import com.ieum.signal.repository.SignalEventRepository;
@@ -59,6 +60,7 @@ class ThreadApiTest {
     @MockitoBean PracticeRecordRepository recordRepository;
     @MockitoBean SignalKeywordRepository signalKeywordRepository;   // 신호 검사가 DB에 닿지 않게 막는다
     @MockitoBean SignalEventRepository signalEventRepository;
+    @MockitoBean NotificationRepository notificationRepository;   // 알림 저장이 DB에 닿지 않게 막는다
     @MockitoBean PlatformTransactionManager transactionManager;   // DB 없이 @Transactional을 통과시키기 위해
 
     @BeforeEach

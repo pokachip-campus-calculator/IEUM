@@ -2,6 +2,7 @@ package com.ieum.signal.service;
 
 import com.ieum.message.entity.Message;
 import com.ieum.message.entity.SenderRole;
+import com.ieum.notification.service.NotificationService;
 import com.ieum.signal.entity.MatchType;
 import com.ieum.signal.entity.Severity;
 import com.ieum.signal.entity.SignalEvent;
@@ -29,13 +30,21 @@ class SignalCheckServiceTest {
 
     private SignalKeywordRepository keywordRepository;
     private SignalEventRepository eventRepository;
+    private NotificationService notificationService;
     private SignalCheckService service;
 
     @BeforeEach
     void setUp() {
         keywordRepository = mock(SignalKeywordRepository.class);
         eventRepository = mock(SignalEventRepository.class);
-        service = new SignalCheckService(keywordRepository, eventRepository);
+        notificationService = mock(NotificationService.class);
+        service = new SignalCheckService(keywordRepository, eventRepository, notificationService);
+        // 저장하면 DB처럼 id가 채워진 채로 돌아온다
+        when(eventRepository.save(any(SignalEvent.class))).thenAnswer(inv -> {
+            SignalEvent e = inv.getArgument(0);
+            ReflectionTestUtils.setField(e, "id", 500L);
+            return e;
+        });
     }
 
     private SignalKeyword keyword(long id, Severity severity, String normalized) {
@@ -72,6 +81,8 @@ class SignalCheckServiceTest {
         assertThat(saved.getKeywordId()).isEqualTo(1L);
         assertThat(saved.getMatchedText()).isEqualTo("죽고싶다");
         assertThat(saved.getStatus()).isEqualTo(SignalStatus.OPEN);
+        // 담당 이음쌤(9)에게만 그 신호(500)로 알린다
+        verify(notificationService).signalFlagged(9L, 500L);
     }
 
     @Test
@@ -90,6 +101,7 @@ class SignalCheckServiceTest {
         service.check(message(102, SenderRole.STUDENT, "오늘 급식이 맛있었어요"), 5L, 9L);
 
         verify(eventRepository, never()).save(any(SignalEvent.class));
+        verify(notificationService, never()).signalFlagged(org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong());
     }
 
     @Test
