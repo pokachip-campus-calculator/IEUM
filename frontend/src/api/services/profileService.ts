@@ -20,7 +20,7 @@ export const profileService = {
     if (USE_MOCK) {
       return {
         loginId: "haneul01",
-        nick: "하늘",
+        nick: "친구",
         mail: "",
         notifications: [true, true, false],
         teacher: null,

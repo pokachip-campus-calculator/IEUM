@@ -30,7 +30,15 @@ export interface Profile {
 }
 
 /* ---------- 홈·연습 목록 ---------- */
-export type PracticeArea = "SAFETY" | "RELATION" | "MIND" | "LIFE" | "INDEPENDENCE";
+/** 서버는 SAFETY/HELP/EMOTION 을 내려주고, RELATION/MIND 등은 화면 기준 이름이라 둘 다 받습니다. */
+export type PracticeArea =
+  | "SAFETY"
+  | "HELP"
+  | "EMOTION"
+  | "RELATION"
+  | "MIND"
+  | "LIFE"
+  | "INDEPENDENCE";
 export type PracticeType = "UNIT" | "SCENARIO" | "EMOTION";
 export type PracticeStatus = "NONE" | "IN_PROGRESS" | "DONE";
 
