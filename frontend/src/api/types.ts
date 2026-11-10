@@ -151,6 +151,8 @@ export interface UnitContent {
 export interface UnitVideoContent {
   questions: UnitQuestion[];
   videos: UnitVideoItem[];
+  /** 서버 연습의 카드 수. 영상 단위를 마칠 때 카드를 모두 읽은 것으로 저장하려면 필요해요. */
+  cardCount?: number;
 }
 
 /* ---------- 학습 기록 ---------- */
@@ -289,6 +291,8 @@ export interface GuardianConsentRequest {
 export interface NoteRequest {
   topic: string;
   body: string;
+  /** 시나리오 연습에서 이어서 쓰는 쪽지면 그 연습 번호(이음쌤 화면의 "연결된 시나리오"가 돼요) */
+  practiceId?: number;
 }
 export interface PublishMaterialsRequest {
   tab: string;

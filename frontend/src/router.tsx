@@ -211,9 +211,13 @@ const pageRoutes: RouteObject[] = [
   {
     path: ROUTES.talk,
     element: <Page C={Talk} />,
-    loader: async () => {
+    loader: async (a) => {
       await loadLearnerData(async () => null);
-      return null;
+      // 시나리오 연습에서 넘어오면 ?practiceId=번호 가 붙어요. 잘못된 값이면 그냥 무시해요.
+      const raw = new URL(a.request.url).searchParams.get("practiceId");
+      const practiceId = raw === null ? NaN : Number(raw);
+      if (!Number.isSafeInteger(practiceId) || practiceId < 1) return null;
+      return { practiceId, practiceTitle: await practiceService.getPracticeTitle(practiceId) };
     },
   },
   {
@@ -228,7 +232,7 @@ const pageRoutes: RouteObject[] = [
     path: ROUTES.profile,
     element: <Page C={Profile} />,
     loader: async () => ({
-      profile: await loadLearnerData(() => profileService.getProfile()),
+      profile: await loadSharedData(() => profileService.getProfile()),
     }),
   },
   {

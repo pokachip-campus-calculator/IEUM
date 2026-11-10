@@ -95,7 +95,12 @@ export const contentService = {
   async getUnitVideoContent(_level?: string, practiceId = 1): Promise<UnitVideoContent> {
     if (USE_MOCK) return { questions: unitVideo.unitVideoQuestions, videos: unitVideo.unitVideos };
     const practice = await practiceService.getPractice(practiceId);
-    return { questions: mapQuestions(practice.content), videos: unitVideo.unitVideos };
+    const cards = practice.content.cards as unknown[] | undefined;
+    return {
+      questions: mapQuestions(practice.content),
+      videos: unitVideo.unitVideos,
+      cardCount: Array.isArray(cards) ? cards.length : 0,
+    };
   },
   /** GET /practices/2 */
   async getScenarios(practiceId = 2): Promise<Record<string, ScenarioItem>> {
