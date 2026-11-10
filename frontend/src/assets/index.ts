@@ -8,6 +8,7 @@
 import letterBackDefault from "./images/areas/letter-back-default.png";
 import letterHelpFlap from "./images/areas/letter-help-flap.png";
 import stageBg from "./images/areas/stage-bg.jpg";
+import stageGems from "./images/areas/stage-gems.webp";
 import letterSafeBack from "./images/areas/letter-safe-back.png";
 import letterSafeFlap from "./images/areas/letter-safe-flap.png";
 import letterSafeSeal from "./images/areas/letter-safe-seal.png";
@@ -80,6 +81,7 @@ export const img = {
   letterBackDefault,
   letterHelpFlap,
   stageBg,
+  stageGems,
   letterSafeBack,
   letterSafeFlap,
   letterSafeSeal,

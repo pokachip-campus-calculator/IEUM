@@ -452,13 +452,13 @@
     transition: none !important;
   }
 }
-/* ───── 어디로 갈까요: 그림 한 장 + 실제 글자 + 눌리는 편지 3개 ───── */
+/* ───── 나만의 배움 찾기: 그림 한 장 + 실제 글자 + 눌리는 보석 5개 ───── */
 .ie-pst {
   position: relative;
   isolation: isolate;
   overflow: hidden;
   container-type: inline-size;
-  aspect-ratio: 868/292;
+  aspect-ratio: 1672/941;
   border-radius: 28px;
   border: 2px solid rgba(255, 255, 255, 0.95);
   box-shadow: 0 22px 40px -28px rgba(83, 102, 175, 0.5);
@@ -481,66 +481,49 @@
   user-select: none;
   pointer-events: none;
 }
+/* 제목·안내: 그림 가운데 위쪽 */
 .ie-pst-head {
   position: absolute;
-  left: 47%;
-  top: 2.2%;
+  left: 50%;
+  top: 11.6%;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.8cqw;
+  gap: 1.1cqw;
   width: max-content;
-  max-width: 64%;
+  max-width: 80%;
   text-align: center;
   z-index: 2;
 }
-.ie-pst-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5em;
-  padding: 0.38em 1em;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
-  font-size: clamp(11.5px, 1.2cqw, 14px);
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  color: #5b46c8;
-  box-shadow:
-    0 8px 16px -10px rgba(83, 70, 160, 0.5),
-    inset 0 1px 0 #fff;
-}
-.ie-pst-eyebrow > span {
-  color: #6f58e0;
-}
 .ie-pst-title {
   margin: 0;
-  font-size: clamp(24px, 3.3cqw, 42px);
+  font-size: clamp(22px, 3.5cqw, 46px);
   line-height: 1.2;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.01em;
-  color: #3f3399;
+  color: #473a9e;
   text-shadow:
-    0 2px 0 rgba(255, 255, 255, 0.8),
-    0 8px 18px rgba(124, 143, 224, 0.3);
+    0 2px 0 rgba(255, 255, 255, 0.75),
+    0 8px 18px rgba(124, 143, 224, 0.28);
 }
 .ie-pst-desc {
   margin: 0;
-  font-size: clamp(12.5px, 1.4cqw, 17px);
+  font-size: clamp(12.5px, 1.7cqw, 21px);
   line-height: 1.5;
-  color: #54499c;
+  color: #62579f;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 .ie-pst-hint {
   position: absolute;
-  left: 46%;
-  bottom: 3.4%;
+  left: 50%;
+  bottom: 3.6%;
   transform: translateX(-50%);
   z-index: 2;
   display: inline-flex;
   align-items: center;
   gap: 0.7em;
-  max-width: 86%;
+  max-width: 90%;
   margin: 0;
   padding: 0.5em 1.6em;
   border-radius: 999px;
@@ -561,6 +544,8 @@
   inset: 0;
   z-index: 1;
 }
+
+/* 보석 하나 = 누를 수 있는 칸. 위치·크기는 인라인(퍼센트)으로 들어와요 */
 .ie-pst-hit {
   position: absolute;
   display: block;
@@ -571,86 +556,131 @@
   font: inherit;
   color: inherit;
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
   border-radius: 24px;
+  outline: none;
+  box-shadow: none;
+  z-index: 1;
+  -webkit-tap-highlight-color: transparent;
 }
-.ie-pst-ring {
+.ie-pst-hit:hover {
+  z-index: 2;
+}
+.ie-pst-hit.is-on {
+  z-index: 6;
+}
+/* 보석+구름 받침 부분만 같은 그림에서 오려 낸 층. 가장자리는 부드럽게 흐려서 그림과 이어져요 */
+.ie-gem {
   position: absolute;
-  left: -3%;
-  right: -3%;
-  top: -4%;
-  bottom: 15%;
-  border-radius: 22px;
-  border: 3px solid transparent;
-  opacity: 0;
-  pointer-events: none;
+  left: 0;
+  top: 0;
+  width: 100%;
+  background-repeat: no-repeat;
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 64%, transparent 100%);
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 64%, transparent 100%);
+  transform-origin: 50% 88%;
   transition:
-    opacity 0.2s ease,
-    background-color 0.2s ease,
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
+    transform 0.35s cubic-bezier(0.3, 0.8, 0.3, 1),
+    filter 0.3s ease;
+  pointer-events: none;
+  will-change: transform;
 }
-.ie-pst-hit:hover .ie-pst-ring {
-  opacity: 1;
-  border-color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.22);
+.ie-gem::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(233, 226, 252, 0);
+  transition: background-color 0.4s ease;
 }
-.ie-pst-hit.is-on .ie-pst-ring {
-  opacity: 1;
-  border-color: #fff;
-  background: rgba(255, 255, 255, 0.28);
-  box-shadow:
-    0 0 0 3px var(--c),
-    0 16px 30px -14px var(--c);
+/* 마우스를 올리면 살짝 떠올라요 */
+.ie-pst-hit:not(.is-on):hover .ie-gem {
+  transform: translateY(-1.2cqw) scale(1.07);
+  filter: brightness(1.05) saturate(1.1);
 }
+/* 눌러 둔 보석은 앞으로 나와 둥실거려요 */
+.ie-pst-hit.is-on .ie-gem {
+  transform: translateY(-1.8cqw) scale(1.12);
+  filter: brightness(1.06) saturate(1.12);
+  animation: ie-gem-bob 3.2s ease-in-out 0.4s infinite alternate;
+}
+@keyframes ie-gem-bob {
+  from {
+    transform: translateY(-1.8cqw) scale(1.12);
+  }
+  to {
+    transform: translateY(-2.7cqw) scale(1.12);
+  }
+}
+/* 다른 보석은 뒤로 물러나요 */
+.ie-pst.has-open .ie-pst-hit:not(.is-on) .ie-gem {
+  transform: scale(0.94);
+}
+.ie-pst.has-open .ie-pst-hit:not(.is-on) .ie-gem::after {
+  background: rgba(233, 226, 252, 0.55);
+}
+.ie-pst.has-open .ie-pst-hit:not(.is-on):hover .ie-gem {
+  transform: translateY(-0.8cqw) scale(0.98);
+}
+.ie-pst.has-open .ie-pst-hit:not(.is-on):hover .ie-gem::after {
+  background: rgba(233, 226, 252, 0.25);
+}
+
+/* 이름표: 그림에 박힌 글자가 아니라 실제 글자예요 */
 .ie-pst-pill {
   position: absolute;
-  bottom: 0;
+  top: 78.8%;
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.3em;
-  min-width: 3.4em;
-  min-height: 1.95em;
-  padding: 0 1.05em;
+  gap: 0.4em;
+  min-width: 11.8cqw;
+  min-height: 4.6cqw;
+  padding: 0 1.2em;
+  box-sizing: border-box;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.94);
-  font-size: clamp(13px, 1.62cqw, 17px);
-  font-weight: 700;
+  background: linear-gradient(180deg, #fff 0%, var(--pill) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  color: var(--ink);
+  font-size: clamp(12px, 1.95cqw, 24px);
+  font-weight: 800;
   line-height: 1;
   white-space: nowrap;
   box-shadow:
-    0 8px 16px -10px rgba(83, 70, 160, 0.5),
+    0 0.9cqw 1.5cqw -1cqw rgba(83, 70, 160, 0.55),
     inset 0 1px 0 #fff;
   transition:
-    background-color 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.25s ease,
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+.ie-pst-ic {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
 }
 .ie-pst-ck {
   display: none;
   flex: none;
 }
-.ie-pst--help .ie-pst-pill {
-  color: #94431f;
-}
-.ie-pst--safe .ie-pst-pill {
-  color: #2a6a52;
-}
-.ie-pst--emo .ie-pst-pill {
-  color: #4e3fa6;
+.ie-pst-hit:hover .ie-pst-pill {
+  transform: translateX(-50%) translateY(-0.3cqw);
 }
 .ie-pst-hit.is-on .ie-pst-pill {
   box-shadow:
-    0 0 0 2px var(--c),
-    0 10px 18px -10px var(--c),
+    0 0 0 0.22cqw var(--c),
+    0 1cqw 1.8cqw -0.8cqw var(--c),
     inset 0 1px 0 #fff;
 }
 .ie-pst-hit.is-on .ie-pst-ck {
   display: inline-block;
 }
-.ie-root .ie-pst-hit:focus-visible {
+.ie-pst.has-open .ie-pst-hit:not(.is-on) .ie-pst-pill {
+  opacity: 0.78;
+}
+.ie-root .ie-pst-hit:focus-visible .ie-pst-pill {
   box-shadow: var(--ie-focus);
+}
+.ie-root .ie-pst-hit:focus:not(:focus-visible) {
   outline: none;
 }
 @media (max-width: 760px) {
@@ -670,11 +700,8 @@
     gap: 6px;
     padding: 0 6px;
   }
-  .ie-pst-eyebrow {
-    font-size: 12px;
-  }
   .ie-pst-title {
-    font-size: 26px;
+    font-size: 24px;
   }
   .ie-pst-desc {
     font-size: 13.5px;
@@ -683,15 +710,19 @@
     position: relative;
     inset: auto;
     order: 1;
-    aspect-ratio: 868/292;
+    aspect-ratio: 1672/941;
     container-type: inline-size;
     border-radius: 18px;
     overflow: hidden;
   }
   .ie-pst-pill {
-    font-size: 12px;
-    min-height: 26px;
-    padding: 0 10px;
+    font-size: 11.5px;
+    min-height: 24px;
+    min-width: 0;
+    padding: 0 8px;
+  }
+  .ie-pst-ic {
+    display: none;
   }
   .ie-pst-hint {
     position: static;
@@ -705,199 +736,14 @@
     text-align: center;
   }
 }
-
-/* ───── 편지 봉투: 눌리면 가운데로 날아와 뚜껑이 열리고 편지지가 올라와요 ───── */
-.ie-pst-hit {
-  z-index: 1;
-}
-.ie-pst-hit.is-on {
-  z-index: 6;
-}
-.ie-pst-hit:hover {
-  z-index: 2;
-}
-.ie-env {
-  position: absolute;
-  display: block;
-  pointer-events: none;
-  transform-origin: 50% 50%;
-  transform: rotate(var(--th)) translate(0, 0) scale(1);
-  filter: drop-shadow(0 0.9cqw 0.8cqw rgba(83, 70, 160, 0.16));
-  transition:
-    transform 0.55s cubic-bezier(0.5, 0.05, 0.25, 1) 0.5s,
-    opacity 0.35s ease 0.2s;
-}
-.ie-root .ie-env .ie-env-i {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  display: block;
-  -webkit-user-drag: none;
-  user-select: none;
-  pointer-events: none;
-}
-.ie-env-int {
-  z-index: 1;
-}
-.ie-env-cw {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  clip-path: inset(-400% 0 calc(var(--cb) + 12%) 0);
-}
-.ie-env-card {
-  position: absolute;
-  left: var(--cl);
-  top: var(--ct);
-  width: var(--cw);
-  height: var(--ch);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25em;
-  padding: 0 0.3em;
-  border-radius: 6px 6px 2px 2px;
-  background: linear-gradient(180deg, #fff 0%, #fff 62%, #f5f2fe 100%);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 -1px 6px rgba(83, 70, 160, 0.14);
-  transform: translateY(0);
-  transition: transform 0.45s cubic-bezier(0.5, 0, 0.6, 1) 0s;
-  text-align: center;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-.ie-env-tt {
-  position: relative;
-  font-family: "Jua", var(--ie-font);
-  font-size: clamp(14px, 2cqw, 23px);
-  font-weight: 400;
-  line-height: 1.3;
-  color: var(--ink);
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-  margin: 0;
-}
-.ie-pst--help {
-  --ink: #b24a22;
-}
-.ie-pst--safe {
-  --ink: #237357;
-}
-.ie-pst--emo {
-  --ink: #4e3fa6;
-}
-.ie-env-body {
-  z-index: 4;
-}
-.ie-env-fl {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  perspective: 900px;
-  perspective-origin: 50% var(--hy);
-  transition: z-index 0s 0.42s;
-}
-.ie-env-flap {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  transform-origin: 50% var(--hy);
-  transform: rotateX(0deg);
-  transition: transform 0.5s cubic-bezier(0.5, 0, 0.5, 1) 0.18s;
-}
-.ie-env .ie-env-ff {
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-.ie-env-fb {
-  position: absolute;
-  inset: 0;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  transform: rotateY(180deg);
-  clip-path: var(--tri);
-  background: linear-gradient(180deg, var(--bk) 0%, color-mix(in srgb, var(--bk) 82%, #fff) 100%);
-}
-/* 눌러 둔 편지 */
-.ie-pst-hit.is-on .ie-env {
-  pointer-events: auto;
-  transform: rotate(0deg) translate(var(--dx), var(--dy)) scale(var(--s));
-  transition: transform 0.8s cubic-bezier(0.3, 0.8, 0.3, 1) 0s;
-}
-.ie-pst-hit.is-on .ie-env-fl {
-  z-index: 2;
-  transition: z-index 0s 0.78s;
-}
-.ie-pst-hit.is-on .ie-env-flap {
-  transform: rotateX(-180deg);
-  transition: transform 0.7s cubic-bezier(0.4, 0.1, 0.3, 1) 0.45s;
-}
-.ie-pst-hit.is-on .ie-env-card {
-  transform: translateY(calc(var(--rise) * -1));
-  transition: transform 0.75s cubic-bezier(0.2, 1.15, 0.4, 1) 1.05s;
-}
-.ie-pst-hit.is-on .ie-pst-ring {
-  opacity: 0;
-}
-/* 마우스를 올리면 살짝 떠올라 뚜껑이 들썩여요 */
-.ie-pst-hit:not(.is-on):hover .ie-env {
-  transform: rotate(var(--th)) translate(0, -1cqw) scale(1.04);
-  transition: transform 0.25s ease 0s;
-}
-.ie-pst-hit:not(.is-on):hover .ie-env-flap {
-  transform: rotateX(-16deg);
-  transition: transform 0.25s ease 0s;
-}
-/* 다른 편지는 뒤로 물러나요 */
-.ie-pst.has-open .ie-pst-hit:not(.is-on) .ie-env {
-  opacity: 0.5;
-  transform: rotate(var(--th)) scale(0.9);
-  transition:
-    transform 0.5s ease 0s,
-    opacity 0.4s ease 0s;
-}
-.ie-pst.has-open .ie-pst-hit:not(.is-on):hover .ie-env {
-  opacity: 0.9;
-  transform: rotate(var(--th)) translate(0, -0.8cqw) scale(0.94);
-}
-/* 제목·안내 글은 편지가 열리는 동안 물러나요 */
-.ie-pst-head,
-.ie-pst-hint {
-  transition:
-    opacity 0.3s ease 0.4s,
-    visibility 0s;
-}
-@media (min-width: 761px) {
-  .ie-pst.has-open .ie-pst-head,
-  .ie-pst.has-open .ie-pst-hint {
-    opacity: 0;
-    visibility: hidden;
-    transition:
-      opacity 0.3s ease 0s,
-      visibility 0s 0.3s;
-  }
-}
-@media (max-width: 760px) {
-  .ie-pst-hit.is-on .ie-env {
-    transform: rotate(0deg) translate(var(--dx), calc(var(--dy) - 3.2cqw))
-      scale(calc(var(--s) * 0.8));
-  }
-  .ie-env-tt {
-    font-size: clamp(12px, 2.4cqw, 15px);
-  }
-}
 @media (prefers-reduced-motion: reduce) {
-  .ie-env,
-  .ie-env-flap,
-  .ie-env-card,
-  .ie-env-fl {
+  .ie-gem,
+  .ie-gem::after,
+  .ie-pst-pill {
     transition-duration: 0.01s !important;
-    transition-delay: 0s !important;
+  }
+  .ie-pst-hit.is-on .ie-gem {
+    animation: none !important;
   }
 }
 
@@ -1136,21 +982,4 @@
     width: 34%;
     opacity: 0.9;
   }
-}
-
-/* 마우스를 올렸을 때의 사각형·이름표는 쓰지 않아요 */
-.ie-pst-ring,
-.ie-pst-pill {
-  display: none !important;
-}
-.ie-pst-hit,
-.ie-pst-hit:hover,
-.ie-pst-hit:active {
-  outline: none;
-  background: none;
-  box-shadow: none;
-}
-.ie-root .ie-pst-hit:focus:not(:focus-visible) {
-  outline: none;
-  box-shadow: none;
 }

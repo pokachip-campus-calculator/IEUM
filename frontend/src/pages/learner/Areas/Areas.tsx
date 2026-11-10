@@ -16,6 +16,45 @@ import Gem from "@/components/Gem/Gem";
 import PageStyle from "@/lib/PageStyle";
 import pageCss from "./Areas.css?inline";
 
+/** 이름표 앞의 작은 그림(마음·관계·안전·생활·자립). 색은 이름표 글자색을 따라가요. */
+function GemIcon({ kind }: { kind: string }) {
+  const common = { className: "ie-pst-ic", width: 22, height: 22, viewBox: "0 0 256 256", "aria-hidden": true } as const;
+  if (kind === "heart")
+    return (
+      <svg {...common}>
+        <path d="M128 216S28 160 28 92a52 52 0 0 1 100-20 52 52 0 0 1 100 20c0 68-100 124-100 124Z" fill="currentColor" />
+      </svg>
+    );
+  if (kind === "people")
+    return (
+      <svg {...common}>
+        <circle cx="96" cy="92" r="38" fill="currentColor" />
+        <path d="M20 216a76 76 0 0 1 152 0Z" fill="currentColor" />
+        <circle cx="190" cy="104" r="28" fill="currentColor" opacity=".7" />
+        <path d="M188 160a62 62 0 0 1 56 56h-56Z" fill="currentColor" opacity=".7" />
+      </svg>
+    );
+  if (kind === "shield")
+    return (
+      <svg {...common}>
+        <path d="M128 20 36 54v64c0 58 40 96 92 118 52-22 92-60 92-118V54Z" fill="currentColor" />
+        <path d="M92 124l26 26 48-52" fill="none" stroke="#fff" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  if (kind === "house")
+    return (
+      <svg {...common}>
+        <path d="M24 124 128 36l104 88-12 14-20-17v95h-60v-62H116v62H56v-95l-20 17Z" fill="currentColor" />
+      </svg>
+    );
+  return (
+    <svg {...common}>
+      <circle cx="128" cy="128" r="96" fill="none" stroke="currentColor" strokeWidth="18" />
+      <path d="m176 80-28 68-68 28 28-68Z" fill="currentColor" />
+    </svg>
+  );
+}
+
 export default class Areas extends Component<any, any> {
   [key: string]: any;
 
@@ -73,16 +112,19 @@ export default class Areas extends Component<any, any> {
       statusKey: STATUS_KEY[practice.myStatus],
     }));
     const s = this.state;
-    const LET: any = [
-      { id: "help", name: "마음", tag: "마음" },
-      { id: "safe", name: "안전", tag: "안전" },
-      { id: "emo", name: "관계", tag: "관계" },
+    // 그림(1672x941) 위에서 보석 5개가 놓인 자리(px). 이름표는 그림에 박히지 않고 실제 글자로 올려요.
+    const IMG_W = 1672;
+    const IMG_H = 941;
+    const HIT_TOP = 292; // 눌리는 칸의 위쪽
+    const HIT_H = 395; // 눌리는 칸의 높이(이름표까지)
+    const GEM_BOTTOM = 608; // 보석+구름 받침의 아래쪽
+    const STAGE: any = [
+      { id: "help", tag: "마음", name: "마음", icon: "heart", x: 40, w: 351, pill: 233, ink: "#D9487A", bg: "#FFE4EE", ring: "#F58DB0" },
+      { id: "emo", tag: "관계", name: "관계", icon: "people", x: 400, w: 296, pill: 542, ink: "#2C8C73", bg: "#DAF6EC", ring: "#6DD3B5" },
+      { id: "safe", tag: "안전", name: "안전", icon: "shield", x: 705, w: 286, pill: 843, ink: "#3568C8", bg: "#DDEBFF", ring: "#7FAEF2" },
+      { id: "life", tag: "생활", name: "생활", icon: "house", x: 1005, w: 291, pill: 1144, ink: "#B8700B", bg: "#FFEDC8", ring: "#F2BE5A" },
+      { id: "indep", tag: "자립", name: "자립", icon: "compass", x: 1315, w: 309, pill: 1454, ink: "#6A4BC9", bg: "#E8E0FF", ring: "#A592EE" },
     ];
-    const IMG: any = {
-      safe: [img.letterSafeBack, img.letterSafeFlap, img.letterSafeSeal],
-      help: [img.letterHelpBack, img.letterHelpFlap, img.letterHelpSeal],
-      emo: [img.letterEmoBack, img.letterEmoFlap, img.letterEmoSeal],
-    };
     const q = (s.query || "").trim().toLocaleLowerCase();
     const list = normalized.filter(
       (practice) =>
@@ -99,8 +141,8 @@ export default class Areas extends Component<any, any> {
         on: s[key] === o[0],
         pick: () => this.upd({ [key]: o[0] }),
       }));
-    const ORDER = ["마음", "관계", "안전"];
-    const TKEY: any = { 마음: "help", 관계: "emo", 안전: "safe" };
+    const ORDER = ["마음", "관계", "안전", "생활", "자립"];
+    const TKEY: any = { 마음: "help", 관계: "emo", 안전: "safe", 생활: "help", 자립: "emo" };
     const LANE: any = {
       마음: [
         "마음",
@@ -138,9 +180,9 @@ export default class Areas extends Component<any, any> {
         laneDesc: L[1],
         laneGem: L[2],
         laneCls: L[3],
-        laneIsSafe: K === "safe",
-        laneIsHelp: K === "help",
-        laneIsEmo: K === "emo",
+        laneIsSafe: practice.tag === "안전",
+        laneIsHelp: practice.tag === "마음",
+        laneIsEmo: practice.tag === "관계",
         laneDone: done,
         laneTotal: total,
         lanePct: Math.round((done / total) * 100),
@@ -168,66 +210,42 @@ export default class Areas extends Component<any, any> {
       area: s.area,
       flip: s.flip,
       stageSel: "all",
-      letters: LET.map((L) => {
+      letters: STAGE.map((L) => {
         const open = s.sel === L.id;
-        const B: any = {
-          help: [12.0, 37.0, 17.9, 45.9, 47.7, "#E9876B"],
-          safe: [36.3, 39.7, 18.7, 43.2, 54.9, "#4FB896"],
-          emo: [62.1, 35.3, 17.5, 47.6, 55.3, "#8C79DC"],
-        }[L.id];
-        const D: any = {
-          help: {
-            env: "left:-4.286%;top:2.022%;width:105.07%;height:78.528%;--th:8deg;--dx:26.822cqw;--dy:-1.55cqw;--s:1.226;--hy:10.689%;--tri:polygon(8.27% 9.264%,92.037% 9.264%,51.072% 51.188%);--bk:#FFD1C8;--cl:15.176%;--ct:37.824%;--cw:69.954%;--ch:95.772%;--rise:73.333%;--cb:10.926%",
-            body: img.envHelpBody,
-            flap: img.envHelpFlap,
-            int: img.envHelpInner,
-          },
-          safe: {
-            env: "left:-4.826%;top:-14.209%;width:107.66%;height:96.913%;--th:-4.5deg;--dx:2.001cqw;--dy:-1.062cqw;--s:1.155;--hy:8.793%;--tri:polygon(9.299% 7.566%,92.561% 7.566%,50.572% 53.272%);--bk:#D0F8ED;--cl:16.252%;--ct:37.022%;--cw:69.356%;--ch:99.632%;--rise:73.333%;--cb:9.407%",
-            body: img.envSafeBody,
-            flap: img.envSafeFlap,
-            int: img.envSafeInner,
-          },
-          emo: {
-            env: "left:-6.273%;top:-4.192%;width:109.776%;height:87.415%;--th:-8deg;--dx:-23.15cqw;--dy:-0.931cqw;--s:1.224;--hy:8.23%;--tri:polygon(10.045% 6.996%,92.204% 6.996%,50.6% 52.778%);--bk:#DFCCFF;--cl:16.822%;--ct:36.634%;--cw:68.606%;--ch:100.247%;--rise:73.333%;--cb:9.465%",
-            body: img.envEmoBody,
-            flap: img.envEmoFlap,
-            int: img.envEmoInner,
-          },
-        }[L.id];
+        const gemH = GEM_BOTTOM - HIT_TOP; // 보석과 구름 받침이 들어가는 높이(px)
         return {
           id: L.id,
           name: L.name,
+          icon: L.icon,
           on: open,
-          px: B[4],
           cls: "ie-pst-hit ie-pst--" + L.id + (open ? " is-on" : ""),
-          box:
-            "left:" +
-            B[0] +
-            "%;top:" +
-            B[1] +
-            "%;width:" +
-            B[2] +
-            "%;height:" +
-            B[3] +
-            "%;--c:" +
-            B[5],
-          env: D.env,
-          imgBody: D.body,
-          imgFlap: D.flap,
-          imgInt: D.int,
-          aria: L.name + ", " + (open ? "열려 있어요" : "닫혀 있어요"),
+          // 눌리는 칸: 그림 위의 위치를 퍼센트로 둬서 화면이 줄어도 그림과 같이 움직여요.
+          boxStyle: {
+            left: (L.x / IMG_W) * 100 + "%",
+            top: (HIT_TOP / IMG_H) * 100 + "%",
+            width: (L.w / IMG_W) * 100 + "%",
+            height: (HIT_H / IMG_H) * 100 + "%",
+            "--c": L.ring,
+            "--ink": L.ink,
+            "--pill": L.bg,
+          },
+          // 보석 부분만 같은 그림에서 오려 낸 층. 올리거나 눌렀을 때 이 층만 움직여요.
+          gemStyle: {
+            height: (gemH / HIT_H) * 100 + "%",
+            backgroundImage: `url(${img.stageGems})`,
+            backgroundSize: `${(IMG_W / L.w) * 100}% ${(IMG_H / gemH) * 100}%`,
+            backgroundPosition: `${(L.x / (IMG_W - L.w)) * 100}% ${(HIT_TOP / (IMG_H - gemH)) * 100}%`,
+          },
+          pillStyle: { left: ((L.pill - L.x) / L.w) * 100 + "%" },
+          aria: L.name + ", " + (open ? "선택했어요" : "선택하지 않았어요"),
+          // 같은 걸 다시 누르면 풀고, 다른 걸 누르면 그쪽으로 바꿔요.
           pick: () =>
-            this.upd(
-              s.sel
-                ? { sel: null, tag: "all" }
-                : { sel: L.id, tag: L.tag },
-            ),
+            this.upd(open ? { sel: null, tag: "all" } : { sel: L.id, tag: L.tag }),
         };
       }),
       stageCls: "ie-pst ie-in" + (s.sel ? " has-open" : ""),
       tagChips: [["all", "전체"]].concat(TAGS.map((t) => [t, t])).map((o) => {
-        const li = LET.map((L) => L.tag).indexOf(o[0]);
+        const li = STAGE.map((L) => L.tag).indexOf(o[0]);
         const on = s.tag === o[0];
         return {
           label: o[1],
@@ -237,7 +255,7 @@ export default class Areas extends Component<any, any> {
               o[0] === "all" || on
                 ? { tag: "all", sel: null }
                 : li >= 0
-                  ? { tag: o[0], sel: LET[li].id, cur: li }
+                  ? { tag: o[0], sel: STAGE[li].id, cur: li }
                   : { tag: o[0], sel: null },
             ),
         };
@@ -324,75 +342,53 @@ export default class Areas extends Component<any, any> {
                 <div className="ie-pst-art">
                   <img
                     className="ie-pst-bg"
-                    src={img.stageBg}
+                    src={img.stageGems}
                     alt=""
                     aria-hidden="true"
                     draggable="false"
                   />
-                  <div className="ie-pst-sw" role="radiogroup" aria-label="오늘 도착한 편지">
-                    {(v.letters || []).map((l: any, __i0: number) => (
-                      <Fragment key={__i0}>
-                        <button
-                          type="button"
-                          role="radio"
-                          className={l.cls}
-                          style={css(l.box)}
-                          aria-checked={l.on}
-                          aria-label={l.aria}
-                          onClick={l.pick}
-                        >
-                          <span className="ie-env" style={css(l.env)} aria-hidden="true">
-                            <img
-                              className="ie-env-i ie-env-int"
-                              src={l.imgInt}
-                              alt=""
-                              draggable="false"
+                  <div className="ie-pst-sw" role="radiogroup" aria-label="배움 영역 고르기">
+                    {(v.letters || []).map((l: any) => (
+                      <button
+                        key={l.id}
+                        type="button"
+                        role="radio"
+                        className={l.cls}
+                        style={l.boxStyle}
+                        aria-checked={l.on}
+                        aria-label={l.aria}
+                        onClick={l.pick}
+                      >
+                        <span className="ie-gem" style={l.gemStyle} aria-hidden="true" />
+                        <span className="ie-pst-pill" style={l.pillStyle}>
+                          <GemIcon kind={l.icon} />
+                          <span className="ie-pst-name">{l.name}</span>
+                          <svg
+                            className="ie-pst-ck"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 256 256"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"
+                              fill="currentColor"
                             />
-                            <span className="ie-env-cw">
-                              <span className="ie-env-card">
-                                <span className="ie-env-tt">
-                                  {l.name}
-                                </span>
-                              </span>
-                            </span>
-                            <img
-                              className="ie-env-i ie-env-body"
-                              src={l.imgBody}
-                              alt=""
-                              draggable="false"
-                            />
-                            <span className="ie-env-fl">
-                              <span className="ie-env-flap">
-                                <img
-                                  className="ie-env-i ie-env-ff"
-                                  src={l.imgFlap}
-                                  alt=""
-                                  draggable="false"
-                                />
-                                <span className="ie-env-fb" />
-                              </span>
-                            </span>
-                          </span>
-                        </button>
-                      </Fragment>
+                          </svg>
+                        </span>
+                      </button>
                     ))}
                   </div>
                 </div>
                 <div className="ie-pst-head">
-                  <span className="ie-pst-eyebrow">
-                    <span aria-hidden="true">✦</span>
-                    {" 오늘도 도착한 편지"}
-                  </span>
                   <h2 className="ie-pst-title" id="stg-h">
-                    어디로 갈까요?
+                    나만의 배움을 찾아볼까요?
                   </h2>
-                  <p className="ie-pst-desc">
-                    끌리는 편지를 눌러 열어 보세요. 순서도 잠금도 없어요.
-                  </p>
+                  <p className="ie-pst-desc">다섯 가지 배움 속에서 오늘의 주제를 골라요</p>
                 </div>
                 <p className="ie-pst-hint">
                   <span aria-hidden="true">✦</span>
-                  {" 편지를 누르면 아래 연습 목록이 그 영역으로 바뀌어요."}
+                  {" 배움을 누르면 아래 연습 목록이 그 영역으로 바뀌어요."}
                 </p>
               </section>
               <section
