@@ -1,8 +1,0 @@
-body{margin:0}
-
-:root{--ie-ui:1}
-
-@media (min-width:1024px){
-  :root{--ie-ui:.92}
-  #root{zoom:.92}
-}
