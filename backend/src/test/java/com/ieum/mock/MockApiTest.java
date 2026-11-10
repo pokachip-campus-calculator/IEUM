@@ -17,7 +17,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** [역할] mock API 16개(09~24)의 접근 규칙, 응답 모양, 기준서 오류 코드를 DB 없이 확인한다. */
+/** [역할] mock API(19~21 제외: 이음쌤 API는 실제 구현, TeacherInboxApiTest가 맡는다)의 접근 규칙, 응답 모양, 기준서 오류 코드를 DB 없이 확인한다. */
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {"jwt.secret=test-secret-test-secret-test-secret-1234", "mock.learning.enabled=true"})   // yaml 값과 무관하게 학습 mock(07~10)을 켠다
@@ -131,29 +131,6 @@ class MockApiTest {
                         .contentType(MediaType.APPLICATION_JSON).content("{\"body\":\"답장\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.senderRole").value("TEACHER"));
-    }
-
-    @Test
-    void 이음쌤_API_19_21은_이음쌤만_열린다() throws Exception {
-        // 16~18(요약·학습자 목록·상세)은 TeacherController가 실제로 구현해서 TeacherHomeApiTest가 맡는다
-        mockMvc.perform(get("/api/v1/teacher/threads").header("Authorization", student()))
-                .andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/v1/teacher/threads").param("status", "WAITING").header("Authorization", teacher()))
-                .andExpect(jsonPath("$.items.length()").value(1));
-        mockMvc.perform(get("/api/v1/teacher/signals").param("status", "OPEN").header("Authorization", teacher()))
-                .andExpect(jsonPath("$.items[0].id").value(5));
-    }
-
-    @Test
-    void 신호_대응_21은_handled에_따라_상태를_돌려준다() throws Exception {
-        mockMvc.perform(patch("/api/v1/teacher/signals/5").header("Authorization", teacher())
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"handled\":true,\"memo\":\"통화함\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("HANDLED"))
-                .andExpect(jsonPath("$.responseMemo").value("통화함"));
-        mockMvc.perform(patch("/api/v1/teacher/signals/999").header("Authorization", teacher())
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"handled\":true}"))
-                .andExpect(status().isNotFound());
     }
 
     @Test

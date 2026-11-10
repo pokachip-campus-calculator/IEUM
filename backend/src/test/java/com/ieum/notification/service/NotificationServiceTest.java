@@ -106,14 +106,14 @@ class NotificationServiceTest {
     }
 
     @Test
-    void 학습자_배정은_이음쌤에게_쪽지_묶음으로_연결한다() {
-        service.learnerAssigned(9L, 31L);
+    void 학습자_배정은_이음쌤에게_그_학습자로_연결한다() {
+        service.learnerAssigned(9L, 12L);
 
         Notification n = saved();
         assertThat(n.getUserId()).isEqualTo(9L);
         assertThat(n.getType()).isEqualTo(NotificationType.LEARNER_ASSIGNED);
-        assertThat(n.getLinkType()).isEqualTo(LinkType.THREAD);
-        assertThat(n.getLinkId()).isEqualTo(31L);
+        assertThat(n.getLinkType()).isEqualTo(LinkType.STUDENT);
+        assertThat(n.getLinkId()).isEqualTo(12L);
     }
 
     private Notification existing(long id, long userId, boolean read) {

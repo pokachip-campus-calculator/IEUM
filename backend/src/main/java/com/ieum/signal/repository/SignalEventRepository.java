@@ -16,6 +16,9 @@ public interface SignalEventRepository extends JpaRepository<SignalEvent, Long> 
     // 여러 학습자의 신호를 한 번에(N+1 금지). 이음쌤 홈 요약·학습자 목록에서 쓴다
     java.util.List<SignalEvent> findByStudentIdInAndStatus(java.util.Collection<Long> studentIds, SignalStatus status);
 
+    // 이음쌤 신호 목록(20): 내 담당 학습자들의 신호를 상태 구분 없이 한 번에
+    java.util.List<SignalEvent> findByStudentIdIn(java.util.Collection<Long> studentIds);
+
     // 학습자 한 명에게 처리 안 한 신호가 있는지(이음쌤 학습자 상세의 hasOpenSignal)
     boolean existsByStudentIdAndStatus(Long studentId, SignalStatus status);
 }

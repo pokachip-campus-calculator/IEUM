@@ -26,6 +26,12 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     List<Long> findThreadIdsWithUnread(@Param("threadIds") Collection<Long> threadIds,
                                        @Param("senderRole") SenderRole senderRole);
 
+    // 해당 상태의 신호가 붙은 메시지가 있는 쪽지 묶음 id (이음쌤 쪽지함의 hasSignal·signalStatus 계산용)
+    @Query("select distinct m.threadId from Message m where m.threadId in :threadIds "
+            + "and exists (select 1 from SignalEvent s where s.messageId = m.id and s.status = :status)")
+    List<Long> findThreadIdsWithSignal(@Param("threadIds") Collection<Long> threadIds,
+                                       @Param("status") com.ieum.signal.entity.SignalStatus status);
+
     // 학습자가 아직 읽지 않은 이음쌤 답장 수(홈의 unreadMessages)
     @Query("select count(m) from Message m where m.senderRole = :sender and m.readAt is null "
             + "and m.threadId in (select t.id from MessageThread t where t.studentId = :studentId)")

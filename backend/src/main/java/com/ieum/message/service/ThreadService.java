@@ -86,7 +86,7 @@ public class ThreadService {
         notificationService.noteReceived(teacherId, thread.getId());
         if (newlyAssigned) {
             notificationService.teacherAssigned(student.getId());
-            notificationService.learnerAssigned(teacherId, thread.getId());
+            notificationService.learnerAssigned(teacherId, student.getId());
         }
 
         return new CreateThreadResponse(thread.getId(), thread.getStatus(), toOffset(thread.getCreatedAt()));
