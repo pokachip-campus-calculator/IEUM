@@ -54,6 +54,15 @@ function selectedIds(values: string[], choices: string[], prefix: string): strin
   });
 }
 
+/** selectedIds의 반대: 서버 id("f1")를 화면에서 쓰는 문구로 되돌려요. 모르는 id는 건너뛰어요. */
+function labelsOf(ids: unknown, choices: string[], prefix: string): string[] {
+  if (!Array.isArray(ids)) return [];
+  return ids.flatMap((id) => {
+    const index = Number(String(id).replace(prefix, "")) - 1;
+    return Number.isInteger(index) && index >= 0 && index < choices.length ? [choices[index]] : [];
+  });
+}
+
 /** 학습 기록 */
 export const recordService = {
   /** GET /records */
@@ -100,6 +109,87 @@ export const recordService = {
       myNote: req.note,
       done: true,
     });
+  },
+  /** 저장된 학습 단위 진행 기록을 화면 state(문항 번호→보기 번호)로 되돌려요. 진행 중 기록이 아니면 null. */
+  restoreUnitProgress(
+    record: { status: string; answers: Record<string, unknown> } | null | undefined,
+  ): { pre: Record<number, number>; post: Record<number, number>; cardsRead: number[] } | null {
+    if (!record || record.status !== "IN_PROGRESS") return null;
+    const indexes = (answers: unknown): Record<number, number> =>
+      Object.fromEntries(
+        Object.entries((answers ?? {}) as Record<string, string>).flatMap(([questionId, optionId]) => {
+          const questionIndex = Number(questionId.replace(/^q/, "")) - 1;
+          const optionIndex = ["a", "b", "c", "d", "e"].indexOf(optionId);
+          return questionIndex >= 0 && optionIndex >= 0 ? [[questionIndex, optionIndex]] : [];
+        }),
+      );
+    const cardsRead = record.answers.cardsRead;
+    return {
+      pre: indexes(record.answers.pre),
+      post: indexes(record.answers.post),
+      cardsRead: Array.isArray(cardsRead) ? (cardsRead as number[]) : [],
+    };
+  },
+  /** PUT /practices/2/record {done:false} — "잠시 쉬기"에서 지금까지 고른 것을 진행 중으로 저장해요. */
+  async saveScenarioProgress(req: {
+    practiceId: number;
+    choice: number | null;
+    feelings: string[];
+    note: string;
+  }): Promise<void> {
+    if (USE_MOCK) return;
+    const answers: Record<string, unknown> = {};
+    if (req.choice !== null) answers.choice = `c${req.choice + 1}`;
+    const feelings = selectedIds(req.feelings, scenarioFeelings, "f");
+    if (feelings.length > 0) answers.feelings = feelings;
+    if (Object.keys(answers).length === 0 && req.note.trim() === "") return; // 저장할 게 없어요
+    await http("PUT", `/practices/${req.practiceId}/record`, {
+      answers,
+      myNote: req.note,
+      done: false,
+    });
+  },
+  /** 저장된 시나리오 진행 기록을 화면 state(고른 방법 번호·마음·한 줄)로 되돌려요. */
+  restoreScenarioProgress(
+    record: { status: string; answers: Record<string, unknown>; myNote: string | null } | null | undefined,
+    choiceCount: number,
+  ): { pick: number | null; feels: string[]; note: string } | null {
+    if (!record || record.status !== "IN_PROGRESS") return null;
+    const choiceIndex = Number(String(record.answers.choice ?? "").replace(/^c/, "")) - 1;
+    const pick =
+      Number.isInteger(choiceIndex) && choiceIndex >= 0 && choiceIndex < choiceCount
+        ? choiceIndex
+        : null;
+    return {
+      pick,
+      feels: labelsOf(record.answers.feelings, scenarioFeelings, "f"),
+      note: record.myNote ?? "",
+    };
+  },
+  /** PUT /practices/3/record {done:false} — "잠시 쉬기"에서 지금까지 고른 단서·마음을 진행 중으로 저장해요. */
+  async saveEmotionProgress(req: {
+    practiceId: number;
+    clues: string[];
+    feelings: string[];
+  }): Promise<void> {
+    if (USE_MOCK) return;
+    const clues = selectedIds(req.clues, emotionClues, "k");
+    const feelings = selectedIds(req.feelings, emotionFeelings, "f");
+    if (clues.length + feelings.length === 0) return; // 저장할 게 없어요
+    await http("PUT", `/practices/${req.practiceId}/record`, {
+      answers: { clues, feelings },
+      done: false,
+    });
+  },
+  /** 저장된 감정 읽기 진행 기록을 화면 state(단서·마음 이름)로 되돌려요. */
+  restoreEmotionProgress(
+    record: { status: string; answers: Record<string, unknown> } | null | undefined,
+  ): { clues: string[]; feels: string[] } | null {
+    if (!record || record.status !== "IN_PROGRESS") return null;
+    return {
+      clues: labelsOf(record.answers.clues, emotionClues, "k"),
+      feels: labelsOf(record.answers.feelings, emotionFeelings, "f"),
+    };
   },
   /** PUT /practices/3/record — 감정 읽기에서 고른 단서·마음 저장 */
   async saveEmotionReading(req: {
