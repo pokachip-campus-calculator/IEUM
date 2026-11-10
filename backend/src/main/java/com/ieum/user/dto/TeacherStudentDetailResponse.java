@@ -19,8 +19,10 @@ import java.util.List;
 public record TeacherStudentDetailResponse(Long id, String nickname, OffsetDateTime assignedAt, boolean hasOpenSignal,
                                            int doneCount, List<RecordItem> records, List<ThreadItem> threads) {
 
+    /** [역할] 학습자가 마친 연습 기록 한 건. compare는 UNIT에만 emotion은 EMOTION에만 값이 있다. */
     public record RecordItem(Long practiceId, String title, PracticeType type, PracticeArea area, int level,
                              OffsetDateTime completedAt, List<Compare> compare, EmotionView emotion) {}
 
+    /** [역할] 학습자가 보낸 쪽지 묶음 한 건. */
     public record ThreadItem(Long id, ThreadTopic topic, ThreadStatus status, OffsetDateTime createdAt) {}
 }

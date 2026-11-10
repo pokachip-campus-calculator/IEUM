@@ -11,6 +11,7 @@ import java.util.List;
  */
 public record TeacherStudentListResponse(List<Item> items) {
 
+    /** [역할] 담당 학습자 한 명의 목록 항목. */
     public record Item(Long id, String nickname, OffsetDateTime assignedAt, OffsetDateTime lastActivityAt,
                        int doneCount, int waitingThreadCount, boolean hasOpenSignal) {}
 }
