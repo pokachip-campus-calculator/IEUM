@@ -1,0 +1,675 @@
+{
+  "info": {
+    "name": "IEUM #49 알림 API (22~24)와 알림 생성",
+    "description": "위에서 아래로 순서대로 실행한다. #52 통합 점검용이다.\n\n준비: MySQL에 db/ 스키마·시드(signal_keywords 포함), 서버(localhost:8080), 전용 테스트 계정(학습자 ieumstu01, 이음쌤 ieumtea01)은 \"00 사전\" 가입 단계에서 만든다(이미 있으면 409여도 괜찮음). 비밀번호는 Variables의 password·teacherPassword다.\n\n주의: 학습자의 첫 쪽지(12)는 맡은 학생이 가장 적은 이음쌤에게 자동 배정된다. DB에 이음쌤이 여러 명이면 ieumtea01이 아닌 이음쌤이 배정될 수 있다. 그러면 이음쌤 쪽 알림이 비어 보이므로, DB에서 학생의 teacher_id를 ieumtea01로 맞추거나, 배정된 이음쌤 계정으로 teacherLoginId를 바꾼다. 이음쌤 쪽 알림 검사는 그 이음쌤이 받은 알림에 이번 쪽지의 알림이 들어 있는지 본다(이전 알림이 섞여 있어도 된다).\n\n확인할 것: 알림 6종이 12·14·15에서 생기고 제목이 기준서의 고정 문구뿐이다. 쪽지 내용·찾은 낱말이 알림에 없다. SIGNAL_FLAGGED는 이음쌤에게만 간다. 읽음 처리와 모두 읽음, 남의 알림은 404다.\n\n뒷정리: 테스트 데이터(학습자, 쪽지, 신호, 알림)는 DB에 남는다.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "password",
+      "value": "ieumtest1234"
+    },
+    {
+      "key": "studentLoginId",
+      "value": "ieumstu01"
+    },
+    {
+      "key": "teacherLoginId",
+      "value": "ieumtea01"
+    },
+    {
+      "key": "teacherPassword",
+      "value": "ieumteach1234"
+    },
+    {
+      "key": "studentToken",
+      "value": ""
+    },
+    {
+      "key": "teacherToken",
+      "value": ""
+    },
+    {
+      "key": "threadId",
+      "value": ""
+    },
+    {
+      "key": "notiId",
+      "value": ""
+    },
+    {
+      "key": "unreadBefore",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "00 사전 - 학습자 가입 (이미 있으면 409여도 괜찮음)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"STUDENT\",\n  \"loginId\": \"{{studentLoginId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"테스트\",\n  \"nickname\": \"알림확인\",\n  \"birthDate\": \"2008-01-01\",\n  \"phone\": \"01012345678\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "00 사전 - 학습자 로그인 (토큰 자동 저장)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('studentToken', pm.response.json().token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loginId\": \"{{studentLoginId}}\",\n  \"password\": \"{{password}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "00 사전 - 이음쌤 가입 (이미 있으면 409여도 괜찮음)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"TEACHER\",\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{teacherPassword}}\",\n  \"name\": \"김쌤\",\n  \"nickname\": \"테스트 이음쌤\",\n  \"birthDate\": \"1990-05-20\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "00 사전 - 이음쌤 로그인 (DB에 있는 이음쌤)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('teacherToken', pm.response.json().token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{teacherPassword}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "22 토큰 없이 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/notifications"
+      }
+    },
+    {
+      "name": "22 unread가 허용 값 밖 (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));",
+              "pm.test('code=VALIDATION_FAILED', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_FAILED'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications?unread=maybe"
+      }
+    },
+    {
+      "name": "12 첫 쪽지 보내기 - 신호 낱말 포함 (201, 이음쌤 자동 배정 + 신호)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('threadId', pm.response.json().id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/threads",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"topic\": \"ONLINE\",\n  \"body\": \"비밀쪽지내용 요즘 죽고 싶다는 생각이 들어요\"\n}"
+        }
+      }
+    },
+    {
+      "name": "22-A 학습자 알림: TEACHER_ASSIGNED가 있고 SIGNAL_FLAGGED는 없다",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const j = pm.response.json();",
+              "pm.test('{ unreadCount, items } 형식', () => { pm.expect(j.unreadCount).to.be.a('number'); pm.expect(j.items).to.be.an('array'); });",
+              "pm.test('createdAt에 +09:00', () => j.items.forEach(i => pm.expect(i.createdAt).to.match(/\\+09:00$/)));",
+              "pm.test('최대 50건', () => pm.expect(j.items.length).to.be.at.most(50));",
+              "pm.test('쪽지 내용·낱말이 알림에 없다', () => pm.expect(JSON.stringify(j.items)).to.not.include('비밀쪽지내용').and.not.include('죽고 싶다'));",
+              "pm.test('학습자: TEACHER_ASSIGNED \"담당 이음쌤이 정해졌어요\"', () => { const it = j.items.find(i => i.type === 'TEACHER_ASSIGNED'); pm.expect(it, 'TEACHER_ASSIGNED 없음').to.exist; pm.expect(it.title).to.eql('담당 이음쌤이 정해졌어요'); });",
+              "pm.test('학습자에게 SIGNAL_FLAGGED은 없다', () => pm.expect(j.items.some(i => i.type === 'SIGNAL_FLAGGED')).to.eql(false));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications"
+      }
+    },
+    {
+      "name": "22-B 이음쌤 알림: LEARNER_ASSIGNED·NOTE_RECEIVED·SIGNAL_FLAGGED (제목 고정 문구, 링크 확인)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const j = pm.response.json();",
+              "pm.test('{ unreadCount, items } 형식', () => { pm.expect(j.unreadCount).to.be.a('number'); pm.expect(j.items).to.be.an('array'); });",
+              "pm.test('createdAt에 +09:00', () => j.items.forEach(i => pm.expect(i.createdAt).to.match(/\\+09:00$/)));",
+              "pm.test('최대 50건', () => pm.expect(j.items.length).to.be.at.most(50));",
+              "pm.test('쪽지 내용·낱말이 알림에 없다', () => pm.expect(JSON.stringify(j.items)).to.not.include('비밀쪽지내용').and.not.include('죽고 싶다'));",
+              "pm.test('이음쌤: LEARNER_ASSIGNED \"새 학습자가 배정됐어요\"', () => { const it = j.items.find(i => i.type === 'LEARNER_ASSIGNED'); pm.expect(it, 'LEARNER_ASSIGNED 없음').to.exist; pm.expect(it.title).to.eql('새 학습자가 배정됐어요'); });",
+              "pm.test('이음쌤: NOTE_RECEIVED \"새 쪽지가 도착했어요\"', () => { const it = j.items.find(i => i.type === 'NOTE_RECEIVED'); pm.expect(it, 'NOTE_RECEIVED 없음').to.exist; pm.expect(it.title).to.eql('새 쪽지가 도착했어요'); });",
+              "pm.test('이음쌤: SIGNAL_FLAGGED \"확인이 필요한 쪽지가 있어요\"', () => { const it = j.items.find(i => i.type === 'SIGNAL_FLAGGED'); pm.expect(it, 'SIGNAL_FLAGGED 없음').to.exist; pm.expect(it.title).to.eql('확인이 필요한 쪽지가 있어요'); });",
+              "pm.test('링크: NOTE_RECEIVED=THREAD(쪽지), SIGNAL_FLAGGED=SIGNAL, LEARNER_ASSIGNED=STUDENT', () => { const by = t => j.items.find(i => i.type === t); pm.expect(by('NOTE_RECEIVED').linkType).to.eql('THREAD'); pm.expect(by('NOTE_RECEIVED').linkId).to.eql(Number(pm.collectionVariables.get('threadId'))); pm.expect(by('SIGNAL_FLAGGED').linkType).to.eql('SIGNAL'); pm.expect(by('LEARNER_ASSIGNED').linkType).to.eql('STUDENT'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications"
+      }
+    },
+    {
+      "name": "14 이음쌤이 쪽지 상세를 열기 (200, 학습자에게 NOTE_READ 생김)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/threads/{{threadId}}"
+      }
+    },
+    {
+      "name": "14 이음쌤이 한 번 더 열기 (200, NOTE_READ는 새로 안 생김)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/threads/{{threadId}}"
+      }
+    },
+    {
+      "name": "15 이음쌤 답장 (201, 학습자에게 REPLY_ARRIVED 생김)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201', () => pm.response.to.have.status(201));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/threads/{{threadId}}/messages",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"body\": \"답장입니다. 같이 이야기해요.\"\n}"
+        }
+      }
+    },
+    {
+      "name": "22-C 학습자 알림: NOTE_READ·REPLY_ARRIVED 생김, NOTE_READ는 1건만",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const j = pm.response.json();",
+              "pm.test('{ unreadCount, items } 형식', () => { pm.expect(j.unreadCount).to.be.a('number'); pm.expect(j.items).to.be.an('array'); });",
+              "pm.test('createdAt에 +09:00', () => j.items.forEach(i => pm.expect(i.createdAt).to.match(/\\+09:00$/)));",
+              "pm.test('최대 50건', () => pm.expect(j.items.length).to.be.at.most(50));",
+              "pm.test('쪽지 내용·낱말이 알림에 없다', () => pm.expect(JSON.stringify(j.items)).to.not.include('비밀쪽지내용').and.not.include('죽고 싶다'));",
+              "pm.test('학습자: NOTE_READ \"이음쌤이 쪽지를 읽었어요\"', () => { const it = j.items.find(i => i.type === 'NOTE_READ'); pm.expect(it, 'NOTE_READ 없음').to.exist; pm.expect(it.title).to.eql('이음쌤이 쪽지를 읽었어요'); });",
+              "pm.test('학습자: REPLY_ARRIVED \"이음쌤의 답장이 도착했어요\"', () => { const it = j.items.find(i => i.type === 'REPLY_ARRIVED'); pm.expect(it, 'REPLY_ARRIVED 없음').to.exist; pm.expect(it.title).to.eql('이음쌤의 답장이 도착했어요'); });",
+              "pm.test('학습자에게 SIGNAL_FLAGGED은 없다', () => pm.expect(j.items.some(i => i.type === 'SIGNAL_FLAGGED')).to.eql(false));",
+              "pm.test('NOTE_READ는 이 쪽지에 1건', () => pm.expect(j.items.filter(i => i.type === 'NOTE_READ' && i.linkId === Number(pm.collectionVariables.get('threadId'))).length).to.eql(1));",
+              "pm.collectionVariables.set('notiId', j.items[0].id);",
+              "pm.collectionVariables.set('unreadBefore', j.unreadCount);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications"
+      }
+    },
+    {
+      "name": "22 unread=true (안 읽은 것만)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const j = pm.response.json();",
+              "pm.test('{ unreadCount, items } 형식', () => { pm.expect(j.unreadCount).to.be.a('number'); pm.expect(j.items).to.be.an('array'); });",
+              "pm.test('createdAt에 +09:00', () => j.items.forEach(i => pm.expect(i.createdAt).to.match(/\\+09:00$/)));",
+              "pm.test('최대 50건', () => pm.expect(j.items.length).to.be.at.most(50));",
+              "pm.test('쪽지 내용·낱말이 알림에 없다', () => pm.expect(JSON.stringify(j.items)).to.not.include('비밀쪽지내용').and.not.include('죽고 싶다'));",
+              "pm.test('모두 안 읽음', () => j.items.forEach(i => pm.expect(i.isRead).to.eql(false)));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications?unread=true"
+      }
+    },
+    {
+      "name": "23-A 한 건 읽음 처리 (204)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('204', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/{{notiId}}/read"
+      }
+    },
+    {
+      "name": "23-B 이미 읽은 알림 다시 (204, 그대로 둠)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('204', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/{{notiId}}/read"
+      }
+    },
+    {
+      "name": "22-D 읽음 처리 뒤 unreadCount가 1 줄었다",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const j = pm.response.json();",
+              "pm.test('{ unreadCount, items } 형식', () => { pm.expect(j.unreadCount).to.be.a('number'); pm.expect(j.items).to.be.an('array'); });",
+              "pm.test('createdAt에 +09:00', () => j.items.forEach(i => pm.expect(i.createdAt).to.match(/\\+09:00$/)));",
+              "pm.test('최대 50건', () => pm.expect(j.items.length).to.be.at.most(50));",
+              "pm.test('쪽지 내용·낱말이 알림에 없다', () => pm.expect(JSON.stringify(j.items)).to.not.include('비밀쪽지내용').and.not.include('죽고 싶다'));",
+              "pm.test('unreadCount -1', () => pm.expect(j.unreadCount).to.eql(Number(pm.collectionVariables.get('unreadBefore')) - 1));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications"
+      }
+    },
+    {
+      "name": "23 남의 알림 읽기 (이음쌤 토큰으로 학습자 알림, 404)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404', () => pm.response.to.have.status(404));",
+              "pm.test('code=NOT_FOUND', () => pm.expect(pm.response.json().code).to.eql('NOT_FOUND'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/{{notiId}}/read"
+      }
+    },
+    {
+      "name": "23 없는 알림 (404)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404', () => pm.response.to.have.status(404));",
+              "pm.test('code=NOT_FOUND', () => pm.expect(pm.response.json().code).to.eql('NOT_FOUND'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/999999999/read"
+      }
+    },
+    {
+      "name": "23 토큰 없이 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": "{{baseUrl}}/notifications/{{notiId}}/read"
+      }
+    },
+    {
+      "name": "24-A 모두 읽음 ({ updated: N })",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.test('updated가 숫자', () => pm.expect(pm.response.json().updated).to.be.a('number'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/read-all"
+      }
+    },
+    {
+      "name": "22-E 모두 읽음 뒤 unreadCount=0",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const j = pm.response.json();",
+              "pm.test('{ unreadCount, items } 형식', () => { pm.expect(j.unreadCount).to.be.a('number'); pm.expect(j.items).to.be.an('array'); });",
+              "pm.test('createdAt에 +09:00', () => j.items.forEach(i => pm.expect(i.createdAt).to.match(/\\+09:00$/)));",
+              "pm.test('최대 50건', () => pm.expect(j.items.length).to.be.at.most(50));",
+              "pm.test('쪽지 내용·낱말이 알림에 없다', () => pm.expect(JSON.stringify(j.items)).to.not.include('비밀쪽지내용').and.not.include('죽고 싶다'));",
+              "pm.test('unreadCount=0', () => pm.expect(j.unreadCount).to.eql(0));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications"
+      }
+    },
+    {
+      "name": "24-B 한 번 더 (updated=0)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.test('updated=0', () => pm.expect(pm.response.json().updated).to.eql(0));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/read-all"
+      }
+    },
+    {
+      "name": "24 토큰 없이 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": "{{baseUrl}}/notifications/read-all"
+      }
+    }
+  ]
+}
