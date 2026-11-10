@@ -1646,19 +1646,19 @@ a.ie-card:hover,.ie-card--link:hover,.ie-pcard:hover{box-shadow:0 2px 4px rgba(6
 @media (prefers-reduced-motion:reduce){.ie-3lab{transition:none}}
 /* 화면 밖으로 완전히 나간 이름표만 부드럽게 숨김 (transform 은 JS 가 매 프레임 직접 갱신 → transition 대상 아님) */
 .ie-3lab.is-gone{opacity:0!important;pointer-events:none}
-/* v45 — 홈 버튼 크게 */
-.ie-3lab{gap:8px;padding:5px 16px 5px 5px;font-size:15px;border-width:1.5px}
-.ie-3lic{width:30px;height:30px}.ie-3lic svg{width:20px;height:20px}
-.ie-w3dock{width:min(760px,calc(100% - 32px));gap:10px}
-.ie-w3nav{width:54px;height:54px}.ie-w3nav svg{width:24px;height:24px}
-.ie-w3card{height:96px}
-.ie-w3ico{width:58px;height:58px}.ie-w3ico svg{width:32px;height:32px}
-.ie-w3nm{font-size:20px}.ie-w3ds{font-size:13px}
-.ie-w3go{min-height:48px;padding:0 20px;font-size:15px;border-radius:15px}.ie-w3go svg{width:18px;height:18px}
-.ie-w3dots{gap:10px;padding:8px 14px}
+/* v45 — 홈 버튼 크기 (v47: 이름표와 아래 카드를 줄임) */
+.ie-3lab{gap:6px;padding:3px 11px 3px 3px;font-size:12.5px;border-width:1.5px}
+.ie-3lic{width:24px;height:24px}.ie-3lic svg{width:16px;height:16px}
+.ie-w3dock{width:min(600px,calc(100% - 32px));gap:8px}
+.ie-w3nav{width:42px;height:42px}.ie-w3nav svg{width:20px;height:20px}
+.ie-w3card{height:72px;border-radius:24px}.ie-w3item{gap:12px;padding:0 14px 0 12px}
+.ie-w3ico{width:46px;height:46px;border-radius:16px}.ie-w3ico svg{width:26px;height:26px}
+.ie-w3nm{font-size:17px}.ie-w3ds{font-size:12px}
+.ie-w3go{min-height:38px;padding:0 15px;font-size:13.5px;border-radius:12px}.ie-w3go svg{width:16px;height:16px}
+.ie-w3dots{gap:8px;padding:6px 12px}
 .ie-w3dot,.ie-w3dot.is-on{width:10px!important;height:10px}
 .ie-w3hint{font-size:14px;padding:9px 16px 9px 13px}
-@media (max-width:1023px){.ie-w3card{height:104px}.ie-w3nav{width:48px;height:48px}.ie-3lab{font-size:14px}.ie-3lic{width:28px;height:28px}}
+@media (max-width:1023px){.ie-w3card{height:84px}.ie-w3nav{width:40px;height:40px}.ie-3lab{font-size:12px}.ie-3lic{width:22px;height:22px}}
 /* v46 — 홈: 제목·3D 마을·아래 카드가 겹치지 않게 칸 나누기, 확대·축소 버튼 */
 @media (min-width:1024px){
 .ie-w3{display:grid;grid-template-rows:auto minmax(0,1fr) auto;grid-template-columns:minmax(0,1fr) auto}
@@ -1788,3 +1788,19 @@ a.ie-card:hover,.ie-card--link:hover,.ie-pcard:hover{box-shadow:0 2px 4px rgba(6
 /* 배너 카드 옆 건물 그림 제거 — 모든 화면의 배너에서 숨겨요.
    (그림 파일·마크업은 그대로 두었으니 이 규칙만 지우면 되돌아와요) */
 .ie-banner>.ie-banner-art{display:none!important}
+
+/* v47 — 홈 풀스크린: 홈에서만 상단 네비게이션을 없애고 3D 마을과 배경이 브라우저 전체를 써요.
+   (.ie-home 은 홈 화면만 가진 클래스라 다른 화면의 레이아웃은 그대로예요) */
+.ie-shell.ie-home{height:calc(100vh / var(--ie-ui));height:calc(100dvh / var(--ie-ui));min-height:0;overflow:hidden}
+.ie-home .ie-body-row{flex:1 1 0;min-height:0;overflow:hidden;flex-wrap:nowrap}
+.ie-home .ie-main.ie-w3main{flex:1 1 0;min-width:0;width:100%;max-width:none;margin:0;padding:0;gap:0}
+.ie-home .ie-w3{height:calc(100vh / var(--ie-ui));height:calc(100dvh / var(--ie-ui));min-height:0;border:0;border-radius:0;box-shadow:none}
+.ie-home .ie-3map{-webkit-mask-image:none;mask-image:none}
+@media (min-width:1024px){
+  .ie-home .ie-w3stage{position:absolute!important;inset:0!important;grid-row:auto!important;grid-column:auto!important;margin:0!important;border-radius:0!important;-webkit-mask-image:none!important;mask-image:none!important}
+}
+@media (max-width:1023px){
+  .ie-home .ie-w3{display:flex;flex-direction:column}
+  .ie-home .ie-w3stage{flex:1 1 0;height:auto;min-height:220px}
+  .ie-home .ie-w3dock{margin-top:0}
+}
