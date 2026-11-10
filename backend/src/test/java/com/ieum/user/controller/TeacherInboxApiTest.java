@@ -288,6 +288,26 @@ class TeacherInboxApiTest {
     }
 
     @Test
+    void 대응_21은_처리를_취소했다가_다시_누르면_처음_처리한_시각으로_돌아온다() throws Exception {
+        // 처음 처리(11/7 09:00) 뒤 handled:false로 되돌린 상태. 시각은 남아 있지만 OPEN이라 응답에는 안 나간다
+        SignalEvent reopened = signal(10, 12, 101, 1, SignalStatus.OPEN, LocalDateTime.of(2026, 11, 3, 9, 0),
+                LocalDateTime.of(2026, 11, 7, 9, 0), null);
+        when(signalEventRepository.findById(10L)).thenReturn(Optional.of(reopened));
+        when(signalEventRepository.findByStudentIdIn(anyCollection())).thenReturn(List.of(reopened));
+
+        mockMvc.perform(get("/api/v1/teacher/signals").header("Authorization", teacher()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].status").value("OPEN"))
+                .andExpect(jsonPath("$.items[0].handledAt").doesNotExist());
+
+        mockMvc.perform(patch("/api/v1/teacher/signals/10").header("Authorization", teacher())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"handled\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("HANDLED"))
+                .andExpect(jsonPath("$.handledAt").value("2026-11-07T09:00:00+09:00"));
+    }
+
+    @Test
     void 대응_21은_handled_false면_OPEN으로_되돌리고_처리_시각을_비우며_memo_생략은_그대로_둔다() throws Exception {
         mockMvc.perform(patch("/api/v1/teacher/signals/6").header("Authorization", teacher())
                         .contentType(MediaType.APPLICATION_JSON).content("{\"handled\":false}"))

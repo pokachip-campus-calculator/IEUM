@@ -163,7 +163,8 @@ public class TeacherInboxService {
                         message == null ? null : message.getThreadId(),
                         message == null ? null : message.getBody(),
                         message == null ? null : toOffset(message.getCreatedAt())),
-                toOffset(e.getHandledAt()), e.getResponseMemo(), toOffset(e.getCreatedAt()));
+                e.getStatus() == SignalStatus.HANDLED ? toOffset(e.getHandledAt()) : null,
+                e.getResponseMemo(), toOffset(e.getCreatedAt()));
     }
 
     // 생략하면 모두. WAITING·ANSWERED 밖의 값은 VALIDATION_FAILED(status)
