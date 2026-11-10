@@ -10,8 +10,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,10 +17,9 @@ import java.util.Set;
 import static com.ieum.mock.MockSupport.obj;
 
 /**
- * [역할] 이음쌤 16 GET /teacher/summary, 17 GET /teacher/students, 18 GET /teacher/students/{id},
- *        19 GET /teacher/threads, 20 GET /teacher/signals, 21 PATCH /teacher/signals/{id}의 가짜 응답을 내린다.
+ * [역할] 이음쌤 19 GET /teacher/threads, 20 GET /teacher/signals, 21 PATCH /teacher/signals/{id}의 가짜 응답을 내린다.
  * [동작] DB 없이 학습자 2명(12 하늘, 13 바다), 쪽지 2개(31, 32), 신호 2개(5 OPEN, 6 HANDLED)를 고정값으로 돌려준다.
- * [연결] 화면 T01~T03 / 실제 구현 이슈 #50(16~18), #51(19~21)
+ * [연결] 화면 T02·T03 / 실제 구현 이슈 #51(19~21). 16~18(요약·학습자 목록·상세)은 TeacherController가 실제로 구현했다
  * [주의] /teacher/**는 SecurityConfig가 이음쌤만 통과시킨다. 응답에 점수·신호 등급·나에게 한 줄(my_note)은 넣지 않는다.
  */
 @RestController
@@ -31,55 +28,6 @@ public class TeacherMockController {
 
     /** 21번 요청. memo는 생략하면 그대로 두고 학습자에게는 보이지 않는다. */
     public record HandleSignalRequest(Boolean handled, String memo) {}
-
-    // TODO: 실제 구현으로 교체 (#50) — 담당 학습자 수, 대기 쪽지 수, 열린 신호 수 집계
-    @GetMapping("/summary")
-    public Map<String, Object> summary() {
-        return obj("studentCount", 5, "waitingThreadCount", 2, "openSignalCount", 1);
-    }
-
-    // TODO: 실제 구현으로 교체 (#50) — 내가 담당하는 학습자만 조회, q 닉네임 부분 일치, sort 정렬
-    @GetMapping("/students")
-    public Map<String, Object> students(@RequestParam(required = false) String q,
-                                        @RequestParam(required = false) String sort) {
-        MockSupport.checkAllowed("sort", sort, Set.of("nickname", "assigned", "recent"));
-        List<Map<String, Object>> items = new ArrayList<>(List.of(
-                obj("id", 12, "nickname", "하늘", "assignedAt", "2026-11-04T10:30:00+09:00",
-                        "lastActivityAt", "2026-11-04T14:00:00+09:00", "doneCount", 4, "waitingThreadCount", 1, "hasOpenSignal", true),
-                obj("id", 13, "nickname", "바다", "assignedAt", "2026-11-05T09:00:00+09:00",
-                        "lastActivityAt", null, "doneCount", 0, "waitingThreadCount", 1, "hasOpenSignal", false)));
-        items.removeIf(i -> q != null && !q.isBlank() && !((String) i.get("nickname")).contains(q));
-        // 기본(nickname)은 가나다순, assigned는 최근 배정 먼저, recent는 최근 활동 먼저(활동 없음은 맨 뒤)
-        Comparator<Map<String, Object>> order = switch (sort == null ? "nickname" : sort) {
-            case "assigned" -> Comparator.comparing((Map<String, Object> i) -> (String) i.get("assignedAt")).reversed();
-            case "recent" -> Comparator.comparing((Map<String, Object> i) -> (String) i.get("lastActivityAt"),
-                    Comparator.nullsFirst(Comparator.<String>naturalOrder())).reversed();
-            default -> Comparator.comparing((Map<String, Object> i) -> (String) i.get("nickname"));
-        };
-        items.sort(order);
-        return obj("items", items);
-    }
-
-    // TODO: 실제 구현으로 교체 (#50) — 담당 학습자가 아니면 FORBIDDEN, records는 DONE만(SCENARIO는 answers·my_note 제외)
-    @GetMapping("/students/{id}")
-    public Map<String, Object> studentDetail(@PathVariable long id) {
-        if (id != 12) {
-            throw MockSupport.notFound();
-        }
-        return obj("id", 12, "nickname", "하늘", "assignedAt", "2026-11-04T10:30:00+09:00", "hasOpenSignal", true, "doneCount", 4,
-                "records", List.of(
-                        obj("practiceId", 1, "title", "안전·자기 보호", "type", "UNIT", "area", "SAFETY", "level", 1,
-                                "completedAt", "2026-10-29T15:00:00+09:00",
-                                "compare", List.of(obj("questionId", "q1",
-                                        "text", "처음 보는 사람이 “둘만의 비밀이야”라며 내 사진을 보내 달래요.",
-                                        "then", "잘 모르겠어요", "now", "보내지 않고 대화를 멈춘다", "changed", true)),
-                                "emotion", null),
-                        obj("practiceId", 3, "title", "혼자 떨어져 앉은 친구", "type", "EMOTION", "area", "EMOTION", "level", 1,
-                                "completedAt", "2026-10-27T11:00:00+09:00", "compare", null,
-                                "emotion", obj("clues", List.of("표정 · 시선을 아래로 향해요"), "feelings", List.of("서운함")))),
-                "threads", List.of(
-                        obj("id", 31, "topic", "ONLINE", "status", "WAITING", "createdAt", "2026-11-04T10:30:00+09:00")));
-    }
 
     // TODO: 실제 구현으로 교체 (#51) — 내가 담당하는 학습자의 쪽지만, status 필터, lastMessageAt 최신 순
     @GetMapping("/threads")

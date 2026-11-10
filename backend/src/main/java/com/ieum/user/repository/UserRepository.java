@@ -19,6 +19,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByLoginId(String loginId);
 
+    // 내 담당 학습자(teacher_id=나, role=STUDENT)만. like는 "%"(전체) 또는 "%문구%"(닉네임 부분 일치, %·_ 이스케이프됨)
+    @Query("select s from User s where s.teacherId = :teacherId and s.role = :role and s.nickname like :like escape '\\'")
+    List<User> findStudentsByTeacher(@Param("teacherId") Long teacherId, @Param("role") Role role, @Param("like") String like);
+
     // 맡은 학습자 수가 적은 순, 같으면 id 작은 순으로 이음쌤을 늘어놓는다(자동 배정용)
     @Query("select t from User t where t.role = :role and t.status = :status "
             + "order by (select count(s) from User s where s.teacherId = t.id), t.id")
