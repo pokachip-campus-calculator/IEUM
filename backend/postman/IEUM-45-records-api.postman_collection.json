@@ -11,11 +11,11 @@
     },
     {
       "key": "loginId",
-      "value": "learn4321"
+      "value": "ieumstu01"
     },
     {
       "key": "password",
-      "value": "password123"
+      "value": "ieumtest1234"
     },
     {
       "key": "token",
@@ -23,8 +23,9 @@
     },
     {
       "key": "teacherLoginId",
-      "value": "teach4321"
+      "value": "ieumtea01"
     },
+    { "key": "teacherPassword", "value": "ieumteach1234" },
     {
       "key": "teacherToken",
       "value": ""
@@ -86,6 +87,52 @@
         "body": {
           "mode": "raw",
           "raw": "{\n  \"loginId\": \"{{loginId}}\",\n  \"password\": \"{{password}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "00 사전 - 이음쌤 가입 (이미 있으면 409여도 괜찮음)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"TEACHER\",\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{teacherPassword}}\",\n  \"name\": \"김쌤\",\n  \"nickname\": \"테스트 이음쌤\",\n  \"birthDate\": \"1990-05-20\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "00 사전 - 이음쌤 로그인 (teacherToken 자동 저장)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('teacherToken', pm.response.json().token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{teacherPassword}}\"\n}"
         }
       }
     },
@@ -436,7 +483,7 @@
               "pm.test('개수 = 목록 길이', () => pm.expect(b.doneCount + b.inProgressCount).to.eql(b.items.length));",
               "pm.test('UNIT·EMOTION은 DONE, SCENARIO는 IN_PROGRESS', () => { const m = id => b.items.find(i => i.practiceId === id).status; pm.expect(m(1)).to.eql('DONE'); pm.expect(m(3)).to.eql('DONE'); pm.expect(m(2)).to.eql('IN_PROGRESS'); });",
               "pm.test('DONE이면 completedAt이 +09:00', () => b.items.filter(i => i.status === 'DONE').forEach(i => pm.expect(i.completedAt).to.match(/[+]09:00$/)));",
-              "pm.test('IN_PROGRESS 기록은 completedAt null', () => pm.expect(b.items.find(i => i.practiceId === 2).completedAt).to.eql(null));",
+              "pm.test('IN_PROGRESS 기록의 completedAt은 null이거나 완료한 적 있는 시각(다시 하는 중)이다', () => { const c = b.items.find(i => i.practiceId === 2).completedAt; pm.expect(c === null || /\\+09:00$/.test(c)).to.eql(true); });",
               "pm.test('updatedAt은 +09:00', () => b.items.forEach(i => pm.expect(i.updatedAt).to.match(/[+]09:00$/)));",
               "pm.test('기본은 최신순(updatedAt 내림차순)', () => { for (let k = 1; k < b.items.length; k++) pm.expect(b.items[k-1].updatedAt >= b.items[k].updatedAt).to.eql(true); });"
             ]
