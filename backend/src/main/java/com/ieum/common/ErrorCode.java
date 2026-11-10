@@ -1,0 +1,52 @@
+package com.ieum.common;
+
+import org.springframework.http.HttpStatus;
+
+/**
+ * [역할] 서버에서 쓰는 오류 종류와 HTTP 상태, 기본 문구를 한곳에 모아 둔 목록.
+ *
+ * 응답 형식
+ * { "code": "NOT_FOUND", "message": "없는 데이터입니다." }
+ *
+ * 입력 오류일 때만 `fieldErrors`가 같이 옵니다.
+ * { "code": "VALIDATION_FAILED", "message": "...", "fieldErrors": [{ "field": "loginId", "message": "..." }] }
+ */
+
+// 오류 코드별 HTTP 상태와 메시지 목록
+    /* comment. 오류 코드
+        |         code         |         HTTP       |         언제         |
+        |----------------------|--------------------|---------------------|
+        | VALIDATION_FAILED    | 400 (BAD_REQUEST)  | 입력 형식 오류        |
+        | RECORD_INCOMPLETE    | 400 (BAD_REQUEST)  | 필수 선택이 빠짐      |
+        | UNAUTHORIZED         | 401 (UNAUTHORIZED) | 토큰 없음·만료        |
+        | BAD_CREDENTIALS      | 401 (UNAUTHORIZED) | 아이디·비밀번호 불일치 |
+        | GUARDIAN_PENDING     | 403 (FORBIDDEN)    | 보호자 확인 전 로그인 |
+        | FORBIDDEN            | 403 (FORBIDDEN)    | 권한 없음           |
+        | NOT_FOUND            | 404 (NOT_FOUND)    | 없는 id            |
+        | LOGIN_ID_TAKEN       | 409 (CONFLICT)     | 아이디 중복         |
+        | NO_TEACHER_AVAILABLE | 409 (CONFLICT)     | 맡을 이음쌤 없음     | */
+
+
+public enum ErrorCode {
+    VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "입력 형식이 올바르지 않습니다."),
+    RECORD_INCOMPLETE(HttpStatus.BAD_REQUEST, "필수 선택이 빠졌습니다."),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "토큰이 없거나 만료되었습니다."),
+    BAD_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 맞지 않습니다."),
+    GUARDIAN_PENDING(HttpStatus.FORBIDDEN, "보호자 확인이 끝나면 시작할 수 있어요."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없습니다"),
+    NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 아이디입니다."),
+    LOGIN_ID_TAKEN(HttpStatus.CONFLICT, "이미 사용 중인 아이디입니다."),
+    NO_TEACHER_AVAILABLE(HttpStatus.CONFLICT, "배정된 이음쌤이 없습니다. ");
+
+    private final HttpStatus status;
+    private final String message;
+
+    ErrorCode(HttpStatus status, String message) {
+        this.status = status;
+        this.message = message;
+    }
+
+    // 읽기 전용 통로
+    public HttpStatus getStatus() { return status; }
+    public String getMessage() { return message; }
+}

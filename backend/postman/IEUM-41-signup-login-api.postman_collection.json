@@ -1,0 +1,513 @@
+{
+  "info": {
+    "name": "IEUM #41 회원가입·로그인 API (01·02)",
+    "description": "가입 01 POST /auth/signup, 로그인 02 POST /auth/login 시나리오.\n위에서 아래로 순서대로 실행한다. 첫 요청이 실행 ID(runId)를 만들어 아이디를 매번 새로 쓴다.\n마지막 요청은 DB에서 kid{{runId}}의 status를 ACTIVE로 바꾼 뒤 따로 실행한다 (보호자 승인 API가 아직 없음).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "password",
+      "value": "password1"
+    },
+    {
+      "key": "runId",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 가입 - 이음쌤 정상 (201 ACTIVE)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// 실행마다 새 아이디가 되도록 실행 ID를 만든다 (이 요청을 먼저 실행해야 한다)",
+              "pm.collectionVariables.set('runId', Date.now().toString(36).slice(-7));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201', () => pm.response.to.have.status(201));",
+              "pm.test('status ACTIVE', () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"TEACHER\",\n  \"loginId\": \"teacher{{runId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"김쌤\",\n  \"nickname\": \"김 이음쌤\",\n  \"birthDate\": \"1990-05-20\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "01 가입 - 이음쌤 생년월일 없음 (400 birthDate)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));",
+              "pm.test('code VALIDATION_FAILED', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_FAILED'));",
+              "pm.test('fieldErrors에 birthDate', () => pm.expect(pm.response.json().fieldErrors.map(e => e.field)).to.include('birthDate'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"TEACHER\",\n  \"loginId\": \"noBirth{{runId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"박쌤\",\n  \"nickname\": \"박 이음쌤\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "01 가입 - 학습자 만 14세 이상 (201 ACTIVE)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201', () => pm.response.to.have.status(201));",
+              "pm.test('status ACTIVE', () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"STUDENT\",\n  \"loginId\": \"student{{runId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"홍길동\",\n  \"nickname\": \"길동\",\n  \"birthDate\": \"2008-03-15\",\n  \"phone\": \"01012345678\",\n  \"school\": \"이음중\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "01 가입 - 학습자 만 14세 미만 + 보호자 (201 PENDING_GUARDIAN)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201', () => pm.response.to.have.status(201));",
+              "pm.test('status PENDING_GUARDIAN', () => pm.expect(pm.response.json().status).to.eql('PENDING_GUARDIAN'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"STUDENT\",\n  \"loginId\": \"kid{{runId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"김아이\",\n  \"nickname\": \"아이\",\n  \"birthDate\": \"2015-01-01\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true,\n  \"guardian\": {\n    \"name\": \"엄마\",\n    \"relation\": \"PARENT\",\n    \"contact\": \"01099999999\"\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "01 가입 - 만 14세 미만 보호자 없음 (400 guardian)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));",
+              "pm.test('code VALIDATION_FAILED', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_FAILED'));",
+              "pm.test('fieldErrors에 guardian', () => pm.expect(pm.response.json().fieldErrors.map(e => e.field)).to.include('guardian'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"STUDENT\",\n  \"loginId\": \"noGuard{{runId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"이아이\",\n  \"nickname\": \"아이2\",\n  \"birthDate\": \"2015-01-01\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "01 가입 - 학습자 생년월일 없음 (400 birthDate)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));",
+              "pm.test('code VALIDATION_FAILED', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_FAILED'));",
+              "pm.test('fieldErrors에 birthDate', () => pm.expect(pm.response.json().fieldErrors.map(e => e.field)).to.include('birthDate'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"STUDENT\",\n  \"loginId\": \"stuNoB{{runId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"홍길동\",\n  \"nickname\": \"길동\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "01 가입 - 중복 아이디, 대소문자만 다름 (409)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('409', () => pm.response.to.have.status(409));",
+              "pm.test('code LOGIN_ID_TAKEN', () => pm.expect(pm.response.json().code).to.eql('LOGIN_ID_TAKEN'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"TEACHER\",\n  \"loginId\": \"TEACHER{{runId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"김쌤\",\n  \"nickname\": \"중복\",\n  \"birthDate\": \"1990-05-20\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "01 가입 - 형식 오류 여러 개 (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));",
+              "pm.test('code VALIDATION_FAILED', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_FAILED'));",
+              "pm.test('fieldErrors에 loginId', () => pm.expect(pm.response.json().fieldErrors.map(e => e.field)).to.include('loginId'));",
+              "pm.test('fieldErrors에 password', () => pm.expect(pm.response.json().fieldErrors.map(e => e.field)).to.include('password'));",
+              "pm.test('fieldErrors에 nickname', () => pm.expect(pm.response.json().fieldErrors.map(e => e.field)).to.include('nickname'));",
+              "pm.test('fieldErrors에 phone', () => pm.expect(pm.response.json().fieldErrors.map(e => e.field)).to.include('phone'));",
+              "pm.test('fieldErrors에 agreeTerms', () => pm.expect(pm.response.json().fieldErrors.map(e => e.field)).to.include('agreeTerms'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"STUDENT\",\n  \"loginId\": \"ab\",\n  \"password\": \"short\",\n  \"name\": \"홍길동\",\n  \"nickname\": \"\",\n  \"phone\": \"123\",\n  \"agreeTerms\": false,\n  \"agreePrivacy\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "01 가입 - 깨진 JSON (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));",
+              "pm.test('code VALIDATION_FAILED', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_FAILED'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"role\":\"TEACHER\","
+        }
+      }
+    },
+    {
+      "name": "01 가입 - 잘못된 role 값 (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));",
+              "pm.test('code VALIDATION_FAILED', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_FAILED'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"ADMIN\",\n  \"loginId\": \"admin{{runId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"관리\",\n  \"nickname\": \"관리\",\n  \"birthDate\": \"1990-01-01\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "02 로그인 - 정상, 대소문자 다르게 (200, 토큰 자동 저장)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "pm.test('token·expiresAt·user', () => pm.expect(b).to.have.keys('token', 'expiresAt', 'user'));",
+              "pm.test('user 요약', () => pm.expect(b.user).to.have.keys('id', 'nickname', 'role'));",
+              "pm.collectionVariables.set('token', b.token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loginId\": \"Teacher{{runId}}\",\n  \"password\": \"{{password}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "02 로그인 - 비밀번호 틀림 (401 BAD_CREDENTIALS)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));",
+              "pm.test('code BAD_CREDENTIALS', () => pm.expect(pm.response.json().code).to.eql('BAD_CREDENTIALS'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loginId\": \"teacher{{runId}}\",\n  \"password\": \"wrong-password\"\n}"
+        }
+      }
+    },
+    {
+      "name": "02 로그인 - 없는 아이디 (401 BAD_CREDENTIALS)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));",
+              "pm.test('code BAD_CREDENTIALS', () => pm.expect(pm.response.json().code).to.eql('BAD_CREDENTIALS'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loginId\": \"nobody\",\n  \"password\": \"{{password}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "02 로그인 - 보호자 확인 전 (403 GUARDIAN_PENDING)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('403', () => pm.response.to.have.status(403));",
+              "pm.test('code GUARDIAN_PENDING', () => pm.expect(pm.response.json().code).to.eql('GUARDIAN_PENDING'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loginId\": \"kid{{runId}}\",\n  \"password\": \"{{password}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "02 로그인 - 빈 값 (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));",
+              "pm.test('code VALIDATION_FAILED', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_FAILED'));",
+              "pm.test('fieldErrors에 loginId', () => pm.expect(pm.response.json().fieldErrors.map(e => e.field)).to.include('loginId'));",
+              "pm.test('fieldErrors에 password', () => pm.expect(pm.response.json().fieldErrors.map(e => e.field)).to.include('password'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loginId\": \"\",\n  \"password\": \"\"\n}"
+        }
+      }
+    },
+    {
+      "name": "02 로그인 - 보호자 승인 후 (200) ※ DB에서 status를 ACTIVE로 바꾼 뒤 실행",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loginId\": \"kid{{runId}}\",\n  \"password\": \"{{password}}\"\n}"
+        }
+      }
+    }
+  ]
+}
