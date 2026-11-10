@@ -26,7 +26,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     List<Long> findThreadIdsWithUnread(@Param("threadIds") Collection<Long> threadIds,
                                        @Param("senderRole") SenderRole senderRole);
 
-    // 해당 상태의 신호가 붙은 메시지가 있는 쪽지 묶음 id (이음쌤 쪽지함의 hasSignal은 OPEN 기준)
+    // 해당 상태의 신호가 붙은 메시지가 있는 쪽지 묶음 id (이음쌤 쪽지함의 hasSignal·signalStatus 계산용)
     @Query("select distinct m.threadId from Message m where m.threadId in :threadIds "
             + "and exists (select 1 from SignalEvent s where s.messageId = m.id and s.status = :status)")
     List<Long> findThreadIdsWithSignal(@Param("threadIds") Collection<Long> threadIds,

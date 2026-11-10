@@ -161,11 +161,36 @@ class TeacherInboxApiTest {
                 .andExpect(jsonPath("$.items[0].linkedPractice.id").value(7))
                 .andExpect(jsonPath("$.items[0].linkedPractice.title").value("낯선 사람의 사진 요청"))
                 .andExpect(jsonPath("$.items[0].hasSignal").value(true))
+                .andExpect(jsonPath("$.items[0].signalStatus").value("OPEN"))
                 .andExpect(jsonPath("$.items[1].id").value(32))
                 .andExpect(jsonPath("$.items[1].preview").value("가".repeat(40)))
                 .andExpect(jsonPath("$.items[1].linkedPractice").doesNotExist())
                 .andExpect(jsonPath("$.items[1].hasSignal").value(false))
+                .andExpect(jsonPath("$.items[1].signalStatus").doesNotExist())
                 .andExpect(jsonPath("$.items[0].severity").doesNotExist());
+    }
+
+    @Test
+    void 쪽지함_19의_signalStatus는_미처리가_하나라도_있으면_OPEN_전부_처리됐으면_HANDLED_없으면_null이다() throws Exception {
+        MessageThread both = thread(31, 12, ThreadStatus.WAITING, null, LocalDateTime.of(2026, 11, 4, 10, 30));
+        MessageThread handledOnly = thread(32, 13, ThreadStatus.ANSWERED, null, LocalDateTime.of(2026, 11, 3, 9, 30));
+        MessageThread none = thread(33, 12, ThreadStatus.ANSWERED, null, LocalDateTime.of(2026, 11, 2, 9, 30));
+        when(threadRepository.findByTeacherIdOrderByLastMessageAtDescIdDesc(TEACHER_ID))
+                .thenReturn(List.of(both, handledOnly, none));
+        when(messageRepository.findFirstMessages(anyCollection())).thenReturn(List.of());
+        // 31번은 미처리와 처리 완료 신호가 함께 있고, 32번은 처리 완료만 있다
+        when(messageRepository.findThreadIdsWithSignal(anyCollection(), eq(SignalStatus.OPEN))).thenReturn(List.of(31L));
+        when(messageRepository.findThreadIdsWithSignal(anyCollection(), eq(SignalStatus.HANDLED)))
+                .thenReturn(List.of(31L, 32L));
+
+        mockMvc.perform(get("/api/v1/teacher/threads").header("Authorization", teacher()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].hasSignal").value(true))
+                .andExpect(jsonPath("$.items[0].signalStatus").value("OPEN"))
+                .andExpect(jsonPath("$.items[1].hasSignal").value(true))
+                .andExpect(jsonPath("$.items[1].signalStatus").value("HANDLED"))
+                .andExpect(jsonPath("$.items[2].hasSignal").value(false))
+                .andExpect(jsonPath("$.items[2].signalStatus").doesNotExist());
     }
 
     @Test

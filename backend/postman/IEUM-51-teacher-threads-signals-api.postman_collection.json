@@ -160,7 +160,7 @@
       }
     },
     {
-      "name": "19-A 쪽지함 (200, 방금 보낸 쪽지가 맨 위, hasSignal true)",
+      "name": "19-A 쪽지함 (200, 방금 보낸 쪽지가 맨 위, hasSignal true, signalStatus OPEN)",
       "event": [
         {
           "listen": "test",
@@ -170,9 +170,9 @@
               "pm.test('200', () => pm.response.to.have.status(200));",
               "const first = pm.response.json().items[0];",
               "pm.test('최신 쪽지가 맨 위', () => pm.expect(String(first.id)).to.eql(String(pm.collectionVariables.get('threadId'))));",
-              "pm.test('항목 모양', () => pm.expect(first).to.have.all.keys('id', 'student', 'topic', 'status', 'lastMessageAt', 'preview', 'linkedPractice', 'hasSignal'));",
+              "pm.test('항목 모양', () => pm.expect(first).to.have.all.keys('id', 'student', 'topic', 'status', 'lastMessageAt', 'preview', 'linkedPractice', 'hasSignal', 'signalStatus'));",
               "pm.test('학습자 정보', () => { pm.expect(first.student).to.have.all.keys('id', 'nickname'); pm.collectionVariables.set('studentId', first.student.id); });",
-              "pm.test('대기 중 + 신호 있음', () => { pm.expect(first.status).to.eql('WAITING'); pm.expect(first.hasSignal).to.eql(true); });"
+              "pm.test('대기 중 + 신호 있음', () => { pm.expect(first.status).to.eql('WAITING'); pm.expect(first.hasSignal).to.eql(true); pm.expect(first.signalStatus).to.eql('OPEN'); });"
             ]
           }
         }
@@ -412,7 +412,7 @@
             "exec": [
               "pm.test('200', () => pm.response.to.have.status(200));",
               "const r = pm.response.json();",
-              "pm.test('HANDLED', () => { pm.expect(r.status).to.eql('HANDLED'); pm.expect(r.handledAt).to.be.a('string'); pm.expect(r.responseMemo).to.eql('다음 날 담임과 통화했다'); });"
+              "pm.test('HANDLED', () => { pm.expect(r.status).to.eql('HANDLED'); pm.expect(r.handledAt).to.be.a('string'); pm.expect(r.responseMemo).to.eql('다음 날 담임과 통화했다'); pm.collectionVariables.set('firstHandledAt', r.handledAt); });"
             ]
           }
         }
@@ -437,7 +437,7 @@
       }
     },
     {
-      "name": "21-B handled=true만 다시 (200, 메모 생략이라 그대로)",
+      "name": "21-B handled=true만 다시 (200, 메모 그대로, handledAt은 처음 시각 유지)",
       "event": [
         {
           "listen": "test",
@@ -445,7 +445,8 @@
             "type": "text/javascript",
             "exec": [
               "pm.test('200', () => pm.response.to.have.status(200));",
-              "pm.test('메모 유지', () => pm.expect(pm.response.json().responseMemo).to.eql('다음 날 담임과 통화했다'));"
+              "pm.test('메모 유지', () => pm.expect(pm.response.json().responseMemo).to.eql('다음 날 담임과 통화했다'));",
+              "pm.test('처음 처리한 시각 유지', () => pm.expect(pm.response.json().handledAt).to.eql(pm.collectionVariables.get('firstHandledAt')));"
             ]
           }
         }

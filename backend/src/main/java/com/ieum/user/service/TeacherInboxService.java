@@ -80,7 +80,9 @@ public class TeacherInboxService {
         List<Long> threadIds = threads.stream().map(MessageThread::getId).toList();
         Map<Long, Message> firstMessages = messageRepository.findFirstMessages(threadIds).stream()
                 .collect(Collectors.toMap(Message::getThreadId, Function.identity()));
-        Set<Long> signalThreadIds = new HashSet<>(messageRepository.findThreadIdsWithSignal(threadIds, SignalStatus.OPEN));
+        // 신호 상태: 처리 안 한 신호가 하나라도 있으면 OPEN, 신호는 있는데 전부 처리됐으면 HANDLED, 없으면 null
+        Set<Long> openThreadIds = new HashSet<>(messageRepository.findThreadIdsWithSignal(threadIds, SignalStatus.OPEN));
+        Set<Long> handledThreadIds = new HashSet<>(messageRepository.findThreadIdsWithSignal(threadIds, SignalStatus.HANDLED));
 
         List<Long> studentIds = threads.stream().map(MessageThread::getStudentId).distinct().toList();
         Map<Long, User> students = userRepository.findAllById(studentIds).stream()
@@ -95,13 +97,15 @@ public class TeacherInboxService {
             Message first = firstMessages.get(t.getId());
             User student = students.get(t.getStudentId());
             String title = t.getPracticeId() == null ? null : practiceTitles.get(t.getPracticeId());
+            SignalStatus signalStatus = openThreadIds.contains(t.getId()) ? SignalStatus.OPEN
+                    : handledThreadIds.contains(t.getId()) ? SignalStatus.HANDLED : null;
             return new TeacherThreadListResponse.Item(
                     t.getId(),
                     new TeacherThreadListResponse.Student(t.getStudentId(), student == null ? null : student.getNickname()),
                     t.getTopic(), t.getStatus(), toOffset(t.getLastMessageAt()),
                     first == null ? "" : preview(first.getBody()),
                     title == null ? null : new TeacherThreadListResponse.LinkedPractice(t.getPracticeId(), title),
-                    signalThreadIds.contains(t.getId()));
+                    signalStatus != null, signalStatus);
         }).toList();
         return new TeacherThreadListResponse(items);
     }
