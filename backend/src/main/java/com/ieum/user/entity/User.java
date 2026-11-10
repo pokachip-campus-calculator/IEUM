@@ -76,7 +76,7 @@ public class User {
     private LocalDateTime createdAt;
 
     @PrePersist
-    void onCreate() { this.createdAt = LocalDateTime.now(); }
+    void onCreate() { this.createdAt = LocalDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS); }
 
     protected User() {}
 

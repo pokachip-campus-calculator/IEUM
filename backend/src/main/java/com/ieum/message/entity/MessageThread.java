@@ -42,7 +42,7 @@ public class MessageThread {
 
     @PrePersist
     void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
         if (this.lastMessageAt == null) this.lastMessageAt = this.createdAt;
     }
 

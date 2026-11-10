@@ -44,12 +44,12 @@ public class PracticeRecord {
 
     @PrePersist
     void onCreate() {
-        this.startedAt = LocalDateTime.now();
+        this.startedAt = LocalDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
         this.updatedAt = this.startedAt;
     }
 
     @PreUpdate
-    void onUpdate() { this.updatedAt = LocalDateTime.now(); }
+    void onUpdate() { this.updatedAt = LocalDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS); }
 
     protected PracticeRecord() {}
 
