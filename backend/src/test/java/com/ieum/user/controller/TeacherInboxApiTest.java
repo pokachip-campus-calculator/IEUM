@@ -278,6 +278,16 @@ class TeacherInboxApiTest {
     }
 
     @Test
+    void 대응_21은_이미_처리된_신호에_handled_true를_또_보내면_처음_처리한_시각을_유지하고_메모만_바꾼다() throws Exception {
+        mockMvc.perform(patch("/api/v1/teacher/signals/6").header("Authorization", teacher())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"handled\":true,\"memo\":\"보호자와도 통화함\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("HANDLED"))
+                .andExpect(jsonPath("$.handledAt").value("2026-11-07T09:00:00+09:00"))
+                .andExpect(jsonPath("$.responseMemo").value("보호자와도 통화함"));
+    }
+
+    @Test
     void 대응_21은_handled_false면_OPEN으로_되돌리고_처리_시각을_비우며_memo_생략은_그대로_둔다() throws Exception {
         mockMvc.perform(patch("/api/v1/teacher/signals/6").header("Authorization", teacher())
                         .contentType(MediaType.APPLICATION_JSON).content("{\"handled\":false}"))
