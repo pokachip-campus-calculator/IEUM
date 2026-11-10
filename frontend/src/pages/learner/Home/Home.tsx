@@ -10,7 +10,6 @@ import type { CSSProperties } from "react";
 import { img } from "@/assets";
 import { ROUTES } from "@/routes";
 import { startVillage } from "./village3d";
-import Header from "@/components/Header/Header";
 import PageStyle from "@/lib/PageStyle";
 import pageCss from "./Home.css?inline";
 
@@ -40,10 +39,7 @@ export default class Home extends Component<any, any> {
     return (
       <>
         <PageStyle css={pageCss} />
-        <div className="ie-root ie-shell">
-          <div className="ie-header-slot">
-            <Header active="home" />
-          </div>
+        <div className="ie-root ie-shell ie-home">
           <div className="ie-body-row">
             <main className="ie-main ie-w3main">
               <section className="ie-w3 ie-in" aria-labelledby="home-h">
@@ -184,78 +180,6 @@ export default class Home extends Component<any, any> {
                     <A
                       className="ie-3lab"
                       data-k="1"
-                      href={ROUTES.emotion}
-                      draggable="false"
-                      style={{ "--c": "#9C86E6", "--soft": "#F0EBFF" } as CSSProperties}
-                      aria-label="감정 읽기"
-                    >
-                      <span className="ie-3lic">
-                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                          <circle cx="12" cy="12" r="9" fill="#C7B6F3" />
-                          <circle cx="9" cy="10" r="1.3" fill="#FFFFFF" />
-                          <circle cx="15" cy="10" r="1.3" fill="#FFFFFF" />
-                          <path
-                            d="M8 14 Q12 17.5 16 14"
-                            fill="none"
-                            stroke="#FFFFFF"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                      </span>
-                      <span className="ie-3lnm">감정 읽기</span>
-                    </A>
-                    <A
-                      className="ie-3lab"
-                      data-k="2"
-                      href={ROUTES.scenario}
-                      draggable="false"
-                      style={{ "--c": "#6F8FE6", "--soft": "#E8EEFF" } as CSSProperties}
-                      aria-label="안전"
-                    >
-                      <span className="ie-3lic">
-                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                          <path
-                            d="M12 2 L20 5 V11 C20 16 16.5 20 12 22 C7.5 20 4 16 4 11 V5Z"
-                            fill="#8FA9EA"
-                          />
-                          <path
-                            d="M8.5 12 L11 14.5 L15.5 9.5"
-                            fill="none"
-                            stroke="#FFFFFF"
-                            strokeWidth="2.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </span>
-                      <span className="ie-3lnm">안전</span>
-                    </A>
-                    <A
-                      className="ie-3lab"
-                      data-k="3"
-                      href={ROUTES.scenario}
-                      draggable="false"
-                      style={{ "--c": "#EE9A78", "--soft": "#FFEDE4" } as CSSProperties}
-                      aria-label="도움 구하기"
-                    >
-                      <span className="ie-3lic">
-                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                          <path
-                            d="M3 14 C6 12 9 12 12 14 L17 13 C19 12.6 20.4 14.6 18.6 15.6 L13 19 C10 20.5 6 19.5 3 18Z"
-                            fill="#F5B190"
-                          />
-                          <path
-                            d="M14 4.5 C15.3 3 18 3.4 18 5.8 C18 8 15 10 14 10.6 C13 10 10 8 10 5.8 C10 3.4 12.7 3 14 4.5Z"
-                            fill="#F2A7C6"
-                          />
-                        </svg>
-                      </span>
-                      <span className="ie-3lnm">도움 구하기</span>
-                    </A>
-                    <A
-                      className="ie-3lab"
-                      data-k="4"
                       href={ROUTES.help}
                       draggable="false"
                       style={{ "--c": "#E27FAE", "--soft": "#FFE9F3" } as CSSProperties}
@@ -273,7 +197,7 @@ export default class Home extends Component<any, any> {
                     </A>
                     <A
                       className="ie-3lab"
-                      data-k="5"
+                      data-k="2"
                       href={ROUTES.talk}
                       draggable="false"
                       style={{ "--c": "#52B99C", "--soft": "#E3F7EF" } as CSSProperties}
@@ -294,7 +218,7 @@ export default class Home extends Component<any, any> {
                     </A>
                     <A
                       className="ie-3lab"
-                      data-k="6"
+                      data-k="3"
                       href={ROUTES.messages}
                       draggable="false"
                       style={{ "--c": "#5BA9DA", "--soft": "#E4F3FD" } as CSSProperties}
@@ -316,7 +240,7 @@ export default class Home extends Component<any, any> {
                     </A>
                     <A
                       className="ie-3lab"
-                      data-k="7"
+                      data-k="4"
                       href={ROUTES.notifications}
                       draggable="false"
                       style={{ "--c": "#E0AB3C", "--soft": "#FFF4D8" } as CSSProperties}
@@ -335,7 +259,7 @@ export default class Home extends Component<any, any> {
                     </A>
                     <A
                       className="ie-3lab"
-                      data-k="8"
+                      data-k="5"
                       href={ROUTES.collection}
                       draggable="false"
                       style={{ "--c": "#7C93E8", "--soft": "#EAF0FF" } as CSSProperties}
@@ -357,7 +281,7 @@ export default class Home extends Component<any, any> {
                     </A>
                     <A
                       className="ie-3lab"
-                      data-k="9"
+                      data-k="6"
                       href={ROUTES.profile}
                       draggable="false"
                       style={{ "--c": "#5FB1CF", "--soft": "#E3F4FA" } as CSSProperties}
@@ -500,132 +424,6 @@ export default class Home extends Component<any, any> {
                       <div
                         className="ie-w3item"
                         data-k="2"
-                        style={{ "--c": "#9C86E6", "--soft": "#F0EBFF" } as CSSProperties}
-                      >
-                        <span className="ie-w3ico">
-                          <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true">
-                            <circle cx="12" cy="12" r="9" fill="#C7B6F3" />
-                            <circle cx="9" cy="10" r="1.3" fill="#FFFFFF" />
-                            <circle cx="15" cy="10" r="1.3" fill="#FFFFFF" />
-                            <path
-                              d="M8 14 Q12 17.5 16 14"
-                              fill="none"
-                              stroke="#FFFFFF"
-                              strokeWidth="1.8"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                        </span>
-                        <span className="ie-w3txt">
-                          <b className="ie-w3nm">감정 읽기</b>
-                          <span className="ie-w3ds">표정과 몸짓에서 마음을 짐작해요.</span>
-                        </span>
-                        <A
-                          className="ie-btn ie-btn--primary ie-w3go"
-                          href={ROUTES.emotion}
-                          tabIndex={-1}
-                          aria-label="감정 읽기 들어가기"
-                        >
-                          <span className="ie-w3gt">들어가기</span>
-                          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-                            <path
-                              d="M5 12h14M13 6l6 6-6 6"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.4"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </A>
-                      </div>
-                      <div
-                        className="ie-w3item"
-                        data-k="3"
-                        style={{ "--c": "#6F8FE6", "--soft": "#E8EEFF" } as CSSProperties}
-                      >
-                        <span className="ie-w3ico">
-                          <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true">
-                            <path
-                              d="M12 2 L20 5 V11 C20 16 16.5 20 12 22 C7.5 20 4 16 4 11 V5Z"
-                              fill="#8FA9EA"
-                            />
-                            <path
-                              d="M8.5 12 L11 14.5 L15.5 9.5"
-                              fill="none"
-                              stroke="#FFFFFF"
-                              strokeWidth="2.2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </span>
-                        <span className="ie-w3txt">
-                          <b className="ie-w3nm">안전</b>
-                          <span className="ie-w3ds">불편한 상황에서 멈추는 연습이에요.</span>
-                        </span>
-                        <A
-                          className="ie-btn ie-btn--primary ie-w3go"
-                          href={ROUTES.scenario}
-                          tabIndex={-1}
-                          aria-label="안전 들어가기"
-                        >
-                          <span className="ie-w3gt">들어가기</span>
-                          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-                            <path
-                              d="M5 12h14M13 6l6 6-6 6"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.4"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </A>
-                      </div>
-                      <div
-                        className="ie-w3item"
-                        data-k="4"
-                        style={{ "--c": "#EE9A78", "--soft": "#FFEDE4" } as CSSProperties}
-                      >
-                        <span className="ie-w3ico">
-                          <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true">
-                            <path
-                              d="M3 14 C6 12 9 12 12 14 L17 13 C19 12.6 20.4 14.6 18.6 15.6 L13 19 C10 20.5 6 19.5 3 18Z"
-                              fill="#F5B190"
-                            />
-                            <path
-                              d="M14 4.5 C15.3 3 18 3.4 18 5.8 C18 8 15 10 14 10.6 C13 10 10 8 10 5.8 C10 3.4 12.7 3 14 4.5Z"
-                              fill="#F2A7C6"
-                            />
-                          </svg>
-                        </span>
-                        <span className="ie-w3txt">
-                          <b className="ie-w3nm">도움 구하기</b>
-                          <span className="ie-w3ds">믿는 어른에게 말을 꺼내 봐요.</span>
-                        </span>
-                        <A
-                          className="ie-btn ie-btn--primary ie-w3go"
-                          href={ROUTES.scenario}
-                          tabIndex={-1}
-                          aria-label="도움 구하기 들어가기"
-                        >
-                          <span className="ie-w3gt">들어가기</span>
-                          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-                            <path
-                              d="M5 12h14M13 6l6 6-6 6"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.4"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </A>
-                      </div>
-                      <div
-                        className="ie-w3item"
-                        data-k="5"
                         style={{ "--c": "#E27FAE", "--soft": "#FFE9F3" } as CSSProperties}
                       >
                         <span className="ie-w3ico">
@@ -661,7 +459,7 @@ export default class Home extends Component<any, any> {
                       </div>
                       <div
                         className="ie-w3item"
-                        data-k="6"
+                        data-k="3"
                         style={{ "--c": "#52B99C", "--soft": "#E3F7EF" } as CSSProperties}
                       >
                         <span className="ie-w3ico">
@@ -700,7 +498,7 @@ export default class Home extends Component<any, any> {
                       </div>
                       <div
                         className="ie-w3item"
-                        data-k="7"
+                        data-k="4"
                         style={{ "--c": "#5BA9DA", "--soft": "#E4F3FD" } as CSSProperties}
                       >
                         <span className="ie-w3ico">
@@ -740,7 +538,7 @@ export default class Home extends Component<any, any> {
                       </div>
                       <div
                         className="ie-w3item"
-                        data-k="8"
+                        data-k="5"
                         style={{ "--c": "#E0AB3C", "--soft": "#FFF4D8" } as CSSProperties}
                       >
                         <span className="ie-w3ico">
@@ -777,7 +575,7 @@ export default class Home extends Component<any, any> {
                       </div>
                       <div
                         className="ie-w3item"
-                        data-k="9"
+                        data-k="6"
                         style={{ "--c": "#7C93E8", "--soft": "#EAF0FF" } as CSSProperties}
                       >
                         <span className="ie-w3ico">
@@ -817,7 +615,7 @@ export default class Home extends Component<any, any> {
                       </div>
                       <div
                         className="ie-w3item"
-                        data-k="10"
+                        data-k="7"
                         style={{ "--c": "#5FB1CF", "--soft": "#E3F4FA" } as CSSProperties}
                       >
                         <span className="ie-w3ico">
@@ -873,30 +671,22 @@ export default class Home extends Component<any, any> {
                   <div className="ie-w3dots">
                     <button type="button" className="ie-w3dot" data-k="0" aria-label="마을 전체" />
                     <button type="button" className="ie-w3dot" data-k="1" aria-label="학습 영역" />
-                    <button type="button" className="ie-w3dot" data-k="2" aria-label="감정 읽기" />
-                    <button type="button" className="ie-w3dot" data-k="3" aria-label="안전" />
                     <button
                       type="button"
                       className="ie-w3dot"
-                      data-k="4"
-                      aria-label="도움 구하기"
-                    />
-                    <button
-                      type="button"
-                      className="ie-w3dot"
-                      data-k="5"
+                      data-k="2"
                       aria-label="도움 받을 수 있는 곳"
                     />
-                    <button type="button" className="ie-w3dot" data-k="6" aria-label="이음상담소" />
-                    <button type="button" className="ie-w3dot" data-k="7" aria-label="내 쪽지함" />
-                    <button type="button" className="ie-w3dot" data-k="8" aria-label="알림" />
+                    <button type="button" className="ie-w3dot" data-k="3" aria-label="이음상담소" />
+                    <button type="button" className="ie-w3dot" data-k="4" aria-label="내 쪽지함" />
+                    <button type="button" className="ie-w3dot" data-k="5" aria-label="알림" />
                     <button
                       type="button"
                       className="ie-w3dot"
-                      data-k="9"
+                      data-k="6"
                       aria-label="내 학습 기록"
                     />
-                    <button type="button" className="ie-w3dot" data-k="10" aria-label="내 정보" />
+                    <button type="button" className="ie-w3dot" data-k="7" aria-label="내 정보" />
                   </div>
                 </div>
                 <p className="ie-w3live ie-sr" aria-live="polite" />

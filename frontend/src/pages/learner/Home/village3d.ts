@@ -26,19 +26,17 @@ const SPOTS = {
   purple: [0.6, 0.427, 0.441], // 오른쪽 보라 집
   fountain: [0, 0.346, 0.086], // 가운데 분수
 };
-// 장소 순서(data-k): 학습 영역, 감정 읽기, 안전, 도움 구하기, 도움 받을 수 있는 곳, 이음상담소, 내 쪽지함, 알림, 내 학습 기록, 내 정보
+// 장소 순서(data-k): 학습 영역, 도움 받을 수 있는 곳, 이음상담소, 내 쪽지함, 알림, 내 학습 기록, 내 정보
+// (감정 읽기·안전·도움 구하기는 홈에서 빼서, 비어 있던 분홍·노랑·파랑 집을 알림·내 학습 기록·내 정보가 써요.)
 // [어느 건물, 같은 건물을 같이 쓸 때 옆으로 비켜 줄 정도]
 const MAP = [
-  ["book", 0],
-  ["pink", 0],
-  ["yellow", 0],
-  ["blueL", 0],
-  ["purple", 0],
-  ["orange", 0],
-  ["dome", 0],
-  ["fountain", -0.1],
-  ["book", 0.16],
-  ["fountain", 0.1],
+  ["book", 0], // 학습 영역
+  ["purple", 0], // 도움 받을 수 있는 곳
+  ["orange", 0], // 이음상담소
+  ["dome", 0], // 내 쪽지함
+  ["pink", 0], // 알림
+  ["yellow", 0], // 내 학습 기록
+  ["blueL", 0], // 내 정보
 ];
 const HIT = { book: 0.26, pink: 0.18, yellow: 0.18, blueL: 0.18, orange: 0.18, dome: 0.18, purple: 0.18, fountain: 0.2 };
 const CENTER = [0, 0.18, 0]; // 마을 전체를 볼 때 바라보는 점
@@ -127,7 +125,8 @@ export function startVillage(this: any): void {
   const goal = { x: CENTER[0], y: CENTER[1], z: CENTER[2], s: 100 };
   let tp = 0,
     tt = 0; // 지금 보는 각도(°), 가려는 각도(°)
-  let uz = 1,
+  let overlay = false,
+    uz = 1,
     step = -1,
     W = 1,
     H = 1,
@@ -143,7 +142,7 @@ export function startVillage(this: any): void {
 
   // 첫 화면에서 마을을 더 크게 보여 주되, 좁은 화면에서는 가장자리를 자르지 않아요.
   const fitOf = () => {
-    const k = W < 720 ? 1.0 : 1.42;
+    const k = overlay ? 1.12 : W < 720 ? 1.0 : 1.42;
     return Math.max(20, Math.min((W - 32) / 1.95, (H - padT - padB) / 1.78) * k);
   };
   const setGoal = () => {
@@ -407,8 +406,18 @@ export function startVillage(this: any): void {
   const fit = () => {
     W = st.clientWidth || 1;
     H = st.clientHeight || 1;
-    padB = 8;
-    padT = 40;
+    // 3D 칸이 홈 전체를 덮는 풀스크린 배치면, 위쪽 안내(제목·버튼)와 아래 카드(dock) 위로 마을이 올라타지 않게
+    // 실제 위치를 재서 마을이 앉을 위·아래 여백을 정해요. 그렇지 않은 배치(좁은 화면)는 예전 값 그대로예요.
+    overlay = st.offsetHeight >= root.clientHeight - 2;
+    if (overlay) {
+      const dock = root.querySelector(".ie-w3dock");
+      const dockTop = dock ? dock.offsetTop : H - 120;
+      padB = Math.max(40, root.clientHeight - dockTop + 10);
+      padT = 60;
+    } else {
+      padB = 8;
+      padT = 40;
+    }
     cy0 = padT + (H - padT - padB) / 2;
     if (renderer) {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
