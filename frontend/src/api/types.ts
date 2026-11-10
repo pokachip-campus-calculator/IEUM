@@ -67,14 +67,6 @@ export interface HomeResponse {
     estMinutes: number;
     myStatus: PracticeStatus;
   } | null;
-  inProgress: { practiceId: number; title: string; area: PracticeArea; level: number }[];
-  areas: { area: PracticeArea; doneCount: number }[];
-  recent: {
-    practiceId: number;
-    title: string;
-    area: PracticeArea;
-    completedAt: string;
-  }[];
 }
 
 /* ---------- 학습 콘텐츠 ---------- */
@@ -167,6 +159,9 @@ export type CompareRow = [question: string, before: string, after: string];
 
 export interface LearningRecord {
   id: string;
+  /** 연습 번호와 종류. "다시 연습"이 알맞은 화면(학습 단위·시나리오·감정 읽기)으로 가는 데 써요. 목업에는 없을 수 있어요. */
+  practiceId?: number;
+  type?: PracticeType;
   /** 정렬용 날짜 키 (예: 1031 = 10월 31일) */
   d: number;
   date: string;
@@ -224,6 +219,18 @@ export interface Student {
   guess: string[];
   notes: StudentNote[];
 }
+/** 이음쌤 홈 요약(GET /teacher/summary) */
+export interface TeacherSummary {
+  studentCount: number;
+  waitingThreadCount: number;
+  openSignalCount: number;
+}
+
+/** 회원가입 응답: ACTIVE 면 바로 쓸 수 있고, PENDING_GUARDIAN 이면 보호자 확인을 기다려요. */
+export interface SignupResponse {
+  status: "ACTIVE" | "PENDING_GUARDIAN";
+}
+
 export interface TeacherMessage {
   id: string;
   nick: string;

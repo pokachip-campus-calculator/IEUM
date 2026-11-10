@@ -1,5 +1,12 @@
 import { USE_MOCK, http } from "../client";
-import type { PublishMaterialsRequest, SignalStudent, Student, TeacherMessage } from "../types";
+import type {
+  CompareRow,
+  PublishMaterialsRequest,
+  SignalStudent,
+  Student,
+  TeacherMessage,
+  TeacherSummary,
+} from "../types";
 import * as signals from "../mock/signals";
 import * as students from "../mock/students";
 import * as teacherMessages from "../mock/teacherMessages";
@@ -12,6 +19,20 @@ interface ApiStudent {
   doneCount: number;
   waitingThreadCount: number;
   hasOpenSignal: boolean;
+}
+
+/** GET /teacher/students/{id} — 학습자가 마친 연습과 비교·감정 읽기 결과(점수·메모는 없어요) */
+interface ApiStudentDetail {
+  id: number;
+  records: {
+    practiceId: number;
+    title: string;
+    type: "UNIT" | "SCENARIO" | "EMOTION";
+    level: number;
+    completedAt: string;
+    compare: { text: string; then: string; now: string }[] | null;
+    emotion: { clues: string[]; feelings: string[] } | null;
+  }[];
 }
 
 interface ApiThread {
@@ -79,7 +100,16 @@ async function getThreadDetails(): Promise<{ summary: ApiThread; detail: ApiThre
   );
 }
 
-function mapStudent(student: ApiStudent, threads: Awaited<ReturnType<typeof getThreadDetails>>): Student {
+function mapStudent(
+  student: ApiStudent,
+  threads: Awaited<ReturnType<typeof getThreadDetails>>,
+  detail: ApiStudentDetail | null,
+): Student {
+  // 상세의 기록은 마친 날짜 최신순이에요. 비교는 가장 최근 학습 단위, 감정 읽기는 가장 최근 것을 보여 줘요.
+  const records = detail?.records ?? [];
+  const unitRec = records.find((r) => r.type === "UNIT" && r.compare && r.compare.length > 0);
+  const emoRec = records.find((r) => r.type === "EMOTION" && r.emotion);
+  const rows: CompareRow[] = (unitRec?.compare ?? []).map((c) => [c.text, c.then, c.now]);
   const ownThreads = threads.filter(({ summary }) => summary.student.id === student.id);
   const notes = ownThreads.flatMap(({ summary, detail }) =>
     detail.messages.map((message) => ({
@@ -99,11 +129,11 @@ function mapStudent(student: ApiStudent, threads: Awaited<ReturnType<typeof getT
     last: monthDay(activity),
     key: dayKey(activity),
     since: monthDay(student.assignedAt),
-    stamps: [],
-    unit: "",
-    rows: [],
-    clues: [],
-    guess: [],
+    stamps: records.map((r) => [r.title, monthDay(r.completedAt)] as [string, string]),
+    unit: unitRec ? `${unitRec.title} · LEVEL ${unitRec.level}` : "",
+    rows,
+    clues: emoRec?.emotion?.clues ?? [],
+    guess: emoRec?.emotion?.feelings ?? [],
     notes,
   };
 }
@@ -143,7 +173,22 @@ export const teacherService = {
       http<{ items: ApiStudent[] }>("GET", "/teacher/students"),
       getThreadDetails().catch(() => [] as Awaited<ReturnType<typeof getThreadDetails>>),
     ]);
-    return studentResponse.items.map((student) => mapStudent(student, threads));
+    // 학생마다 상세(마친 연습·비교·감정 읽기)를 함께 읽어요. 읽기 전용이고, 하나가 실패해도 목록은 보여요.
+    const details = await Promise.all(
+      studentResponse.items.map((student) =>
+        http<ApiStudentDetail>("GET", `/teacher/students/${student.id}`).catch(() => null),
+      ),
+    );
+    return studentResponse.items.map((student, i) => mapStudent(student, threads, details[i]));
+  },
+  /** GET /teacher/summary — 이음쌤 홈 위쪽 숫자(담당 학습자 수 · 대기 쪽지 수 · 확인이 필요한 신호 수) */
+  async getSummary(): Promise<TeacherSummary | null> {
+    if (USE_MOCK) return null;
+    try {
+      return await http<TeacherSummary>("GET", "/teacher/summary");
+    } catch {
+      return null; // 요약을 못 받아도 목록으로 계산해 보여 줘요
+    }
   },
   /** GET /teacher/threads and GET /threads/{id} */
   async getMessages(): Promise<TeacherMessage[]> {

@@ -4,6 +4,7 @@
  */
 import { Component, Fragment } from "react";
 import { A } from "@/lib/A";
+import { practiceHref } from "@/lib/practiceLink";
 import { img } from "@/assets";
 import { ROUTES } from "@/routes";
 import Header from "@/components/Header/Header";
@@ -117,6 +118,11 @@ export default class Collection extends Component<any, any> {
           title: r.title,
           kind: LV[r.lv][0],
           lvLabel: "LEVEL " + (r.lv + 1) + " · " + LV[r.lv][1],
+          // 서버가 알려 준 연습 번호·종류가 있으면 그 화면으로, 없으면(목업) 예전처럼 학습 단위로 가요.
+          openHref: r.practiceId ? practiceHref({ id: r.practiceId, type: r.type, levelIndex: r.lv }) : ROUTES.unit,
+          restartHref: r.practiceId
+            ? practiceHref({ id: r.practiceId, type: r.type, levelIndex: r.lv }, true)
+            : ROUTES.unit,
           isDone: r.st === "done",
           isDoing: r.st === "doing",
           stLabel: r.st === "done" ? "했어요" : "하는 중",
@@ -335,14 +341,14 @@ export default class Collection extends Component<any, any> {
                               >
                                 {r.openLabel}
                               </button>{" "}
-                              <A className="ie-btn ie-btn--secondary ie-btn--sm" href={ROUTES.unit}>
+                              <A className="ie-btn ie-btn--secondary ie-btn--sm" href={r.restartHref}>
                                 다시 연습하기
                               </A>
                             </div>
                           ) : null}{" "}
                           {r.isDoing ? (
                             <div className="ie-row">
-                              <A className="ie-btn ie-btn--primary ie-btn--sm" href={ROUTES.unit}>
+                              <A className="ie-btn ie-btn--primary ie-btn--sm" href={r.openHref}>
                                 이어서 하기
                               </A>
                               <span className="ie-meta">

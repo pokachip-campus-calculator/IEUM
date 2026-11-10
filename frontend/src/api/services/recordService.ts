@@ -1,10 +1,11 @@
 import { USE_MOCK, http } from "../client";
-import type { LearningRecord, PracticeArea } from "../types";
+import type { LearningRecord, PracticeArea, PracticeType } from "../types";
 import * as records from "../mock/records";
 
 interface ApiLearningRecord {
   practiceId: number;
   title: string;
+  type: PracticeType;
   area: PracticeArea;
   level: number;
   status: "DONE" | "IN_PROGRESS";
@@ -63,6 +64,8 @@ export const recordService = {
       const { date, key } = formatRecordDate(item.completedAt ?? item.updatedAt);
       return {
         id: String(item.practiceId),
+        practiceId: item.practiceId,
+        type: item.type,
         d: key,
         date,
         area: areaLabel[item.area],
@@ -73,6 +76,11 @@ export const recordService = {
         rows: (item.compare ?? []).map((row) => [row.text, row.then, row.now]),
       };
     });
+  },
+  /** PUT /practices/{id}/record {restart:true} — 기록을 처음부터 다시 시작해요("다시 연습"). */
+  async restartPractice(practiceId: number): Promise<void> {
+    if (USE_MOCK) return;
+    await http("PUT", `/practices/${practiceId}/record`, { restart: true });
   },
   /** PUT /practices/2/record — 시나리오 연습의 "했어요 기록" 저장 */
   async saveScenarioReflection(req: {

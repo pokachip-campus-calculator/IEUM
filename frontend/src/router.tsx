@@ -49,6 +49,19 @@ const TeacherUpload = lazy(() => import("@/pages/teacher/TeacherUpload/TeacherUp
 const levelOf = (a: LoaderFunctionArgs) =>
   new URL(a.request.url).searchParams.get("level") ?? undefined;
 
+/**
+ * 주소에 restart=1 이 있으면 서버의 연습 기록을 처음부터 다시 시작한 뒤, restart 를 뺀 같은 주소로 보내요.
+ * (새로고침해도 또 초기화되지 않도록, 화면이 뜨기 전에 로더에서 한 번만 처리해요.)
+ */
+async function restartIfAsked(a: LoaderFunctionArgs, fallbackId: number): Promise<void> {
+  const url = new URL(a.request.url);
+  if (url.searchParams.get("restart") !== "1") return;
+  const practiceId = practiceIdOf(a, fallbackId);
+  await loadLearnerData(() => recordService.restartPractice(practiceId));
+  url.searchParams.delete("restart");
+  throw redirect(url.pathname + url.search);
+}
+
 function practiceIdOf(a: LoaderFunctionArgs, fallback: number): number {
   const value = new URL(a.request.url).searchParams.get("practiceId");
   if (value === null) return fallback;
@@ -62,6 +75,20 @@ function practiceIdOf(a: LoaderFunctionArgs, fallback: number): number {
 async function loadLearnerData<T>(load: () => Promise<T>): Promise<T> {
   if (!session.token) throw redirect(ROUTES.login);
   if (session.user.role !== "learner") throw redirect(ROUTES.teacher);
+  try {
+    return await load();
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      clearSessionUser();
+      throw redirect(ROUTES.login);
+    }
+    throw error;
+  }
+}
+
+/** 학습자·이음쌤이 같이 쓰는 화면(알림 등): 로그인만 확인하고 역할은 따지지 않아요. */
+async function loadSharedData<T>(load: () => Promise<T>): Promise<T> {
+  if (!session.token) throw redirect(ROUTES.login);
   try {
     return await load();
   } catch (error) {
@@ -126,6 +153,7 @@ const pageRoutes: RouteObject[] = [
     path: ROUTES.unit,
     element: <Page C={Unit} />,
     loader: async (a) => {
+      await restartIfAsked(a, 1);
       const level = levelOf(a);
       const practiceId = practiceIdOf(a, 1);
       return {
@@ -139,6 +167,7 @@ const pageRoutes: RouteObject[] = [
     path: ROUTES.unitVideo,
     element: <Page C={UnitVideo} />,
     loader: async (a) => {
+      await restartIfAsked(a, 1);
       const level = levelOf(a);
       const practiceId = practiceIdOf(a, 1);
       return {
@@ -152,6 +181,7 @@ const pageRoutes: RouteObject[] = [
     path: ROUTES.scenario,
     element: <Page C={Scenario} />,
     loader: async (a) => {
+      await restartIfAsked(a, 2);
       const practiceId = practiceIdOf(a, 2);
       return {
         practiceId,
@@ -163,6 +193,7 @@ const pageRoutes: RouteObject[] = [
     path: ROUTES.emotion,
     element: <Page C={Emotion} />,
     loader: async (a) => {
+      await restartIfAsked(a, 3);
       const practiceId = practiceIdOf(a, 3);
       return {
         practiceId,
@@ -204,15 +235,19 @@ const pageRoutes: RouteObject[] = [
     path: ROUTES.notifications,
     element: <Page C={Notifications} />,
     loader: async () => ({
-      notifications: await loadLearnerData(() => notificationService.getNotifications()),
+      notifications: await loadSharedData(() => notificationService.getNotifications()),
     }),
   },
   {
     path: ROUTES.teacher,
     element: <Page C={Teacher} />,
-    loader: async () => ({
-      students: await loadTeacherData(() => teacherService.getStudents()),
-    }),
+    loader: async () => {
+      const [students, summary] = await Promise.all([
+        loadTeacherData(() => teacherService.getStudents()),
+        loadTeacherData(() => teacherService.getSummary()),
+      ]);
+      return { students, summary };
+    },
   },
   {
     path: ROUTES.teacherMessages,

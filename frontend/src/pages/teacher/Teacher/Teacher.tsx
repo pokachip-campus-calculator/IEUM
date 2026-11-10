@@ -77,13 +77,15 @@ export default class Teacher extends Component<any, any> {
       sums: [
         {
           label: "배정된 학습자",
-          value: P.length + "명",
+          value: (this.props.summary ? this.props.summary.studentCount : P.length) + "명",
           note: "쪽지를 보내면 배정돼요",
           cls: "ie-stat ie-stat--sky ie-pop",
         },
         {
           label: "답장이 필요한 쪽지",
-          value: P.filter(needReply).length + "건",
+          // 서버가 센 "답을 기다리는 쪽지" 수가 있으면 그 값을, 없으면 목록으로 계산해요
+          value:
+            (this.props.summary ? this.props.summary.waitingThreadCount : P.filter(needReply).length) + "건",
           note: "바로 답하지 못해도 괜찮아요",
           cls: "ie-stat ie-stat--lav ie-pop",
         },
