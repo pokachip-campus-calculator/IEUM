@@ -13,11 +13,4 @@ export const home: HomeResponse = {
     estMinutes: 10,
     myStatus: "IN_PROGRESS",
   },
-  inProgress: [],
-  areas: [
-    { area: "SAFETY", doneCount: 1 },
-    { area: "RELATION", doneCount: 1 },
-    { area: "MIND", doneCount: 2 },
-  ],
-  recent: [],
 };

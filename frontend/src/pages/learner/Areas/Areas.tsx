@@ -5,6 +5,7 @@
 import { Component, Fragment } from "react";
 import type { PracticeItem } from "@/api";
 import { A } from "@/lib/A";
+import { practiceHref } from "@/lib/practiceLink";
 import { css } from "@/lib/css";
 import type { CSSProperties } from "react";
 import { img } from "@/assets";
@@ -130,12 +131,7 @@ export default class Areas extends Component<any, any> {
       const done = normalized.filter((item) => item.tag === practice.tag && item.myStatus === "DONE").length;
       const L = LANE[practice.tag];
       const K = TKEY[practice.tag];
-      const href =
-        practice.type === "EMOTION"
-          ? `${ROUTES.emotion}?practiceId=${practice.id}`
-          : practice.type === "SCENARIO"
-            ? `${ROUTES.scenario}?practiceId=${practice.id}`
-            : `${practice.levelIndex > 0 ? ROUTES.unitVideo : ROUTES.unit}?level=${LEVEL_KEYS[practice.levelIndex]}&practiceId=${practice.id}`;
+      const href = practiceHref(practice);
       return {
         laneStart: i === 0 || sorted[i - 1].tag !== practice.tag,
         laneName: L[0],

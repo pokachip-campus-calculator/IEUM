@@ -62,10 +62,6 @@ export default class Signup extends Component<any, any> {
       org: "",
       birth: "",
       phone: "",
-      mail: "idle",
-      mailErr: "",
-      code: "",
-      codeTried: false,
       tried: false,
       ans: {},
       gName: "",
@@ -166,7 +162,7 @@ export default class Signup extends Component<any, any> {
       pwConfirm: s.pwConfirm === "" || s.pwConfirm !== s.pw,
       birth: !birthOk,
       phone: !/^0[0-9]{9,10}$/.test(s.phone.replace(/[^0-9]/g, "")),
-      mail: s.mail !== "verified",
+      mail: !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.email.trim()),
     };
     const anyInv = Object.values(inv).some(Boolean);
     const bad: any = {};
@@ -285,48 +281,15 @@ export default class Signup extends Component<any, any> {
         ["pwConfirm", "비밀번호 재확인"],
         ["birth", "생년월일"],
         ["phone", "연락처"],
-        ["mail", "이메일 인증"],
+        ["mail", "이메일"],
       ]
         .filter((x) => inv[x[0]])
         .map((x) => x[1])
         .join(", "),
-      mailIdle: s.mail === "idle",
-      mailSent: s.mail === "sent",
-      mailDone: s.mail === "verified",
-      mailBad: bad.mail || s.mailErr !== "",
-      mailCls: cls(bad.mail || s.mailErr !== ""),
-      mailMsgOn: bad.mail || s.mailErr !== "",
-      mailMsg: s.mailErr !== "" ? s.mailErr : "이메일을 적고 이메일 인증을 마쳐 주세요.",
-      mailHelp:
-        s.mail === "sent"
-          ? s.email.trim() + "로 인증 번호를 보냈어요."
-          : s.mail === "verified"
-            ? "인증한 이메일이에요. 바꾸면 다시 인증해야 해요."
-            : "이메일을 적고 이메일 인증을 눌러 주세요. 인증을 마쳐야 가입할 수 있어요.",
-      code: s.code,
-      codeBad: s.codeTried && !/^[0-9]{6}$/.test(s.code),
-      codeCls: s.codeTried && !/^[0-9]{6}$/.test(s.code) ? "ie-input is-error" : "ie-input",
-      onCode: (e) => this.setState({ code: e.target.value, codeTried: false }),
-      sendMail: () => {
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.email.trim())) {
-          this.setState({
-            mailErr:
-              s.email.trim() === ""
-                ? "이메일 주소를 먼저 적어 주세요."
-                : "이메일 주소를 다시 확인해 주세요.",
-          });
-          return;
-        }
-        void authService.sendEmailCode(s.email.trim());
-        this.setState({ mail: "sent", mailErr: "", code: "", codeTried: false });
-      },
-      verifyMail: () => {
-        if (!/^[0-9]{6}$/.test(s.code)) {
-          this.setState({ codeTried: true });
-          return;
-        }
-        this.setState({ mail: "verified", mailErr: "", codeTried: false });
-      },
+      mailBad: bad.mail,
+      mailCls: cls(bad.mail),
+      mailMsgOn: bad.mail,
+      mailMsg: s.email.trim() === "" ? "이메일 주소를 적어 주세요." : "이메일 주소를 다시 확인해 주세요.",
       nameCls: cls(bad.name),
       idCls: cls(bad.uid),
       nickCls: cls(bad.nick),
@@ -341,14 +304,7 @@ export default class Signup extends Component<any, any> {
       onPwConfirm: (e) => this.setState({ pwConfirm: e.target.value }),
       onBirth: (e) => this.setState({ birth: e.target.value }),
       onPhone: (e) => this.setState({ phone: e.target.value }),
-      onEmail: (e) =>
-        this.setState({
-          email: e.target.value,
-          mail: "idle",
-          mailErr: "",
-          code: "",
-          codeTried: false,
-        }),
+      onEmail: (e) => this.setState({ email: e.target.value }),
       onOrg: (e) => this.setState({ org: e.target.value }),
       submit: async (e) => {
         if (e && e.preventDefault) e.preventDefault();
@@ -394,7 +350,7 @@ export default class Signup extends Component<any, any> {
           pwConfirm: v.pwConfirm === "" || v.pwConfirm !== v.pw,
           birth: !okBirth,
           phone: !/^0[0-9]{9,10}$/.test(v.phone.replace(/[^0-9]/g, "")),
-          mail: s.mail !== "verified",
+          mail: !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim()),
         };
         if (Object.values(inv2).some(Boolean)) {
           const first = [
@@ -424,8 +380,14 @@ export default class Signup extends Component<any, any> {
         if (s.submitting) return;
         this.setState({ submitting: true, submitErr: "" });
         try {
-          await authService.signup(this.buildSignup({ ...s, ...v }));
-          this.setState(Object.assign({ phase: "done", tried: false, submitting: false }, v));
+          const res = await authService.signup(this.buildSignup({ ...s, ...v }));
+          // 서버가 보호자 확인이 필요하다고 하면 대기 화면, 아니면 가입 완료 화면
+          this.setState(
+            Object.assign(
+              { phase: res && res.status === "PENDING_GUARDIAN" ? "wait" : "done", tried: false, submitting: false },
+              v,
+            ),
+          );
         } catch (err: any) {
           this.setState({
             submitting: false,
@@ -473,10 +435,14 @@ export default class Signup extends Component<any, any> {
         if (s.submitting) return;
         this.setState({ gName, gRel, gContact, submitting: true, submitErr: "" });
         try {
-          await authService.signup(
+          const res = await authService.signup(
             this.buildSignup(s, { name: gName, relation: gRel, contact: gContact }),
           );
-          this.setState({ gTried: false, phase: "wait", submitting: false });
+          this.setState({
+            gTried: false,
+            phase: res && res.status === "ACTIVE" ? "done" : "wait",
+            submitting: false,
+          });
         } catch (err: any) {
           this.setState({
             submitting: false,
@@ -864,127 +830,24 @@ export default class Signup extends Component<any, any> {
                       <label className="ie-label" htmlFor="su-mail">
                         {"이메일 "}
                         <span className="ie-req">필수</span>
-                      </label>
-                      <div className="ie-row" style={{ gap: "8px" }}>
-                        <input
-                          id="su-mail"
-                          className={v.mailCls}
-                          type="email"
-                          autoComplete="email"
-                          value={v.email}
-                          onChange={v.onEmail}
-                          aria-invalid={v.mailBad}
-                          aria-describedby="su-mail-h su-mail-e"
-                          style={{ flex: "1 1 240px", width: "auto" }}
-                        />{" "}
-                        {v.mailIdle ? (
-                          <button
-                            type="button"
-                            className="ie-btn ie-btn--outline"
-                            onClick={v.sendMail}
-                          >
-                            이메일 인증
-                          </button>
-                        ) : null}{" "}
-                        {v.mailSent ? (
-                          <button
-                            type="button"
-                            className="ie-btn ie-btn--outline"
-                            onClick={v.sendMail}
-                          >
-                            인증 메일 다시 보내기
-                          </button>
-                        ) : null}{" "}
-                        {v.mailDone ? (
-                          <button
-                            type="button"
-                            className="ie-btn"
-                            style={{
-                              background: "#DFF2E9",
-                              borderColor: "#CBE7DA",
-                              color: "#2A6A52",
-                              cursor: "default",
-                            }}
-                          >
-                            <svg width="20" height="20" viewBox="0 0 256 256" aria-hidden="true">
-                              <path
-                                d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z"
-                                fill="#B8E6D3"
-                              />
-                              <path
-                                d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"
-                                fill="#2A6A52"
-                              />
-                            </svg>
-                            이메일 인증 완료
-                          </button>
-                        ) : null}
-                      </div>
+                      </label>{" "}
+                      <input
+                        id="su-mail"
+                        className={v.mailCls}
+                        type="email"
+                        autoComplete="email"
+                        value={v.email}
+                        onChange={v.onEmail}
+                        aria-invalid={v.mailBad}
+                        aria-describedby="su-mail-h su-mail-e"
+                      />{" "}
                       <span id="su-mail-h" className="ie-help">
-                        {v.mailHelp}
+                        자주 쓰는 이메일 주소를 적어 주세요.
                       </span>{" "}
                       {v.mailMsgOn ? (
                         <span id="su-mail-e" className="ie-error-text" role="alert">
                           {v.mailMsg}
                         </span>
-                      ) : null}{" "}
-                      {v.mailSent ? (
-                        <div
-                          className="ie-card ie-card--sky"
-                          style={{ gap: "10px", padding: "16px" }}
-                        >
-                          <label className="ie-label" htmlFor="su-code">
-                            인증 번호 6자리
-                          </label>
-                          <div className="ie-row" style={{ gap: "8px" }}>
-                            <input
-                              id="su-code"
-                              className={v.codeCls}
-                              type="text"
-                              inputMode="numeric"
-                              maxLength={6}
-                              autoComplete="one-time-code"
-                              value={v.code}
-                              onChange={v.onCode}
-                              aria-invalid={v.codeBad}
-                              aria-describedby="su-code-h su-code-e"
-                              style={{ flex: "1 1 160px", width: "auto" }}
-                            />{" "}
-                            <button
-                              type="button"
-                              className="ie-btn ie-btn--primary"
-                              onClick={v.verifyMail}
-                            >
-                              인증 확인
-                            </button>
-                          </div>
-                          <span id="su-code-h" className="ie-help">
-                            메일이 오지 않으면 스팸함도 살펴봐 주세요. 시안에서는 숫자 6자리를
-                            넣으면 인증돼요.
-                          </span>{" "}
-                          {v.codeBad ? (
-                            <span id="su-code-e" className="ie-error-text" role="alert">
-                              인증 번호 6자리를 숫자로 적어 주세요.
-                            </span>
-                          ) : null}
-                        </div>
-                      ) : null}{" "}
-                      {v.mailDone ? (
-                        <div className="ie-alert ie-alert--ok" role="status">
-                          <svg width="22" height="22" viewBox="0 0 256 256" aria-hidden="true">
-                            <path
-                              d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z"
-                              fill="#B8E6D3"
-                            />
-                            <path
-                              d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"
-                              fill="#2A6A52"
-                            />
-                          </svg>
-                          <div>
-                            <b>이메일 인증이 완료됐어요.</b>
-                          </div>
-                        </div>
                       ) : null}
                     </div>
                     <div className="ie-field">

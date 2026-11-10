@@ -278,7 +278,16 @@ export default class Unit extends Component<any, any> {
       showHint: s.hint !== "",
       hint: s.hint,
       cmp,
-      again: () =>
+      again: async () => {
+        // 서버 기록도 처음부터 다시 시작한 뒤에 화면을 처음 상태로 돌려요
+        try {
+          await recordService.restartPractice(this.props.practiceId);
+        } catch (error) {
+          this.setState({
+            apiError: error instanceof Error ? error.message : "처음부터 다시 시작하지 못했어요.",
+          });
+          return;
+        }
         this.setState({
           phase: "pre",
           pre: {},
@@ -286,7 +295,9 @@ export default class Unit extends Component<any, any> {
           card: 0,
           read: [false, false, false, false, false],
           hint: "",
-        }),
+          apiError: "",
+        });
+      },
     };
   }
 

@@ -1804,3 +1804,15 @@ a.ie-card:hover,.ie-card--link:hover,.ie-pcard:hover{box-shadow:0 2px 4px rgba(6
   .ie-home .ie-w3stage{flex:1 1 0;height:auto;min-height:220px}
   .ie-home .ie-w3dock{margin-top:0}
 }
+
+/* v48 — 사이드 메뉴 고정: 본문이 화면보다 길어 스크롤해도 메뉴 칸이 같이 올라가 잘리지 않고 화면에 붙어 있어요.
+   (사이드 칸 높이는 화면 높이로 정해져 있어서, 예전에는 본문이 길면 칸 전체가 본문과 함께 올라갔어요.) */
+@media (min-width:1024px){
+  .ie-side-slot{position:sticky;top:14px;align-self:start}
+}
+
+/* v49 — 사이드 메뉴 플로팅: 스크롤을 부드럽게 뒤따라오고, 움직이는 동안은 그림자가 깊어져 떠 있는 느낌이 나요.
+   (src/lib/floatFollow.ts 가 is-floating·is-moving 클래스와 transform 을 넣어요.
+    움직임 줄이기 설정이거나 768px 미만이면 이 효과가 꺼지고 위의 sticky 로 화면에 붙어 있어요.) */
+.ie-side-slot.is-floating{position:relative!important;top:auto!important;will-change:transform;transition:box-shadow .35s ease}
+.ie-side-slot.is-floating.is-moving{box-shadow:0 28px 54px -22px rgba(83,70,160,.40),0 2px 4px rgba(40,51,76,.06)}
