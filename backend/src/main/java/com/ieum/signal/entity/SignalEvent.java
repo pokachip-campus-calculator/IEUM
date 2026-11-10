@@ -61,6 +61,15 @@ public class SignalEvent {
         this.handledAt = at;
     }
 
+    // 21번: handled=true면 HANDLED+처리 시각, false면 OPEN+시각 null. memo가 null이면 기존 메모를 그대로 둔다
+    public void updateHandling(boolean handled, String memo, LocalDateTime at) {
+        this.status = handled ? SignalStatus.HANDLED : SignalStatus.OPEN;
+        this.handledAt = handled ? at : null;
+        if (memo != null) {
+            this.responseMemo = memo;
+        }
+    }
+
     public Long getId() { return id; }
     public Long getStudentId() { return studentId; }
     public Long getMessageId() { return messageId; }
