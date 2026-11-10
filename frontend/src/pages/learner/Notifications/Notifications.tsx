@@ -68,16 +68,6 @@ export default class Notifications extends Component<any, any> {
         }
       },
       showAll: () => this.setState({ f: "all" }),
-      roles: [
-        ["learner", "학습자"],
-        ["teacher", "이음쌤"],
-      ]
-        .filter((r) => r[0] === session.user.role)
-        .map((r) => ({
-        label: r[1],
-        on: s.role === r[0],
-        pick: () => this.setState({ role: r[0], f: "all" }),
-        })),
       isLearner: s.role === "learner",
       isTeacher: s.role === "teacher",
       kinds: KINDS[s.role].map((k) => ({ n: k[0], t: k[1], d: k[2] })),
@@ -339,29 +329,6 @@ export default class Notifications extends Component<any, any> {
                 ) : null}
               </div>
               <aside aria-label="알림 안내">
-                <section
-                  className="ie-card ie-card--sky ie-pop"
-                  style={{ gap: "12px", "--d": "1" } as CSSProperties}
-                  aria-labelledby="nt-who"
-                >
-                  <h2 id="nt-who" className="ie-h3">
-                    {"보는 사람 바꾸기 "}
-                    <span className="ie-meta">(시안용)</span>
-                  </h2>
-                  <div className="ie-seg" role="tablist" aria-label="알림을 보는 사람">
-                    {(v.roles || []).map((r: any, __i0: number) => (
-                      <Fragment key={__i0}>
-                        <button type="button" role="tab" aria-selected={r.on} onClick={r.pick}>
-                          {r.label}
-                        </button>
-                      </Fragment>
-                    ))}
-                  </div>
-                  <p className="ie-help">
-                    실제 서비스에서는 로그인한 사람의 알림만 보여요. 학습자와 이음쌤은 같은 화면을
-                    쓰고, 내용만 달라요.
-                  </p>
-                </section>
                 <section
                   className="ie-card ie-card--lav ie-pop"
                   style={{ gap: "12px", "--d": "2" } as CSSProperties}

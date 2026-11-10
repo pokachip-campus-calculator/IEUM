@@ -10,7 +10,7 @@ interface ApiNotification {
   type: "REPLY_ARRIVED" | "NOTE_READ" | "TEACHER_ASSIGNED" | "NOTE_RECEIVED" | "SIGNAL_FLAGGED" | "LEARNER_ASSIGNED";
   title: string;
   body: string;
-  linkType: "THREAD" | "PROFILE" | "SIGNAL" | "PRACTICE" | null;
+  linkType: "THREAD" | "PROFILE" | "SIGNAL" | "STUDENT" | null;
   linkId: number | null;
   isRead: boolean;
   createdAt: string;
@@ -41,8 +41,8 @@ function mapNotification(notification: ApiNotification): AppNotification {
       ? ROUTES.profile
       : notification.linkType === "SIGNAL"
         ? ROUTES.teacherSignal
-        : notification.linkType === "PRACTICE"
-          ? ROUTES.areas
+        : notification.linkType === "STUDENT"
+          ? ROUTES.teacher
           : session.user.role === "teacher"
             ? ROUTES.teacherMessages
             : ROUTES.messages;

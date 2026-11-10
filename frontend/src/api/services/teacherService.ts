@@ -134,9 +134,11 @@ export const teacherService = {
   /** GET /teacher/students, /teacher/threads, and GET /threads/{id} */
   async getStudents(): Promise<Student[]> {
     if (USE_MOCK) return students.students;
+    // 학생 목록(/teacher/students)은 실구현이지만 쪽지 목록(/teacher/threads)은 #51 전까지 목이라,
+    // 쪽지를 못 불러와도 학생 목록은 보이게 합니다.
     const [studentResponse, threads] = await Promise.all([
       http<{ items: ApiStudent[] }>("GET", "/teacher/students"),
-      getThreadDetails(),
+      getThreadDetails().catch(() => [] as Awaited<ReturnType<typeof getThreadDetails>>),
     ]);
     return studentResponse.items.map((student) => mapStudent(student, threads));
   },
