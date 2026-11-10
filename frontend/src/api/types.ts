@@ -228,7 +228,10 @@ export interface TeacherMessage {
   id: string;
   nick: string;
   date: string;
+  /** 신호가 하나라도 붙은 쪽지인지(처리해도 true로 남아요) */
   sig: boolean;
+  /** 신호가 있을 때만: OPEN(처리 안 한 신호가 있음) · HANDLED(전부 처리). 신호가 없으면 null */
+  sigStatus?: "OPEN" | "HANDLED" | null;
   scenario: string;
   picked: string;
   need: boolean;
