@@ -52,6 +52,7 @@ import scenarioGroup from "./images/scenarios/scenario-group.png";
 import scenarioGift from "./images/scenarios/scenario-gift.png";
 
 // village
+import villageBg from "./images/village/village-bg.jpg";
 import villageFrame1 from "./images/village/village-frame-1.webp";
 import villageFrame2 from "./images/village/village-frame-2.webp";
 import villageFrame3 from "./images/village/village-frame-3.webp";
@@ -98,6 +99,7 @@ export const img = {
   envEmoInner,
   // banners
   bannerAreas,
+  villageBg,
   bannerTalk,
   bannerMessages,
   bannerUnit,
