@@ -42,10 +42,10 @@ public class NotificationService {
                 "쪽지 모아 보기에서 확인해 보세요", LinkType.THREAD, threadId);
     }
 
-    // SIGNAL_FLAGGED: 담당 이음쌤에게만 "살펴볼 신호가 있어요" (누르면 그 신호). 학습자에게는 만들지 않는다
+    // SIGNAL_FLAGGED: 담당 이음쌤에게만 "확인이 필요한 쪽지가 있어요" (누르면 그 신호). 학습자에게는 만들지 않는다
     @Transactional
     public void signalFlagged(Long teacherId, Long signalId) {
-        create(teacherId, NotificationType.SIGNAL_FLAGGED, "살펴볼 신호가 있어요",
+        create(teacherId, NotificationType.SIGNAL_FLAGGED, "확인이 필요한 쪽지가 있어요",
                 "신호 목록에서 확인해 보세요", LinkType.SIGNAL, signalId);
     }
 
