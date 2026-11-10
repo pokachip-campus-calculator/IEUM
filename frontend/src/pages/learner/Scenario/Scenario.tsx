@@ -95,6 +95,7 @@ export default class Scenario extends Component<any, any> {
         };
       }),
       note: s.note.trim(),
+      noteCount: s.note.length,
       hasNote: s.note.trim() !== "",
       noNote: s.note.trim() === "",
       hasFeels: s.feels.length > 0,
@@ -405,11 +406,19 @@ export default class Scenario extends Component<any, any> {
                         <textarea
                           id="note"
                           className="ie-textarea"
+                          maxLength={500}
                           style={{ minHeight: "96px" }}
                           placeholder="예: 불편하면 멈춰도 된다는 걸 기억할래요."
                           value={v.note}
                           onChange={v.onNote}
                         />
+                        <div className="ie-row-between">
+                          <span />
+                          <span className="ie-help">
+                            {v.noteCount}
+                            {" / 500"}
+                          </span>
+                        </div>
                       </div>
                       <span className="ie-help">
                         남긴 내용은 ‘내 학습 기록’의 이 연습 아래에 저장돼요. 나만 볼 수 있고,

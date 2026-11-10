@@ -211,9 +211,15 @@ export const teacherService = {
       memo: signal.responseMemo ?? "",
     }));
   },
-  /** POST /threads/{id}/messages */
-  async sendReply(threadOrStudentId: string, text: string): Promise<void> {
-    if (USE_MOCK) return;
+  /**
+   * POST /threads/{id}/messages — 서버가 쪽지를 ANSWERED(답장했어요)로 바꿔요.
+   * 화면이 목록을 다시 받지 않아도 되도록, 보낸 답장 정보를 돌려줘요(목업이면 null).
+   */
+  async sendReply(
+    threadOrStudentId: string,
+    text: string,
+  ): Promise<{ threadId: string; entry: [string, string, string] } | null> {
+    if (USE_MOCK) return null;
     const response = await http<{ items: ApiThread[] }>("GET", "/teacher/threads");
     const targetId = Number(threadOrStudentId);
     const thread =
@@ -223,7 +229,15 @@ export const teacherService = {
       ) ??
       response.items.find((item) => item.student.id === targetId);
     if (!thread) throw new Error("답장을 보낼 대기 중인 쪽지를 찾을 수 없습니다.");
-    await http("POST", `/threads/${thread.id}/messages`, { body: text });
+    const sent = await http<{ body: string; createdAt: string }>(
+      "POST",
+      `/threads/${thread.id}/messages`,
+      { body: text },
+    );
+    return {
+      threadId: String(thread.id),
+      entry: ["t", timeLabel(sent.createdAt, "TEACHER"), sent.body],
+    };
   },
   /** No teacher student-memo endpoint is currently provided by the backend. */
   async saveMemo(_studentId: string, _memo: string): Promise<void> {

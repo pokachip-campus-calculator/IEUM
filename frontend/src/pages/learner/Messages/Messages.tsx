@@ -42,7 +42,10 @@ export default class Messages extends Component<any, any> {
     try {
       const detail = await messageService.getMessageDetail(id);
       this.setState((prev) => ({
-        messages: prev.messages.map((m) => (m.id === id ? detail : m)),
+        // 상세 응답에는 preview가 없어서, 목록에서 받은 미리보기는 그대로 둬요. 열었으니 안 읽음 표시는 사라져요.
+        messages: prev.messages.map((m) =>
+          m.id === id ? { ...detail, preview: m.preview, unread: false } : m,
+        ),
       }));
     } catch (error) {
       this.setState({
@@ -87,7 +90,9 @@ export default class Messages extends Component<any, any> {
       list: list.map((m) => ({
         topic: m.topic,
         date: m.date,
-        preview: m.thread[0][2].slice(0, 28) + (m.thread[0][2].length > 28 ? "…" : ""),
+        // 서버가 준 preview(앞 40자)를 그대로 써요. 목업에는 없어서 첫 쪽지 본문을 대신 써요.
+        preview: m.preview ?? m.thread[0][2],
+        unread: m.unread === true,
         status: ST[m.st][0],
         cls: ST[m.st][1],
         on: cur !== null && cur.id === m.id,
@@ -260,7 +265,12 @@ export default class Messages extends Component<any, any> {
                           >
                             <span className="ie-row-between">
                               <b className="ie-body ie-strong">{m.topic}</b>
-                              <span className={m.cls}>{m.status}</span>
+                              <span className="ie-row" style={{ gap: "6px" }}>
+                                {m.unread ? (
+                                  <span className="ie-status ie-status--new">안 읽은 답장</span>
+                                ) : null}
+                                <span className={m.cls}>{m.status}</span>
+                              </span>
                             </span>{" "}
                             <span className="ie-meta">{m.date}</span>{" "}
                             <span className="ie-body ie-sub">{m.preview}</span>
