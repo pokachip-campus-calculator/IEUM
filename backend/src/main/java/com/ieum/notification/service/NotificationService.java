@@ -70,11 +70,11 @@ public class NotificationService {
                 "내 정보에서 확인해 보세요", LinkType.PROFILE, null);
     }
 
-    // LEARNER_ASSIGNED: 이음쌤에게 "새 학습자가 배정됐어요" (누르면 쪽지 묶음)
+    // LEARNER_ASSIGNED: 이음쌤에게 "새 학습자가 배정됐어요" (누르면 이음쌤 홈에서 그 학습자)
     @Transactional
-    public void learnerAssigned(Long teacherId, Long threadId) {
+    public void learnerAssigned(Long teacherId, Long studentId) {
         create(teacherId, NotificationType.LEARNER_ASSIGNED, "새 학습자가 배정됐어요",
-                "쪽지 모아 보기에서 확인해 보세요", LinkType.THREAD, threadId);
+                "이음쌤 홈에서 확인해 보세요", LinkType.STUDENT, studentId);
     }
 
     private void create(Long userId, NotificationType type, String title, String body, LinkType linkType, Long linkId) {

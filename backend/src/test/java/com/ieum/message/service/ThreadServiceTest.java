@@ -182,7 +182,7 @@ class ThreadServiceTest {
         assertThat(captor.getValue().getId()).isEqualTo(101L);   // 저장된 메시지를 검사한다
         verify(notificationService).noteReceived(9L, 31L);
         verify(notificationService).teacherAssigned(1L);
-        verify(notificationService).learnerAssigned(9L, 31L);
+        verify(notificationService).learnerAssigned(9L, 1L);
     }
 
     @Test
