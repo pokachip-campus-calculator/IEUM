@@ -9,7 +9,7 @@ export const authService = {
       return {
         token: "mock-token",
         expiresAt: new Date(Date.now() + 3600_000).toISOString(),
-        user: { id: 0, nickname: "하늘", role: "STUDENT" },
+        user: { id: 0, nickname: "친구", role: "STUDENT" },
       };
     }
     const controller = new AbortController();

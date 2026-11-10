@@ -187,7 +187,7 @@ export default class Home extends Component<any, any> {
                 </svg>
                 <div className="ie-w3head">
                   <h1 id="home-h" className="ie-title">
-                    {(home?.nickname || session.user.nick)}님, 반가워요.
+                    {(session.user.nick || home?.nickname || "친구")}님, 반가워요.
                   </h1>
                   <p className="ie-body-lg ie-sub">스크롤로 마을의 장소를 하나씩 둘러보고, 드래그해서 마을을 돌려 보세요.</p>
                   <div className="ie-row" style={{ marginTop: "14px", pointerEvents: "auto" }}>

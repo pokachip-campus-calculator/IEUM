@@ -56,6 +56,8 @@ export default class Areas extends Component<any, any> {
     const DATA = (this.props.practices || []) as PracticeItem[];
     const AREA_GROUP = {
       SAFETY: { key: "safe", tag: "안전" },
+      HELP: { key: "emo", tag: "관계" },
+      EMOTION: { key: "help", tag: "마음" },
       RELATION: { key: "emo", tag: "관계" },
       MIND: { key: "help", tag: "마음" },
       LIFE: { key: "life", tag: "생활" },
@@ -133,7 +135,7 @@ export default class Areas extends Component<any, any> {
           ? `${ROUTES.emotion}?practiceId=${practice.id}`
           : practice.type === "SCENARIO"
             ? `${ROUTES.scenario}?practiceId=${practice.id}`
-            : `${ROUTES.unit}?level=${LEVEL_KEYS[practice.levelIndex]}&practiceId=${practice.id}`;
+            : `${practice.levelIndex > 0 ? ROUTES.unitVideo : ROUTES.unit}?level=${LEVEL_KEYS[practice.levelIndex]}&practiceId=${practice.id}`;
       return {
         laneStart: i === 0 || sorted[i - 1].tag !== practice.tag,
         laneName: L[0],
