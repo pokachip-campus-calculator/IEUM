@@ -8,6 +8,7 @@ import { A } from "@/lib/A";
 import { ROUTES } from "@/routes";
 import Header from "@/components/Header/Header";
 import TeacherNav from "@/components/TeacherNav/TeacherNav";
+import { queryId } from "@/lib/query";
 
 export default class TeacherMessages extends Component<any, any> {
   [key: string]: any;
@@ -15,8 +16,12 @@ export default class TeacherMessages extends Component<any, any> {
   constructor(props) {
     super(props);
     this.state = {
-      f: "need",
-      sel: props.messages?.[0]?.id ?? "t2",
+      // 알림에서 특정 쪽지로 들어오면 답장 완료된 쪽지도 보이도록 전체로 시작합니다.
+      f: queryId("thread", (props.messages ?? []).map((m) => m.id)) ? "all" : "need",
+      sel:
+        queryId("thread", (props.messages ?? []).map((m) => m.id)) ??
+        props.messages?.[0]?.id ??
+        "t2",
       reply: "",
       tried: false,
       unsent: false,

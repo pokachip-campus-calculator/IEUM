@@ -10,7 +10,7 @@ interface ApiNotification {
   type: "REPLY_ARRIVED" | "NOTE_READ" | "TEACHER_ASSIGNED" | "NOTE_RECEIVED" | "SIGNAL_FLAGGED" | "LEARNER_ASSIGNED";
   title: string;
   body: string;
-  linkType: "THREAD" | "PROFILE" | "SIGNAL" | "PRACTICE" | null;
+  linkType: "THREAD" | "PROFILE" | "SIGNAL" | "STUDENT" | null;
   linkId: number | null;
   isRead: boolean;
   createdAt: string;
@@ -22,6 +22,11 @@ interface ApiNotificationsResponse {
 }
 
 type ApiNotificationsPayload = ApiNotificationsResponse | ApiNotification[];
+
+/** 알림이 가리키는 쪽지·학습자를 화면이 처음부터 선택하도록 ?키=id 를 붙입니다. */
+function withId(path: string, key: string, id: number | null): string {
+  return id === null ? path : `${path}?${key}=${id}`;
+}
 
 function mapNotification(notification: ApiNotification): AppNotification {
   const date = notification.createdAt.slice(0, 10);
@@ -41,11 +46,13 @@ function mapNotification(notification: ApiNotification): AppNotification {
       ? ROUTES.profile
       : notification.linkType === "SIGNAL"
         ? ROUTES.teacherSignal
-        : notification.linkType === "PRACTICE"
-          ? ROUTES.areas
-          : session.user.role === "teacher"
-            ? ROUTES.teacherMessages
-            : ROUTES.messages;
+        : notification.linkType === "STUDENT"
+          ? withId(ROUTES.teacher, "student", notification.linkId)
+          : withId(
+              session.user.role === "teacher" ? ROUTES.teacherMessages : ROUTES.messages,
+              "thread",
+              notification.linkType === "THREAD" ? notification.linkId : null,
+            );
 
   return {
     id: String(notification.id),

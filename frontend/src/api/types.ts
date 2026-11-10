@@ -187,6 +187,8 @@ export interface MyMessage {
   scenario: string;
   /** [l(학습자)|t(이음쌤), 머리글, 본문] */
   thread: [string, string, string][];
+  /** 상세를 불러왔는지. false 면 thread 에 첫 쪽지 미리보기만 있어요. */
+  loaded?: boolean;
 }
 
 export interface AppNotification {

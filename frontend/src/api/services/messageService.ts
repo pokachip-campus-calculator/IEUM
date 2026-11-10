@@ -14,7 +14,8 @@ interface ThreadSummary {
 }
 
 interface ThreadDetail extends ThreadSummary {
-  messages: { senderRole: "STUDENT" | "TEACHER"; body: string; createdAt: string }[];
+  teacher?: { nickname: string } | null;
+  messages:{ senderRole: "STUDENT" | "TEACHER"; body: string; createdAt: string }[];
 }
 
 const topicLabels: Record<string, string> = {
@@ -36,27 +37,49 @@ function messageDate(value: string): string {
   return `${Number(month)}월 ${Number(day)}일 ${hour}:${minute}`;
 }
 
-async function toMyMessage(summary: ThreadSummary): Promise<MyMessage> {
-  const detail = await http<ThreadDetail>("GET", `/threads/${summary.id}`);
+/**
+ * 목록용: 요약만으로 만듭니다. (GET /threads/{id} 는 상대 메시지를 읽음 처리하므로
+ * 목록을 열 때 모든 쪽지의 상세를 부르면 열지 않은 쪽지도 읽음이 됩니다.)
+ */
+function toListMessage(summary: ThreadSummary): MyMessage {
   const sentDate = messageDate(summary.createdAt).split(" ")[0];
-  const reply = detail.messages.find((message) => message.senderRole === "TEACHER");
-  const replyDate = reply ? messageDate(reply.createdAt).split(" ")[0] : "";
+  const answered = summary.status === "ANSWERED";
+  const lastDate = messageDate(summary.lastMessageAt).split(" ")[0];
 
   return {
     id: String(summary.id),
     topic: topicLabels[summary.topic] ?? summary.topic,
-    date: reply
-      ? `${sentDate} 보냄 · ${replyDate} 답변`
-      : `${sentDate} 보냄`,
+    date: answered ? `${sentDate} 보냄 · ${lastDate} 답변` : `${sentDate} 보냄`,
+    st: answered ? "reply" : "wait",
+    scenario: summary.linkedPractice?.title ?? "",
+    thread: [["l", `${messageDate(summary.createdAt)} · 내가 보낸 쪽지`, summary.preview]],
+    loaded: false,
+  };
+}
+
+/** 상세용: 사용자가 쪽지를 열었을 때만 부릅니다. */
+function toDetailMessage(summary: ThreadSummary, detail: ThreadDetail): MyMessage {
+  const sentDate = messageDate(summary.createdAt).split(" ")[0];
+  const reply = detail.messages.find((message) => message.senderRole === "TEACHER");
+  const replyDate = reply ? messageDate(reply.createdAt).split(" ")[0] : "";
+  const teacherName = detail.teacher?.nickname
+    ? `${detail.teacher.nickname} 이음쌤`
+    : "이음쌤";
+
+  return {
+    id: String(summary.id),
+    topic: topicLabels[summary.topic] ?? summary.topic,
+    date: reply ? `${sentDate} 보냄 · ${replyDate} 답변` : `${sentDate} 보냄`,
     st: summary.status === "ANSWERED" ? "reply" : "wait",
     scenario: summary.linkedPractice?.title ?? "",
     thread: detail.messages.map((message) => [
       message.senderRole === "STUDENT" ? "l" : "t",
       `${messageDate(message.createdAt)} · ${
-        message.senderRole === "STUDENT" ? "내가 보낸 쪽지" : "푸른 이음쌤의 답변"
+        message.senderRole === "STUDENT" ? "내가 보낸 쪽지" : `${teacherName}의 답변`
       }`,
       message.body,
     ]),
+    loaded: true,
   };
 }
 
@@ -66,9 +89,19 @@ export const messageService = {
   async getMyMessages(): Promise<MyMessage[]> {
     if (USE_MOCK) return messages.myMessages;
     const response = await http<{ items: ThreadSummary[] }>("GET", "/threads");
-    const result = await Promise.all(response.items.map(toMyMessage));
+    return response.items.map(toListMessage);
+  },
+  /** GET /threads/{id} — 쪽지를 열 때만 부릅니다(상대 메시지가 읽음 처리돼요). */
+  async getMessageDetail(id: string): Promise<MyMessage> {
+    if (USE_MOCK) {
+      const found = messages.myMessages.find((message) => message.id === id);
+      if (!found) throw new Error("쪽지를 찾을 수 없어요.");
+      return found;
+    }
+    const detail = await http<ThreadDetail>("GET", `/threads/${encodeURIComponent(id)}`);
+    const message = toDetailMessage(detail, detail);
     notifyBadgeCountsChanged();
-    return result;
+    return message;
   },
   /** POST /threads — 새 쪽지 쓰기 */
   async sendNote(req: NoteRequest): Promise<void> {

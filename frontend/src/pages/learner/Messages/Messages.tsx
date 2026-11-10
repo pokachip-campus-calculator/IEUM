@@ -11,6 +11,7 @@ import Header from "@/components/Header/Header";
 import SideNav from "@/components/SideNav/SideNav";
 import PageStyle from "@/lib/PageStyle";
 import pageCss from "./Messages.css?inline";
+import { queryId } from "@/lib/query";
 
 export default class Messages extends Component<any, any> {
   [key: string]: any;
@@ -19,7 +20,10 @@ export default class Messages extends Component<any, any> {
     super(props);
     this.state = {
       f: "all",
-      sel: props.messages?.[0]?.id ?? "m3",
+      sel:
+        queryId("thread", (props.messages ?? []).map((m) => m.id)) ??
+        props.messages?.[0]?.id ??
+        "m3",
       messages: props.messages ?? [],
       add: "",
       tried: false,
@@ -27,6 +31,26 @@ export default class Messages extends Component<any, any> {
       apiError: "",
     };
   }
+  componentDidMount() {
+    void this.loadDetail(this.state.sel);
+  }
+
+  /** 열려 있는 쪽지만 상세를 불러옵니다. (상세를 부르면 서버가 상대 메시지를 읽음 처리해요.) */
+  async loadDetail(id: string, force = false) {
+    const current = this.state.messages.find((m) => m.id === id);
+    if (!current || (current.loaded !== false && !force)) return;
+    try {
+      const detail = await messageService.getMessageDetail(id);
+      this.setState((prev) => ({
+        messages: prev.messages.map((m) => (m.id === id ? detail : m)),
+      }));
+    } catch (error) {
+      this.setState({
+        apiError: error instanceof Error ? error.message : "쪽지를 불러오지 못했어요.",
+      });
+    }
+  }
+
   renderVals() {
     const s = this.state;
     const M: any = s.messages;
@@ -67,7 +91,10 @@ export default class Messages extends Component<any, any> {
         status: ST[m.st][0],
         cls: ST[m.st][1],
         on: cur !== null && cur.id === m.id,
-        pick: () => this.setState({ sel: m.id, add: "", tried: false, unsent: false }),
+        pick: () => {
+          this.setState({ sel: m.id, add: "", tried: false, unsent: false });
+          void this.loadDetail(m.id);
+        },
       })),
       noList: list.length === 0,
       hasCur: cur !== null,
@@ -116,6 +143,7 @@ export default class Messages extends Component<any, any> {
           try {
             const messages = await messageService.getMyMessages();
             this.setState({ messages, unsent: false });
+            await this.loadDetail(s.sel, true);
           } catch (error) {
             this.setState({
               apiError: error instanceof Error

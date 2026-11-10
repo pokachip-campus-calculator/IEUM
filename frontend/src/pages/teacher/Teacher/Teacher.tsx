@@ -8,6 +8,7 @@ import { A } from "@/lib/A";
 import { ROUTES } from "@/routes";
 import Header from "@/components/Header/Header";
 import TeacherNav from "@/components/TeacherNav/TeacherNav";
+import { queryId } from "@/lib/query";
 
 export default class Teacher extends Component<any, any> {
   [key: string]: any;
@@ -18,7 +19,10 @@ export default class Teacher extends Component<any, any> {
       q: "",
       how: "all",
       sort: "nick",
-      sel: props.students?.[0]?.id ?? "p2",
+      sel:
+        queryId("student", (props.students ?? []).map((x) => x.id)) ??
+        props.students?.[0]?.id ??
+        "p2",
       tab: "sum",
       reply: "",
       replyTried: false,
