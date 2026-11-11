@@ -1,9 +1,9 @@
 .comfort-rotator-wrap {
   position: absolute;
-  top: 12%;
+  top: 11%;
   right: 2%;
   z-index: 3;
-  width: clamp(320px, 22vw, 400px);
+  width: clamp(280px, 20vw, 340px);
 }
 /* 구름 레이어: 카드보다 먼저(DOM 순서상 앞) 그려서 카드 뒤에 깔린다 */
 .comfort-rotator-cloud {
@@ -22,9 +22,9 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  min-height: 265px;
+  min-height: 130px;
   box-sizing: border-box;
-  padding: 34px 36px;
+  padding: 28px 30px 24px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -48,7 +48,7 @@
   left: 26px;
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 700;
-  font-size: 44px;
+  font-size: 36px;
   line-height: 1;
   color: rgba(255, 255, 255, 0.92);
   pointer-events: none;
@@ -67,7 +67,7 @@
 }
 .comfort-rotator-text {
   margin: 0;
-  font-size: 18px;
+  font-size: 15.5px;
   font-weight: 500;
   line-height: 1.7;
   letter-spacing: -0.3px;
@@ -77,8 +77,8 @@
 }
 .comfort-rotator-from {
   display: block;
-  margin-top: 20px;
-  font-size: 13px;
+  margin-top: 8px;
+  font-size: 12px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.8);
 }
