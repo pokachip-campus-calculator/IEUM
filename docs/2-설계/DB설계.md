@@ -2,7 +2,7 @@
 
 > 데이터의 구조와 관계 정의
 
-MySQL 8.0, InnoDB, utf8mb4(`utf8mb4_0900_ai_ci`). 테이블은 8개이고 스키마의 기준은 `db/` 폴더의 SQL 파일이다(V1 이후 변경은 V2, V3 … 새 파일로 쌓는다). 이 문서는 **V4(`users.birth_date` NOT NULL)까지 적용한 상태**를 적는다.
+MySQL 8.0, InnoDB, utf8mb4(`utf8mb4_0900_ai_ci`). 테이블은 8개이고 스키마의 기준은 `db/` 폴더의 SQL 파일이다(V1 이후 변경은 V2, V3 … 새 파일로 쌓는다). 이 문서는 **V5(연습 콘텐츠 시드 추가)까지 적용한 상태**를 적는다.
 
 ## 1. ERD (물리/논리)
 
@@ -272,8 +272,9 @@ SQL 파일은 `db/`에 있고 번호 순서대로 실행한다. 이미 실행한
 |---|---|---|
 | `V1__init.sql` | 테이블 8개 DDL, 인덱스, 외래키 | |
 | `V2__seed_signal_keywords.sql` | 신호 낱말 사전 107행 (낱말 95 active, 초성 12 inactive) | 원본 CSV 129행에서 공백·특수문자를 빼고 중복 제거 |
-| `V3__seed_practices.sql` | 연습 콘텐츠 3건 (질문지 1, 시나리오 1, 감정 읽기 1) | 나머지 연습은 본문이 정해지면 추가 |
+| `V3__seed_practices.sql` | 연습 콘텐츠 3건 (질문지 1, 시나리오 1, 감정 읽기 1) | 나머지 연습은 V5에서 추가 |
 | `V4__users_birth_date_not_null.sql` | `users.birth_date`를 NOT NULL로 변경 | 이음쌤도 생년월일 필수. NULL인 이음쌤은 임시 값으로 채움 |
+| `V5__seed_practices_more.sql` | 연습 콘텐츠 3건 추가 (시나리오 2건, 영상 단계 질문지 1건) → 연습 6건 | 내용은 프론트 mock 문구 그대로. 영상 파일은 프론트에 있어 서버에는 질문·카드만 둔다. 다시 실행해도 중복되지 않는다 |
 | `ops.sql` | 운영 SQL 4개 | 이음쌤 등록, 보호자 확인(PENDING_GUARDIAN → ACTIVE), 비밀번호 초기화, 1년 미이용 학습자 삭제 |
 
 이음쌤 계정(비밀번호 해시 포함)은 Git에 올리지 않는다. 레포가 Public이기 때문이다. 필요하면 가입 API(01번)에서 role=TEACHER로 가입하거나, ops.sql의 (1)에 본인이 만든 BCrypt 해시를 넣어 DB에 직접 등록한다.
