@@ -73,14 +73,21 @@ class AuthServiceTest {
     }
 
     @Test
-    void 이음쌤은_보호자_없이_ACTIVE로_저장되고_생년월일도_저장된다() {
-        var res = service.signup(teacher());
+    void 이음쌤_가입은_TEACHER_SIGNUP_CLOSED로_거부되고_저장되지_않는다() {
+        assertThatThrownBy(() -> service.signup(teacher()))
+                .isInstanceOfSatisfying(ApiException.class,
+                        e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.TEACHER_SIGNUP_CLOSED));
+        verify(userRepository, never()).saveAndFlush(any());
+    }
 
-        assertThat(res.status()).isEqualTo(UserStatus.ACTIVE);
-        User user = saved();
-        assertThat(user.getBirthDate()).isEqualTo(LocalDate.of(1990, 5, 20));
-        assertThat(user.getGuardianName()).isNull();
-        assertThat(user.getRole()).isEqualTo(Role.TEACHER);
+    @Test
+    void 이음쌤은_아이디가_없어도_NPE_없이_TEACHER_SIGNUP_CLOSED() {
+        var noLoginId = new SignupRequest(Role.TEACHER, null, "password1", "김쌤", "김 이음쌤",
+                LocalDate.of(1990, 5, 20), null, null, null, true, true, null);
+
+        assertThatThrownBy(() -> service.signup(noLoginId))
+                .isInstanceOfSatisfying(ApiException.class,
+                        e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.TEACHER_SIGNUP_CLOSED));
     }
 
     @Test
@@ -125,21 +132,11 @@ class AuthServiceTest {
     }
 
     @Test
-    void 이음쌤도_생년월일이_필수이고_저장하지_않는다() {
-        assertThatThrownBy(() -> service.signup(teacher(null)))
-                .isInstanceOfSatisfying(ApiException.class, e -> {
-                    assertThat(e.getErrorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED);
-                    assertThat(e.getFieldErrors()).extracting("field").containsExactly("birthDate");
-                });
-        verify(userRepository, never()).saveAndFlush(any());
-    }
-
-    @Test
     void 아이디는_소문자로_저장되고_비밀번호는_BCrypt로_저장된다() {
-        service.signup(teacher());
+        service.signup(student(LocalDate.of(2000, 1, 1), null));
 
         User user = saved();
-        assertThat(user.getLoginId()).isEqualTo("teacher01");
+        assertThat(user.getLoginId()).isEqualTo("student01");
         assertThat(user.getPasswordHash()).isNotEqualTo("password1");
         assertThat(encoder.matches("password1", user.getPasswordHash())).isTrue();
         assertThat(user.getTermsAgreedAt()).isEqualTo(LocalDateTime.of(2026, 11, 6, 12, 0));
@@ -147,9 +144,9 @@ class AuthServiceTest {
 
     @Test
     void 이미_있는_아이디는_LOGIN_ID_TAKEN() {
-        when(userRepository.existsByLoginId("teacher01")).thenReturn(true);
+        when(userRepository.existsByLoginId("student01")).thenReturn(true);
 
-        assertThatThrownBy(() -> service.signup(teacher()))
+        assertThatThrownBy(() -> service.signup(student(LocalDate.of(2000, 1, 1), null)))
                 .isInstanceOfSatisfying(ApiException.class,
                         e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.LOGIN_ID_TAKEN));
     }

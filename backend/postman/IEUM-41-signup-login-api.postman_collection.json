@@ -24,7 +24,7 @@
   ],
   "item": [
     {
-      "name": "01 가입 - 이음쌤 정상 (201 ACTIVE)",
+      "name": "01 가입 - 이음쌤 (403 TEACHER_SIGNUP_CLOSED)",
       "event": [
         {
           "listen": "prerequest",
@@ -41,8 +41,8 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('201', () => pm.response.to.have.status(201));",
-              "pm.test('status ACTIVE', () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));"
+              "pm.test('403', () => pm.response.to.have.status(403));",
+              "pm.test('code TEACHER_SIGNUP_CLOSED', () => pm.expect(pm.response.json().code).to.eql('TEACHER_SIGNUP_CLOSED'));"
             ]
           }
         }
@@ -59,36 +59,6 @@
         "body": {
           "mode": "raw",
           "raw": "{\n  \"role\": \"TEACHER\",\n  \"loginId\": \"teacher{{runId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"김쌤\",\n  \"nickname\": \"김 이음쌤\",\n  \"birthDate\": \"1990-05-20\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
-        }
-      }
-    },
-    {
-      "name": "01 가입 - 이음쌤 생년월일 없음 (400 birthDate)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('400', () => pm.response.to.have.status(400));",
-              "pm.test('code VALIDATION_FAILED', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_FAILED'));",
-              "pm.test('fieldErrors에 birthDate', () => pm.expect(pm.response.json().fieldErrors.map(e => e.field)).to.include('birthDate'));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{baseUrl}}/auth/signup",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"role\": \"TEACHER\",\n  \"loginId\": \"noBirth{{runId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"박쌤\",\n  \"nickname\": \"박 이음쌤\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
         }
       }
     },
@@ -235,7 +205,7 @@
         "url": "{{baseUrl}}/auth/signup",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"role\": \"TEACHER\",\n  \"loginId\": \"TEACHER{{runId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"김쌤\",\n  \"nickname\": \"중복\",\n  \"birthDate\": \"1990-05-20\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+          "raw": "{\n  \"role\": \"STUDENT\",\n  \"loginId\": \"STUDENT{{runId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"김쌤\",\n  \"nickname\": \"중복\",\n  \"birthDate\": \"1990-05-20\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
         }
       }
     },
@@ -359,7 +329,7 @@
         "url": "{{baseUrl}}/auth/login",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"loginId\": \"Teacher{{runId}}\",\n  \"password\": \"{{password}}\"\n}"
+          "raw": "{\n  \"loginId\": \"Student{{runId}}\",\n  \"password\": \"{{password}}\"\n}"
         }
       }
     },
@@ -388,7 +358,7 @@
         "url": "{{baseUrl}}/auth/login",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"loginId\": \"teacher{{runId}}\",\n  \"password\": \"wrong-password\"\n}"
+          "raw": "{\n  \"loginId\": \"student{{runId}}\",\n  \"password\": \"wrong-password\"\n}"
         }
       }
     },
