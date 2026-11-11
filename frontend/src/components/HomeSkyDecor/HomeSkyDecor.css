@@ -1,0 +1,29 @@
+.home-sky-decor { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.home-sky-comet {
+  position: absolute; top: 8%; left: 30%; width: 190px; height: 2px;
+  background: linear-gradient(270deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.9) 100%);
+  transform: rotate(-28deg); transform-origin: left center; border-radius: 2px;
+}
+.home-sky-comet::after {
+  content: ""; position: absolute; left: -3px; top: -3px; width: 8px; height: 8px; border-radius: 50%;
+  background: #fff; box-shadow: 0 0 10px 3px rgba(255, 255, 255, 0.85);
+}
+.home-sky-sparkle {
+  position: absolute; background: #fff; opacity: 0.85;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  animation: home-sky-twinkle 4s ease-in-out infinite;
+}
+.home-sky-orb { position: absolute; border-radius: 50%; }
+.home-sky-orb--pink {
+  top: 17%; right: 27%; width: 30px; height: 30px;
+  background: radial-gradient(circle at 32% 30%, #fff 0%, #f6b8e6 55%, #8fa4ff 100%);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.6);
+}
+.home-sky-orb--gold {
+  top: 29%; right: 0.5%; width: 34px; height: 34px;
+  background: radial-gradient(circle at 32% 30%, #fff3d6 0%, #ffb869 60%, #ff9d5c 100%);
+  box-shadow: 0 0 16px rgba(255, 200, 140, 0.55);
+}
+@keyframes home-sky-twinkle { 0%, 100% { opacity: 0.35; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.1); } }
+@media (prefers-reduced-motion: reduce) { .home-sky-sparkle { animation: none; opacity: 0.8; } }
+@media (max-width: 1100px) { .home-sky-orb { display: none; } }
