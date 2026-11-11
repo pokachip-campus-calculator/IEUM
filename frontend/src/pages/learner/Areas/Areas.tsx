@@ -170,7 +170,7 @@ export default class Areas extends Component<any, any> {
       .sort((a, b) => ORDER.indexOf(a.tag) - ORDER.indexOf(b.tag) || a.levelIndex - b.levelIndex);
     const items = sorted.map((practice, i) => {
       const total = normalized.filter((item) => item.tag === practice.tag).length;
-      const done = normalized.filter((item) => item.tag === practice.tag && item.myStatus === "DONE").length;
+      const done = normalized.filter((item) => item.tag === practice.tag && Boolean(item.completedAt)).length;
       const L = LANE[practice.tag];
       const K = TKEY[practice.tag];
       const href = practiceHref(practice);

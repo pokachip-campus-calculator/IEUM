@@ -69,21 +69,29 @@ export const recordService = {
   async getLearningRecords(): Promise<LearningRecord[]> {
     if (USE_MOCK) return records.learningRecords;
     const response = await http<ApiLearningRecordsResponse>("GET", "/records");
-    return response.items.map((item) => {
-      const { date, key } = formatRecordDate(item.completedAt ?? item.updatedAt);
-      return {
-        id: String(item.practiceId),
-        practiceId: item.practiceId,
-        type: item.type,
-        d: key,
-        date,
-        area: areaLabel[item.area],
-        lv: item.level - 1,
-        st: item.status === "DONE" ? "done" : "doing",
-        title: item.title,
-        memo: item.myNote || undefined,
-        rows: (item.compare ?? []).map((row) => [row.text, row.then, row.now]),
+    // 완료 기준은 completedAt. 다시 하는 중인 연습(completedAt 있음 + IN_PROGRESS)은
+    // "했어요" 줄(completedAt)과 "하는 중" 줄(updatedAt) 두 개로 펼쳐요.
+    return response.items.flatMap((item) => {
+      const build = (st: "done" | "doing", at: string): LearningRecord => {
+        const { date, key } = formatRecordDate(at);
+        return {
+          id: `${item.practiceId}-${st}`,
+          practiceId: item.practiceId,
+          type: item.type,
+          d: key,
+          date,
+          area: areaLabel[item.area],
+          lv: item.level - 1,
+          st,
+          title: item.title,
+          memo: item.myNote || undefined,
+          rows: (item.compare ?? []).map((row) => [row.text, row.then, row.now]),
+        };
       };
+      if (item.completedAt && item.status === "IN_PROGRESS") {
+        return [build("done", item.completedAt), build("doing", item.updatedAt)];
+      }
+      return [build(item.status === "DONE" ? "done" : "doing", item.completedAt ?? item.updatedAt)];
     });
   },
   /** PUT /practices/{id}/record {restart:true} — 기록을 처음부터 다시 시작해요("다시 연습"). */
