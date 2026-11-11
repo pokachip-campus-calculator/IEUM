@@ -51,7 +51,12 @@ public class AuthService {
         LocalDateTime now = LocalDateTime.now(clock);
         String loginId = req.loginId().toLowerCase();
 
-        // 생년월일은 학습자·이음쌤 모두 필수
+        // 이음쌤은 가입으로 만들지 않는다(기관 확인 후 DB에 직접 넣는다)
+        if (req.role() == Role.TEACHER) {
+            throw new ApiException(ErrorCode.TEACHER_SIGNUP_CLOSED);
+        }
+
+        // 생년월일은 학습자 필수
         if (req.birthDate() == null) {
             throw ApiException.invalid("birthDate", "생년월일을 입력해 주세요.");
         }
@@ -73,7 +78,6 @@ public class AuthService {
 
         User user = new User(loginId, passwordEncoder.encode(req.password()), req.role(), status,
                 req.name(), req.nickname(), now);
-        // 이음쌤은 보호자 없이 저장한다(생년월일은 저장)
         user.setProfile(req.birthDate(), req.phone(), req.email(), req.school());
         if (needGuardian) {
             user.setGuardian(req.guardian().name(), req.guardian().relation(), req.guardian().contact());
