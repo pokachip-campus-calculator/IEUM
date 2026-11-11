@@ -1,6 +1,19 @@
 .ie-w3stage {
   touch-action: none;
 }
+/* 홈 인사말 영역: 하늘 배경 위에서 읽히도록 흰 글자 + 은은한 그림자 */
+.ie-home .ie-w3head .ie-title {
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(45, 55, 135, 0.45), 0 2px 16px rgba(45, 55, 135, 0.3);
+}
+.ie-home .ie-w3head .ie-sub {
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 3px rgba(45, 55, 135, 0.5), 0 2px 14px rgba(45, 55, 135, 0.3);
+}
+.ie-home .ie-w3head .ie-meta {
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 3px rgba(45, 55, 135, 0.55), 0 2px 12px rgba(45, 55, 135, 0.3);
+}
 .ie-3map {
   position: absolute;
   left: 0;
