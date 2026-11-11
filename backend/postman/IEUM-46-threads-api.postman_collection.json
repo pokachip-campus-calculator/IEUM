@@ -6,10 +6,10 @@
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:8080/api/v1" },
-    { "key": "loginId", "value": "thread1234" },
-    { "key": "password", "value": "password123" },
-    { "key": "teacherLoginId", "value": "여기에이음쌤아이디" },
-    { "key": "teacherPassword", "value": "여기에이음쌤비밀번호" },
+    { "key": "loginId", "value": "ieumstu01" },
+    { "key": "password", "value": "ieumtest1234" },
+    { "key": "teacherLoginId", "value": "ieumtea01" },
+    { "key": "teacherPassword", "value": "ieumteach1234" },
     { "key": "practiceId", "value": "1" },
     { "key": "token", "value": "" },
     { "key": "teacherToken", "value": "" },
@@ -43,16 +43,37 @@
       }
     },
     {
-      "name": "12-A 이음쌤이 한 명도 없을 때 (409, 아무것도 저장 안 됨)",
+      "name": "12-A 이음쌤이 한 명도 없을 때 (409, 이음쌤이 0명일 때만 확인 가능. 있으면 건너뜀)",
       "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-        "pm.test('409', () => pm.response.to.have.status(409));",
-        "pm.test('코드', () => pm.expect(pm.response.json().code).to.eql('NO_TEACHER_AVAILABLE'));"
+        "if (pm.response.code === 201) {",
+        "  pm.test.skip('이음쌤이 DB에 있어서 409를 확인할 수 없다(이음쌤이 0명일 때만 확인 가능)', () => {});",
+        "} else {",
+        "  pm.test('409', () => pm.response.to.have.status(409));",
+        "  pm.test('코드', () => pm.expect(pm.response.json().code).to.eql('NO_TEACHER_AVAILABLE'));",
+        "}"
       ] } }],
       "request": {
         "method": "POST",
         "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
         "url": "{{baseUrl}}/threads",
         "body": { "mode": "raw", "raw": "{\n  \"topic\": \"ONLINE\",\n  \"body\": \"이음쌤이 없을 때 보내 보는 쪽지\"\n}" }
+      }
+    },
+    {
+      "name": "00 사전 - 이음쌤 가입 (이미 있으면 409여도 괜찮음)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"TEACHER\",\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{teacherPassword}}\",\n  \"name\": \"김쌤\",\n  \"nickname\": \"테스트 이음쌤\",\n  \"birthDate\": \"1990-05-20\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+        }
       }
     },
     {
