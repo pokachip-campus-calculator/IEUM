@@ -81,6 +81,16 @@ class AuthServiceTest {
     }
 
     @Test
+    void 이음쌤은_아이디가_없어도_NPE_없이_TEACHER_SIGNUP_CLOSED() {
+        var noLoginId = new SignupRequest(Role.TEACHER, null, "password1", "김쌤", "김 이음쌤",
+                LocalDate.of(1990, 5, 20), null, null, null, true, true, null);
+
+        assertThatThrownBy(() -> service.signup(noLoginId))
+                .isInstanceOfSatisfying(ApiException.class,
+                        e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.TEACHER_SIGNUP_CLOSED));
+    }
+
+    @Test
     void 만_14세_이상_학습자는_보호자를_무시하고_ACTIVE로_저장된다() {
         // 2012-11-06생 = 가입일 기준 만 14세
         var guardian = new SignupRequest.Guardian("엄마", GuardianRelation.PARENT, "01099999999");

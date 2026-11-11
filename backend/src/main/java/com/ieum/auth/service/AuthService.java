@@ -49,12 +49,13 @@ public class AuthService {
     @Transactional
     public SignupResponse signup(SignupRequest req) {
         LocalDateTime now = LocalDateTime.now(clock);
-        String loginId = req.loginId().toLowerCase();
 
-        // 이음쌤은 가입으로 만들지 않는다(기관 확인 후 DB에 직접 넣는다)
+        // 이음쌤은 가입으로 만들지 않는다(기관 확인 후 DB에 직접 넣는다). loginId가 비어 있어도 먼저 막는다
         if (req.role() == Role.TEACHER) {
             throw new ApiException(ErrorCode.TEACHER_SIGNUP_CLOSED);
         }
+
+        String loginId = req.loginId().toLowerCase();
 
         // 생년월일은 학습자 필수
         if (req.birthDate() == null) {
