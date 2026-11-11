@@ -1,26 +1,43 @@
-.comfort-rotator {
+.comfort-rotator-wrap {
   position: absolute;
-  top: 11%;
+  top: 12%;
   right: 2%;
   z-index: 3;
-  width: clamp(300px, 23vw, 400px);
-  min-height: 110px;
-  padding: 30px 32px 28px;
+  width: clamp(320px, 22vw, 400px);
+}
+/* 구름 레이어: 카드보다 먼저(DOM 순서상 앞) 그려서 카드 뒤에 깔린다 */
+.comfort-rotator-cloud {
+  position: absolute;
+  z-index: 0;
+  top: -15%;
+  left: -20%;
+  right: -20%;
+  bottom: -22%;
+  width: 140%;
+  height: 144%;
+  overflow: visible;
+  pointer-events: none;
+}
+.comfort-rotator {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 265px;
+  box-sizing: border-box;
+  padding: 34px 36px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   color: #ffffff;
-  /* 레퍼런스처럼 한 톤 더 짙은 라벤더 유리 카드 */
-  background: linear-gradient(150deg, rgba(196, 184, 250, 0.78) 0%, rgba(139, 118, 215, 0.72) 100%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
-  backdrop-filter: blur(16px) saturate(150%);
+  background: linear-gradient(135deg, rgba(220, 210, 255, 0.74), rgba(151, 143, 224, 0.82));
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
   border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 30px;
+  border-radius: 34px;
   box-shadow:
-    0 10px 30px rgba(95, 80, 170, 0.28),
-    0 0 0 6px rgba(255, 255, 255, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    0 8px 32px rgba(91, 75, 170, 0.14),
+    inset 0 1px 2px rgba(255, 255, 255, 0.65);
   transition: background 0.3s ease;
   outline-offset: 4px;
 }
@@ -28,61 +45,17 @@
   content: "\201C";
   position: absolute;
   top: 2px;
-  left: 24px;
+  left: 26px;
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 700;
   font-size: 44px;
   line-height: 1;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.92);
   pointer-events: none;
-}
-/* 카드 아래쪽에 걸쳐 떠 있는 구름 둔덕 (레퍼런스처럼 아래 가장자리를 감싼다) */
-.comfort-rotator-cloud {
-  position: absolute;
-  width: 40px;
-  height: 16px;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 999px;
-  pointer-events: none;
-  z-index: 1;
-  filter: drop-shadow(0 4px 6px rgba(110, 95, 180, 0.2));
-}
-.comfort-rotator-cloud::before,
-.comfort-rotator-cloud::after {
-  content: "";
-  position: absolute;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 50%;
-}
-.comfort-rotator-cloud::before {
-  width: 24px;
-  height: 24px;
-  top: -13px;
-  left: 4px;
-}
-.comfort-rotator-cloud::after {
-  width: 16px;
-  height: 16px;
-  top: -9px;
-  left: 25px;
-}
-.comfort-rotator-cloud--a {
-  bottom: -10px;
-  left: 4%;
-}
-.comfort-rotator-cloud--b {
-  bottom: -15px;
-  left: 36%;
-  transform: scale(1.25);
-}
-.comfort-rotator-cloud--c {
-  bottom: -8px;
-  right: 6%;
-  transform: scale(0.9) scaleX(-1);
 }
 .comfort-rotator:hover,
 .comfort-rotator:focus-visible {
-  background: linear-gradient(150deg, rgba(196, 184, 250, 0.86) 0%, rgba(139, 118, 215, 0.8) 100%);
+  background: linear-gradient(135deg, rgba(220, 210, 255, 0.72), rgba(151, 143, 224, 0.82));
 }
 .comfort-rotator-image {
   width: 48px;
@@ -94,34 +67,35 @@
 }
 .comfort-rotator-text {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.75;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.7;
+  letter-spacing: -0.3px;
   color: #ffffff;
-  text-shadow: 0 1px 2px rgba(45, 40, 110, 0.25);
+  text-shadow: 0 1px 3px rgba(60, 50, 130, 0.4), 0 2px 10px rgba(60, 50, 130, 0.2);
   animation: comfort-rotator-fade 0.6s ease both;
 }
 .comfort-rotator-from {
   display: block;
-  margin-top: 10px;
-  font-size: 12.5px;
+  margin-top: 20px;
+  font-size: 13px;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.8);
 }
 @keyframes comfort-rotator-fade {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: none; }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .comfort-rotator { background: rgba(139, 118, 215, 0.9); }
+  .comfort-rotator { background: rgba(151, 143, 224, 0.82); }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .comfort-rotator { background: rgba(139, 118, 215, 0.94); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .comfort-rotator { background: rgba(151, 143, 224, 0.86); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .comfort-rotator-text { animation: none; }
   .comfort-rotator { transition: none; }
 }
 @media (max-width: 1100px) {
-  .comfort-rotator { display: none; }
+  .comfort-rotator-wrap { display: none; }
 }
