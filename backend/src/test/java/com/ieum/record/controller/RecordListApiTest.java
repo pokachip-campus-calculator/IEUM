@@ -155,6 +155,26 @@ class RecordListApiTest {
 
     private String student() { return bearer(1L, Role.STUDENT); }
 
+    @Test
+    void 다시_하는_중인_기록은_완료로도_세고_DONE_필터에도_나온다() throws Exception {
+        PracticeRecord done = record(10, 1, RecordStatus.DONE, "{}",
+                LocalDateTime.of(2026, 10, 29, 15, 0), LocalDateTime.of(2026, 10, 29, 15, 0));
+        PracticeRecord redo = record(12, 3, RecordStatus.IN_PROGRESS, "{}",
+                LocalDateTime.of(2026, 10, 20, 9, 0), LocalDateTime.of(2026, 10, 30, 9, 0));
+        when(recordRepository.findByUserId(anyLong())).thenReturn(List.of(done, redo));
+
+        mockMvc.perform(get("/api/v1/records").header("Authorization", bearer(1L, Role.STUDENT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.doneCount").value(2))
+                .andExpect(jsonPath("$.inProgressCount").value(1));
+        mockMvc.perform(get("/api/v1/records?status=DONE").header("Authorization", bearer(1L, Role.STUDENT)))
+                .andExpect(jsonPath("$.items.length()").value(2));
+        mockMvc.perform(get("/api/v1/records?status=IN_PROGRESS").header("Authorization", bearer(1L, Role.STUDENT)))
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].practiceId").value(3))
+                .andExpect(jsonPath("$.items[0].status").value("IN_PROGRESS"));
+    }
+
     private String bearer(long id, Role role) { return "Bearer " + jwtProvider.issue(id, role); }
 
     private static PracticeRecord record(long id, long practiceId, RecordStatus status, String answers,

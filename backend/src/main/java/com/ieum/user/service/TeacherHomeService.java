@@ -104,8 +104,8 @@ public class TeacherHomeService {
         User student = findMyStudent(teacherId, studentId);
 
         List<PracticeRecord> done = recordRepository.findByUserId(studentId).stream()
-                .filter(r -> r.getStatus() == RecordStatus.DONE)
-                .sorted(Comparator.comparing(PracticeRecord::getCompletedAt).reversed())
+                .filter(PracticeRecord::hasCompleted)   // 다시 하는 중이어도 completed_at이 있으면 포함
+                .sorted(Comparator.comparing(PracticeRecord::getCompletedAt, Comparator.nullsFirst(Comparator.<LocalDateTime>naturalOrder())).reversed())
                 .toList();
         // 비공개(published=0)이거나 사라진 연습의 기록은 뺀다(11과 같은 규칙)
         Map<Long, Practice> practices = practiceRepository
@@ -130,7 +130,7 @@ public class TeacherHomeService {
                         Map<Long, List<MessageThread>> threadsByStudent, Set<Long> openSignalStudents) {
         List<PracticeRecord> records = recordsByStudent.getOrDefault(s.getId(), List.of());
         List<MessageThread> threads = threadsByStudent.getOrDefault(s.getId(), List.of());
-        long doneCount = records.stream().filter(r -> r.getStatus() == RecordStatus.DONE).count();
+        long doneCount = records.stream().filter(PracticeRecord::hasCompleted).count();
         long waitingCount = threads.stream().filter(t -> t.getStatus() == ThreadStatus.WAITING).count();
         LocalDateTime recordActivity = records.stream().map(PracticeRecord::getUpdatedAt)
                 .max(Comparator.naturalOrder()).orElse(null);

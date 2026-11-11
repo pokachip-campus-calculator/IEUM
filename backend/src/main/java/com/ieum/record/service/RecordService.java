@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 /**
  * [역할] 내 학습 기록 목록(11)을 만든다.
- * [동작] 내 practice_records를 공개된 연습 정보와 묶어 status로 거르고 updated_at 기준으로 정렬한다.
+ * [동작] 내 practice_records를 공개된 연습 정보와 묶어 거르고 updated_at 기준으로 정렬한다. DONE은 completed_at이 있는 기록(다시 하는 중 포함), IN_PROGRESS는 status가 하는 중인 기록이다.
  *        UNIT은 사전(pre)·사후(post) 답이 모두 있을 때 문항별 선택지 문구로 compare를 채운다.
  * [연결] RecordController가 부른다 / PracticeRecordRepository, PracticeRepository
  * [주의] 학습자 전용이다. 비공개(published=0)이거나 사라진 연습의 기록은 목록에서 뺀다. 개수는 필터와 무관하게 전체 기준이고
@@ -63,8 +63,9 @@ public class RecordService {
                 .filter(r -> practices.containsKey(r.getPracticeId()))
                 .toList();
 
-        int doneCount = (int) visible.stream().filter(r -> r.getStatus() == RecordStatus.DONE).count();
-        int inProgressCount = visible.size() - doneCount;
+        // 완료는 completed_at이 남아 있는 기록이다(다시 하는 중이어도 포함). 하는 중은 status가 IN_PROGRESS인 기록이라 둘에 함께 잡힐 수 있다
+        int doneCount = (int) visible.stream().filter(PracticeRecord::hasCompleted).count();
+        int inProgressCount = (int) visible.stream().filter(r -> r.getStatus() == RecordStatus.IN_PROGRESS).count();
 
         // 최신순이 기본. 같은 시각이면 기록 id가 큰(나중에 만든) 것이 먼저
         Comparator<PracticeRecord> order = Comparator.comparing(PracticeRecord::getUpdatedAt)
@@ -73,7 +74,8 @@ public class RecordService {
             order = order.reversed();
         }
         List<Item> items = visible.stream()
-                .filter(r -> statusFilter == null || r.getStatus() == statusFilter)
+                .filter(r -> statusFilter == null
+                        || (statusFilter == RecordStatus.DONE ? r.hasCompleted() : r.getStatus() == RecordStatus.IN_PROGRESS))
                 .sorted(order)
                 .map(r -> toItem(r, practices.get(r.getPracticeId())))
                 .toList();

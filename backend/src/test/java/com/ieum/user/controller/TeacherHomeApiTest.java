@@ -194,6 +194,38 @@ class TeacherHomeApiTest {
     }
 
     @Test
+    void 목록_17의_doneCount는_다시_하는_중인_기록도_completed_at이_있으면_센다() throws Exception {
+        PracticeRecord done = record(1, 12, RecordStatus.DONE, LocalDateTime.of(2026, 11, 4, 14, 0));
+        PracticeRecord redo = record(2, 12, RecordStatus.IN_PROGRESS, LocalDateTime.of(2026, 10, 27, 11, 0));
+        when(recordRepository.findByUserIdIn(anyCollection())).thenReturn(List.of(done, redo));
+        when(threadRepository.findByTeacherId(TEACHER_ID)).thenReturn(List.of());
+        when(signalEventRepository.findByStudentIdInAndStatus(anyCollection(), eq(SignalStatus.OPEN)))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/teacher/students").header("Authorization", teacher()))
+                .andExpect(jsonPath("$.items[1].id").value(12))
+                .andExpect(jsonPath("$.items[1].doneCount").value(2));
+    }
+
+    @Test
+    void 상세_18은_다시_하는_중인_기록도_completed_at이_있으면_records에_담는다() throws Exception {
+        Practice unit = practice(1, PracticeType.UNIT, "practice-1.json", true);
+        when(practiceRepository.findAllById(anyIterable())).thenReturn(List.of(unit));
+
+        PracticeRecord redo = record(10, 12, RecordStatus.IN_PROGRESS, LocalDateTime.of(2026, 10, 27, 11, 0));
+        ReflectionTestUtils.setField(redo, "practiceId", 1L);
+        when(recordRepository.findByUserId(12L)).thenReturn(List.of(redo));
+        when(threadRepository.findByStudentIdOrderByLastMessageAtDescIdDesc(12L)).thenReturn(List.of());
+        when(signalEventRepository.existsByStudentIdAndStatus(12L, SignalStatus.OPEN)).thenReturn(false);
+
+        mockMvc.perform(get("/api/v1/teacher/students/12").header("Authorization", teacher()))
+                .andExpect(jsonPath("$.doneCount").value(1))
+                .andExpect(jsonPath("$.records.length()").value(1))
+                .andExpect(jsonPath("$.records[0].completedAt").value("2026-10-27T11:00:00+09:00"))
+                .andExpect(jsonPath("$.records[0].compare").doesNotExist());
+    }
+
+    @Test
     void 상세_18은_UNIT_compare와_쪽지_목록을_함께_담는다() throws Exception {
         Practice unit = practice(1, PracticeType.UNIT, "practice-1.json", true);
         when(practiceRepository.findAllById(anyIterable())).thenReturn(List.of(unit));
