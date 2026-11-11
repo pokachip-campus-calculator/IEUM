@@ -94,23 +94,6 @@
       }
     },
     {
-      "name": "00 사전 - 이음쌤 가입 (이미 있으면 409여도 괜찮음)",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{baseUrl}}/auth/signup",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"role\": \"TEACHER\",\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{teacherPassword}}\",\n  \"name\": \"김쌤\",\n  \"nickname\": \"테스트 이음쌤\",\n  \"birthDate\": \"1990-05-20\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
-        }
-      }
-    },
-    {
       "name": "00 사전 - 이음쌤 로그인 (DB에 있는 이음쌤)",
       "event": [
         {
