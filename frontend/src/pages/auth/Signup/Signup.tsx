@@ -221,6 +221,7 @@ export default class Signup extends Component<any, any> {
         pick: () => this.setState({ type: t.k, tryType: false }),
       })),
       typeBad: s.tryType && !typeOk,
+      teacherNotice: s.type === "tch",
       typeAlertOn: s.tryType && (!typeOk || !termsOk),
       typeAlertMsg:
         !typeOk && !termsOk
@@ -389,6 +390,9 @@ export default class Signup extends Component<any, any> {
             ),
           );
         } catch (err: any) {
+          // 이음쌤 가입이 닫혀 있으면(403 TEACHER_SIGNUP_CLOSED) 서버 message(문의 연락처 포함)가
+          // 그대로 오류 문구가 돼요. ApiError 에는 code 가 없지만 http()가 서버 message 를 담아 주고,
+          // 성공 때만 phase 를 바꾸므로 입력 화면과 값은 그대로 남아요.
           this.setState({
             submitting: false,
             submitErr: err?.message || "가입에 실패했어요. 잠시 뒤 다시 시도해 주세요.",
@@ -615,6 +619,14 @@ export default class Signup extends Component<any, any> {
                   ) : null}
                   <div className="ie-su-sec">
                     <h2 className="ie-h3">일반 계정 회원 가입</h2>
+                    {v.teacherNotice ? (
+                      <div className="ie-alert ie-alert--info" role="note">
+                        <div>
+                          이음쌤은 기관 확인을 거친 분만 가입할 수 있어요. 가입 문의는 담당자에게 해
+                          주세요.
+                        </div>
+                      </div>
+                    ) : null}
                     {v.typeAlertOn ? (
                       <div className="ie-alert ie-alert--error" role="alert">
                         <svg width="22" height="22" viewBox="0 0 256 256" aria-hidden="true">
