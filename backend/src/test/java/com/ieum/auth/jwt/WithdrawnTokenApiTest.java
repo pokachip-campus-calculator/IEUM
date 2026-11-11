@@ -2,6 +2,7 @@ package com.ieum.auth.jwt;
 
 import com.ieum.user.entity.Role;
 import com.ieum.user.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,8 +30,12 @@ class WithdrawnTokenApiTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired JwtProvider jwtProvider;
+    @Autowired AccountChecker accountChecker;
     @MockitoBean UserRepository userRepository;                   // existsById 기본값 false = 삭제된 계정
     @MockitoBean PlatformTransactionManager transactionManager;   // DB 없이 @Transactional을 통과시키기 위해
+
+    @BeforeEach
+    void 계정_확인_기억_비우기() { accountChecker.clear(); }   // 앞 테스트의 "있다" 기억이 남지 않게
 
     private String bearer(long id, Role role) { return "Bearer " + jwtProvider.issue(id, role); }
 
