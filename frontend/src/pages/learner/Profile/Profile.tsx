@@ -3,7 +3,7 @@
  * (원본 디자인: Profile.dc.html)
  */
 import { Component, Fragment } from "react";
-import { clearSessionUser, profileService, session } from "@/api";
+import { clearSessionUser, profileService, session, setSessionUser } from "@/api";
 import { A } from "@/lib/A";
 import type { CSSProperties } from "react";
 import { img } from "@/assets";
@@ -30,6 +30,8 @@ export default class Profile extends Component<any, any> {
       pwError: "",
       pwSaving: false,
       basicUnsent: false,
+      basicSaving: false,
+      basicError: "",
       pwUnsent: false,
       notif: props.profile?.notifications ?? [true, true, false],
       outOpen: false,
@@ -72,20 +74,46 @@ export default class Profile extends Component<any, any> {
       pwCurrentError,
       pwSaving: s.pwSaving,
       basicUnsent: s.basicUnsent,
+      basicSaving: s.basicSaving,
+      basicError: s.basicError,
       pwUnsent: s.pwUnsent,
       outUnsent: s.outUnsent,
-      onNick: (e) => this.setState({ nick: e.target.value, basicUnsent: false }),
-      onMail: (e) => this.setState({ mail: e.target.value, basicUnsent: false }),
+      onNick: (e) =>
+        this.setState({ nick: e.target.value, basicUnsent: false, basicError: "" }),
+      onMail: (e) =>
+        this.setState({ mail: e.target.value, basicUnsent: false, basicError: "" }),
       onPwCur: (e) => this.setState({ pwCur: e.target.value, pwUnsent: false, pwError: "" }),
       onPwNew: (e) => this.setState({ pwNew: e.target.value, pwUnsent: false, pwError: "" }),
       onPwNew2: (e) => this.setState({ pwNew2: e.target.value, pwUnsent: false, pwError: "" }),
-      saveBasic: () => {
+      saveBasic: async () => {
         if (s.nick.trim() === "") {
-          this.setState({ basicTried: true, basicUnsent: false });
+          this.setState({ basicTried: true, basicUnsent: false, basicError: "" });
           return;
         }
-        void profileService.updateProfile({ nick: s.nick, mail: s.mail });
-        this.setState({ basicTried: false, basicUnsent: true });
+        if (s.basicSaving) return;
+
+        this.setState({ basicTried: false, basicSaving: true, basicUnsent: false, basicError: "" });
+        try {
+          const saved = await profileService.updateProfile({
+            nick: s.nick.trim(),
+            mail: s.mail.trim(),
+          });
+          // 헤더·홈 인사말이 새 닉네임을 바로 쓰도록 세션도 갱신
+          if (session.token) {
+            setSessionUser({ ...session.user, nick: saved.nick }, session.token);
+          }
+          this.setState({
+            nick: saved.nick,
+            mail: saved.mail,
+            basicSaving: false,
+            basicUnsent: true,
+          });
+        } catch (error) {
+          this.setState({
+            basicSaving: false,
+            basicError: error instanceof Error ? error.message : "내 정보를 저장하지 못했어요.",
+          });
+        }
       },
       savePw: async () => {
         if (s.pwCur === "" || s.pwNew.length < 8 || s.pwNew !== s.pwNew2) {
@@ -238,6 +266,7 @@ export default class Profile extends Component<any, any> {
                         type="text"
                         value={v.nick}
                         onChange={v.onNick}
+                        maxLength={20}
                         aria-invalid={v.nickBad}
                       />
                       {v.nickBad ? (
@@ -256,8 +285,14 @@ export default class Profile extends Component<any, any> {
                       type="email"
                       value={v.mail}
                       onChange={v.onMail}
+                      maxLength={100}
                     />
                   </div>
+                  {v.basicError ? (
+                    <div className="ie-error-text" role="alert">
+                      {v.basicError}
+                    </div>
+                  ) : null}
                   {v.basicUnsent ? (
                     <div className="ie-alert ie-alert--ok" role="status">
                       <svg width="22" height="22" viewBox="0 0 256 256" aria-hidden="true">
@@ -273,8 +308,13 @@ export default class Profile extends Component<any, any> {
                     </div>
                   ) : null}
                   <div className="ie-row">
-                    <button type="button" className="ie-btn ie-btn--primary" onClick={v.saveBasic}>
-                      저장하기
+                    <button
+                      type="button"
+                      className="ie-btn ie-btn--primary"
+                      onClick={v.saveBasic}
+                      disabled={v.basicSaving}
+                    >
+                      {v.basicSaving ? "저장하는 중" : "저장하기"}
                     </button>
                   </div>
                 </section>

@@ -75,10 +75,28 @@ src/
 | `profileService` | 내 정보 · 비밀번호 · 탈퇴 · 알림 설정 |
 | `teacherService` | 학습자 · 쪽지 · 신호 목록, 답장, 메모, 신호 대응 기록, 자료 게시 |
 
-- 기본값은 **목업**(`src/api/mock/*`). `.env.example`을 `.env.local`로 복사해 `VITE_USE_MOCK=false`로 바꾸면 각 서비스의 `http()`가 `VITE_API_BASE_URL`(기본 `/api`)을 호출합니다.
+- 개발 모드(`npm run dev`)의 기본값은 **목업**(`src/api/mock/*`)입니다. 프로덕션 빌드에서는 `VITE_USE_MOCK`이 비어 있어도 목업을 쓰지 않습니다. `.env.example`을 `.env.local`로 복사해 `VITE_USE_MOCK=false`로 바꾸면 각 서비스의 `http()`가 `VITE_API_BASE_URL`(기본 `/api`)을 호출합니다.
 - 각 서비스 함수 위 주석에 가정한 엔드포인트가 적혀 있습니다. 실제 API에 맞게 경로·응답 모양만 고치면 됩니다. 응답 타입은 `api/types.ts`.
 - 목록 데이터는 라우트 `loader`에서 받아 화면 props로 들어갑니다(`router.tsx`의 loaders 표).
 - 로그인한 닉네임은 `api/session.ts`에서 읽어 헤더 아바타·홈 인사말에 씁니다.
+
+## Vercel 배포
+
+| 설정 | 값 |
+|---|---|
+| Root Directory | `frontend` |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+
+환경 변수 2개:
+
+| 이름 | 값 |
+|---|---|
+| `VITE_USE_MOCK` | `false` |
+| `VITE_API_BASE_URL` | `https://(Railway 주소)/api/v1` |
+
+- `vercel.json`이 모든 경로를 `/index.html`로 돌려줘서 새로고침해도 404가 나지 않습니다.
+- 프로덕션 빌드에서 `VITE_API_BASE_URL`이 비어 있으면 화면 위에 "서버 주소가 설정되지 않았어요" 배너가 뜹니다. 환경 변수는 빌드 시점에 반영되므로 바꾼 뒤에는 다시 배포해야 합니다.
 
 ## 원본과 달라진 점 (의도적인 최소 수정)
 

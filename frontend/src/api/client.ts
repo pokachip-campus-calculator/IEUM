@@ -3,11 +3,19 @@ import { session, syncSessionUser } from "./session";
 /**
  * API 호출 공통 도구.
  *
- *  - VITE_USE_MOCK=false 로 두면 services 가 아래 http() 로 실제 서버를 부릅니다. (기본값: 목업 사용)
- *  - VITE_API_BASE_URL 로 서버 주소를 바꿀 수 있어요. (기본값: /api)
+ *  - VITE_USE_MOCK=false 로 두면 services 가 아래 http() 로 실제 서버를 부릅니다.
+ *    개발 모드(npm run dev)에서는 기본값이 목업 사용이고,
+ *    프로덕션 빌드에서는 값이 비어 있어도 목업을 쓰지 않습니다.
+ *  - VITE_API_BASE_URL 로 서버 주소를 바꿀 수 있어요. (개발 모드 기본값: /api)
+ *    프로덕션 빌드에서 비어 있으면 화면에 오류 배너를 보여줍니다.
  */
-export const USE_MOCK: boolean = import.meta.env.VITE_USE_MOCK !== "false";
-export const API_BASE: string = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "/api";
+export const USE_MOCK: boolean = !import.meta.env.PROD && import.meta.env.VITE_USE_MOCK !== "false";
+
+const envApiBase = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "").trim();
+
+/** 프로덕션 빌드인데 서버 주소가 설정되지 않은 경우 */
+export const API_BASE_MISSING: boolean = import.meta.env.PROD && envApiBase === "";
+export const API_BASE: string = envApiBase !== "" ? envApiBase : import.meta.env.PROD ? "" : "/api";
 
 export class ApiError extends Error {
   constructor(

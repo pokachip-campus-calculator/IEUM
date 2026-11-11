@@ -156,7 +156,7 @@ export default class Signup extends Component<any, any> {
     const under14 = s.type === "u14";
     const inv = {
       name: s.name.trim() === "",
-      uid: s.uid.trim().length < 4,
+      uid: !/^[A-Za-z0-9]{4,20}$/.test(s.uid.trim()),
       nick: s.nick.trim() === "",
       pw: s.pw.length < 8,
       pwConfirm: s.pwConfirm === "" || s.pwConfirm !== s.pw,
@@ -344,7 +344,7 @@ export default class Signup extends Component<any, any> {
           : d2 !== null && d2 <= now && (s.type === "u14") === a2 < 14;
         const inv2 = {
           name: v.name.trim() === "",
-          uid: v.uid.trim().length < 4,
+          uid: !/^[A-Za-z0-9]{4,20}$/.test(v.uid.trim()),
           nick: v.nick.trim() === "",
           pw: v.pw.length < 8,
           pwConfirm: v.pwConfirm === "" || v.pwConfirm !== v.pw,
@@ -673,6 +673,7 @@ export default class Signup extends Component<any, any> {
                         onChange={v.onName}
                         aria-invalid={v.nameBad}
                         aria-describedby="su-name-e"
+                        maxLength={30}
                       />{" "}
                       {v.nameBad ? (
                         <span id="su-name-e" className="ie-error-text">
@@ -694,13 +695,14 @@ export default class Signup extends Component<any, any> {
                         onChange={v.onUid}
                         aria-invalid={v.idBad}
                         aria-describedby="su-id-h su-id-e"
+                        maxLength={20}
                       />{" "}
                       <span id="su-id-h" className="ie-help">
-                        영어와 숫자로 4자 이상이에요.
+                        영어와 숫자로 4~20자예요.
                       </span>{" "}
                       {v.idBad ? (
                         <span id="su-id-e" className="ie-error-text">
-                          아이디를 4자 이상으로 적어 주세요.
+                          아이디를 영어와 숫자로 4~20자로 적어 주세요.
                         </span>
                       ) : null}
                     </div>
@@ -715,6 +717,7 @@ export default class Signup extends Component<any, any> {
                         type="text"
                         value={v.nick}
                         onChange={v.onNick}
+                        maxLength={20}
                         aria-invalid={v.nickBad}
                         aria-describedby="su-nick-h su-nick-e"
                       />{" "}
@@ -741,6 +744,7 @@ export default class Signup extends Component<any, any> {
                         onChange={v.onPw}
                         aria-invalid={v.pwBad}
                         aria-describedby="su-pw-h su-pw-e"
+                        maxLength={72}
                       />{" "}
                       <span id="su-pw-h" className="ie-help">
                         8자 이상이에요.
@@ -765,6 +769,7 @@ export default class Signup extends Component<any, any> {
                         onChange={v.onPwConfirm}
                         aria-invalid={v.pwConfirmBad}
                         aria-describedby="su-pw-confirm-h su-pw-confirm-e"
+                        maxLength={72}
                       />{" "}
                       <span id="su-pw-confirm-h" className="ie-help">
                         비밀번호를 한 번 더 적어 주세요.
@@ -840,6 +845,7 @@ export default class Signup extends Component<any, any> {
                         onChange={v.onEmail}
                         aria-invalid={v.mailBad}
                         aria-describedby="su-mail-h su-mail-e"
+                        maxLength={100}
                       />{" "}
                       <span id="su-mail-h" className="ie-help">
                         자주 쓰는 이메일 주소를 적어 주세요.
@@ -861,6 +867,7 @@ export default class Signup extends Component<any, any> {
                         type="text"
                         value={v.org}
                         onChange={v.onOrg}
+                        maxLength={50}
                       />
                     </div>
                     {v.under14 ? (
@@ -960,6 +967,7 @@ export default class Signup extends Component<any, any> {
                         value={v.gName}
                         onChange={v.onGName}
                         aria-invalid={v.gNameBad}
+                        maxLength={30}
                       />{" "}
                       {v.gNameBad ? (
                         <span className="ie-error-text">보호자 이름을 적어 주세요.</span>
@@ -1000,6 +1008,7 @@ export default class Signup extends Component<any, any> {
                         onChange={v.onGCon}
                         aria-invalid={v.gConBad}
                         aria-describedby="g-con-h"
+                        maxLength={100}
                       />{" "}
                       <span id="g-con-h" className="ie-help">
                         동의를 확인할 연락처예요. 다른 용도로 쓰지 않아요.

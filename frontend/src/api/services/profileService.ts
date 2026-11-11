@@ -35,10 +35,11 @@ export const profileService = {
       teacher: me.teacher,
     };
   },
-  /** PATCH /me */
-  async updateProfile(req: { nick: string; mail: string }): Promise<void> {
-    if (USE_MOCK) return;
-    return http("PATCH", "/me", { nickname: req.nick, email: req.mail });
+  /** PATCH /me — 닉네임 1~20자, 이메일 100자 이하(""이면 삭제). 바뀐 내 정보를 돌려받아요. */
+  async updateProfile(req: { nick: string; mail: string }): Promise<{ nick: string; mail: string }> {
+    if (USE_MOCK) return { nick: req.nick, mail: req.mail };
+    const me = await http<MeResponse>("PATCH", "/me", { nickname: req.nick, email: req.mail });
+    return { nick: me.nickname, mail: me.email ?? "" };
   },
   /** PUT /me/password */
   async changePassword(req: { current: string; next: string }): Promise<void> {
