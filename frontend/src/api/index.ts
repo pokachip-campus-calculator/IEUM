@@ -1,5 +1,5 @@
 export * from "./types";
-export { USE_MOCK, API_BASE, ApiError, http } from "./client";
+export { USE_MOCK, API_BASE, API_BASE_MISSING, ApiError, http } from "./client";
 export { session, setSessionUser, clearSessionUser } from "./session";
 export { authService } from "./services/authService";
 export { contentService } from "./services/contentService";
