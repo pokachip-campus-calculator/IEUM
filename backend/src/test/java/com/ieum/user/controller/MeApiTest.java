@@ -115,13 +115,31 @@ class MeApiTest {
 
     @Test
     void 학습자_탈퇴는_204() throws Exception {
-        mockMvc.perform(post("/api/v1/me/withdraw").header("Authorization", bearer(1L, Role.STUDENT)))
+        mockMvc.perform(post("/api/v1/me/withdraw").header("Authorization", bearer(1L, Role.STUDENT))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"acknowledged\":true}"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
+    void 확인_값이_false이면_탈퇴는_400_VALIDATION_FAILED와_acknowledged를_준다() throws Exception {
+        mockMvc.perform(post("/api/v1/me/withdraw").header("Authorization", bearer(1L, Role.STUDENT))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"acknowledged\":false}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("acknowledged"));
+    }
+
+    @Test
+    void 본문이_없으면_탈퇴는_400_VALIDATION_FAILED() throws Exception {
+        mockMvc.perform(post("/api/v1/me/withdraw").header("Authorization", bearer(1L, Role.STUDENT)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+    }
+
+    @Test
     void 이음쌤_탈퇴는_403_FORBIDDEN() throws Exception {
-        mockMvc.perform(post("/api/v1/me/withdraw").header("Authorization", bearer(2L, Role.TEACHER)))
+        mockMvc.perform(post("/api/v1/me/withdraw").header("Authorization", bearer(2L, Role.TEACHER))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"acknowledged\":true}"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("FORBIDDEN"));
     }

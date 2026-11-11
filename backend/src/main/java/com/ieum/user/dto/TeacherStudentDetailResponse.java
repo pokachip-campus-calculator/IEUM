@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * [역할] 이음쌤 학습자 상세(18) 응답.
- * [동작] records는 DONE만 completed_at 최신순이고, compare는 UNIT에만 emotion은 EMOTION에만 채운다.
+ * [동작] records는 completed_at이 있는 기록(다시 하는 중 포함)만 completed_at 최신순이고, compare는 UNIT에만 emotion은 EMOTION에만 채운다.
  * [연결] TeacherHomeService가 만든다 / RecordViewMapper(compare·emotion 변환)
  * [주의] SCENARIO는 제목·날짜만 내려서 compare·emotion은 항상 null이다. 점수·answers·my_note는 담지 않는다.
  */

@@ -4,6 +4,7 @@ import com.ieum.auth.jwt.AuthUser;
 import com.ieum.user.dto.ChangePasswordRequest;
 import com.ieum.user.dto.MeResponse;
 import com.ieum.user.dto.UpdateMeRequest;
+import com.ieum.user.dto.WithdrawRequest;
 import com.ieum.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -51,7 +52,7 @@ public class MeController {
 
     @PostMapping("/withdraw")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void withdraw(@AuthenticationPrincipal AuthUser user) {
+    public void withdraw(@AuthenticationPrincipal AuthUser user, @Valid @RequestBody WithdrawRequest request) {
         userService.withdraw(user.id());
     }
 }

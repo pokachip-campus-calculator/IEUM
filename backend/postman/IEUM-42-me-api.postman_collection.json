@@ -132,7 +132,7 @@
     {
       "name": "06 탈퇴 - 학습자 (204)",
       "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('204', () => pm.response.to.have.status(204));"] } }],
-      "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/me/withdraw" }
+      "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"acknowledged\":true}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/me/withdraw" }
     },
     {
       "name": "06 탈퇴 후 같은 토큰으로 조회 (401)",

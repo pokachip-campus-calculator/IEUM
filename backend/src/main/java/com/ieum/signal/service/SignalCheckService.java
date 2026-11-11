@@ -18,7 +18,7 @@ import java.util.Optional;
 
 /**
  * [역할] 학습자가 보낸 메시지에서 신호 낱말을 찾아 signal_events에 남긴다.
- * [동작] 본문을 소문자로 바꾸고 한글·영문·숫자만 남긴 뒤, 사용 중인 WORD 낱말(normalized)이 들어 있는지 본다. 여러 개면 CRITICAL 우선, 같은 등급이면 id가 작은 하나만 저장한다.
+ * [동작] 본문을 소문자로 바꾸고 한글·영문·숫자만 남긴 뒤, 사용 중인 WORD 낱말(normalized)이 들어 있는지 본다. 여러 개면 CRITICAL 우선, 같은 등급이면 id가 작은 하나만 저장하고, 저장하는 낱말은 사전 원문 표현(expression)이다.
  * [연결] ThreadService가 쪽지를 저장한 같은 트랜잭션에서 부른다(12, 이후 15) / SignalKeywordRepository, SignalEventRepository, NotificationService
  * [주의] 결과는 학습자 응답에 절대 넣지 않는다. 초성(CHOSEONG) 낱말은 검사하지 않는다. 메시지 1건당 신호는 최대 1행이고, 저장하면 담당 이음쌤에게 SIGNAL_FLAGGED 알림을 같이 만든다.
  */
@@ -56,7 +56,7 @@ public class SignalCheckService {
 
         found.ifPresent(k -> {
             SignalEvent event = eventRepository.save(
-                    new SignalEvent(studentId, message.getId(), k.getId(), k.getNormalized()));
+                    new SignalEvent(studentId, message.getId(), k.getId(), k.getExpression()));
             // 담당 이음쌤에게만 알린다. 학습자에게는 알림도 응답도 없다
             notificationService.signalFlagged(teacherId, event.getId());
         });
