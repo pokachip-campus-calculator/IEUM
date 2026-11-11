@@ -37,32 +37,42 @@
 }
 .comfort-rotator-cloud {
   position: absolute;
-  width: 30px;
-  height: 18px;
+  width: 38px;
+  height: 15px;
   background: #ffffff;
-  border-radius: 50%;
-  opacity: 0.95;
-  filter: blur(0.5px);
+  border-radius: 999px;
   pointer-events: none;
   z-index: 1;
+  filter: drop-shadow(0 3px 5px rgba(120, 105, 190, 0.22));
+}
+.comfort-rotator-cloud::before,
+.comfort-rotator-cloud::after {
+  content: "";
+  position: absolute;
+  background: #ffffff;
+  border-radius: 50%;
+}
+.comfort-rotator-cloud::before {
+  width: 22px;
+  height: 22px;
+  top: -12px;
+  left: 3px;
+}
+.comfort-rotator-cloud::after {
+  width: 15px;
+  height: 15px;
+  top: -8px;
+  left: 23px;
 }
 .comfort-rotator-cloud--tl {
-  top: -13px;
-  left: -15px;
-  box-shadow:
-    15px -7px 0 1px #fff,
-    -13px 3px 0 -3px #fff,
-    9px 7px 0 4px #fff,
-    -5px -9px 0 0 #fff;
+  top: -11px;
+  left: -16px;
+  transform: rotate(-12deg);
 }
 .comfort-rotator-cloud--br {
-  bottom: -13px;
-  right: -15px;
-  box-shadow:
-    -15px 7px 0 1px #fff,
-    13px -3px 0 -3px #fff,
-    -9px -7px 0 4px #fff,
-    5px 9px 0 0 #fff;
+  bottom: -11px;
+  right: -16px;
+  transform: rotate(168deg);
 }
 .comfort-rotator:hover,
 .comfort-rotator:focus-visible {
