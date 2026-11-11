@@ -48,7 +48,13 @@ class SignalCheckServiceTest {
     }
 
     private SignalKeyword keyword(long id, Severity severity, String normalized) {
+        return keyword(id, severity, normalized, normalized);
+    }
+
+    // expression은 사전의 원문 표현(공백 있음), normalized는 검사용 값(공백 없음)
+    private SignalKeyword keyword(long id, Severity severity, String expression, String normalized) {
         SignalKeyword k = BeanUtils.instantiateClass(SignalKeyword.class);
+        ReflectionTestUtils.setField(k, "expression", expression);
         ReflectionTestUtils.setField(k, "id", id);
         ReflectionTestUtils.setField(k, "severity", severity);
         ReflectionTestUtils.setField(k, "normalized", normalized);
@@ -68,8 +74,8 @@ class SignalCheckServiceTest {
     }
 
     @Test
-    void 공백과_특수문자를_빼고_낱말을_찾는다() {
-        dictionary(keyword(1, Severity.CRITICAL, "죽고싶다"));
+    void 공백과_특수문자를_빼고_낱말을_찾고_사전_원문_표현을_남긴다() {
+        dictionary(keyword(1, Severity.CRITICAL, "죽고 싶다", "죽고싶다"));
 
         service.check(message(100, SenderRole.STUDENT, "요즘 너무 죽고... 싶다!!"), 5L, 9L);
 
@@ -79,7 +85,7 @@ class SignalCheckServiceTest {
         assertThat(saved.getStudentId()).isEqualTo(5L);
         assertThat(saved.getMessageId()).isEqualTo(100L);
         assertThat(saved.getKeywordId()).isEqualTo(1L);
-        assertThat(saved.getMatchedText()).isEqualTo("죽고싶다");
+        assertThat(saved.getMatchedText()).isEqualTo("죽고 싶다");
         assertThat(saved.getStatus()).isEqualTo(SignalStatus.OPEN);
         // 담당 이음쌤(9)에게만 그 신호(500)로 알린다
         verify(notificationService).signalFlagged(9L, 500L);
