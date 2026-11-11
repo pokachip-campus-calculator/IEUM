@@ -13,6 +13,7 @@ import { startVillage } from "./village3d";
 import PageStyle from "@/lib/PageStyle";
 import pageCss from "./Home.css?inline";
 import ComfortRotator from "@/components/ComfortRotator/ComfortRotator";
+import HomeSkyDecor from "@/components/HomeSkyDecor/HomeSkyDecor";
 
 export default class Home extends Component<any, any> {
   [key: string]: any;
@@ -45,6 +46,7 @@ export default class Home extends Component<any, any> {
             <main className="ie-main ie-w3main">
               <section className="ie-w3 ie-in" aria-labelledby="home-h">
                 <img className="ie-w3sky" src={img.villageBg} alt="" draggable="false" />
+                <HomeSkyDecor />
                 <ComfortRotator />
                 <div className="ie-w3head">
                   <h1 id="home-h" className="ie-title">

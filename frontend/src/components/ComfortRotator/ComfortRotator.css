@@ -1,25 +1,42 @@
 .comfort-rotator {
   position: absolute;
-  top: 12%;
-  right: 3%;
+  top: 11%;
+  right: 2%;
   z-index: 3;
-  width: clamp(240px, 24vw, 360px);
-  min-height: 96px;
-  padding: 18px 22px;
+  width: clamp(260px, 23vw, 400px);
+  min-height: 120px;
+  padding: 44px 30px 26px;
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
   color: #ffffff;
-  /* 글래스: 흰 글자가 읽히도록 짙은 남색을 옅게 깔고, 뒤 그림이 비쳐 보이게 블러 처리 */
-  background: linear-gradient(135deg, rgba(60, 68, 150, 0.72) 0%, rgba(60, 68, 150, 0.52) 100%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  backdrop-filter: blur(14px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 24px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  backdrop-filter: blur(22px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 36px;
   box-shadow:
-    0 8px 32px rgba(70, 80, 160, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    0 12px 40px rgba(80, 90, 190, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.15);
+  transition: background 0.3s ease;
   outline-offset: 4px;
+}
+.comfort-rotator::before {
+  content: "\201C";
+  position: absolute;
+  top: 12px;
+  left: 28px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 56px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.7);
+  pointer-events: none;
+}
+.comfort-rotator:hover,
+.comfort-rotator:focus-visible {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.16) 100%);
 }
 .comfort-rotator-image {
   width: 48px;
@@ -31,17 +48,17 @@
 }
 .comfort-rotator-text {
   margin: 0;
-  font-size: 15px;
+  font-size: 15.5px;
   font-weight: 500;
-  line-height: 1.65;
+  line-height: 1.85;
   color: #ffffff;
-  text-shadow: 0 1px 3px rgba(30, 35, 90, 0.5), 0 2px 12px rgba(30, 35, 90, 0.35);
+  text-shadow: 0 1px 4px rgba(55, 65, 165, 0.5), 0 2px 14px rgba(55, 65, 165, 0.3);
   animation: comfort-rotator-fade 0.6s ease both;
 }
 .comfort-rotator-from {
   display: block;
-  margin-top: 6px;
-  font-size: 12px;
+  margin-top: 12px;
+  font-size: 12.5px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.85);
 }
@@ -49,17 +66,11 @@
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: none; }
 }
-/* blur를 지원하지 않는 브라우저에서는 글자가 읽히도록 배경을 더 진하게 */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .comfort-rotator { background: rgba(70, 80, 160, 0.88); }
+  .comfort-rotator { background: rgba(110, 120, 215, 0.7); }
 }
-/* 투명 효과를 줄여 달라는 사용자 설정 */
 @media (prefers-reduced-transparency: reduce) {
-  .comfort-rotator {
-    background: rgba(70, 80, 160, 0.92);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
+  .comfort-rotator { background: rgba(110, 120, 215, 0.85); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .comfort-rotator-text { animation: none; }

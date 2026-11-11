@@ -2,17 +2,30 @@
   touch-action: none;
 }
 /* 홈 인사말 영역: 하늘 배경 위에서 읽히도록 흰 글자 + 은은한 그림자 */
+/* 그림자만으로 부족한 작은 글자(.ie-meta)를 위한 아주 옅은 보조 그라데이션 */
+.ie-home .ie-w3head {
+  background: linear-gradient(90deg, rgba(60, 70, 160, 0.22) 0%, rgba(60, 70, 160, 0) 60%);
+}
 .ie-home .ie-w3head .ie-title {
   color: #ffffff;
-  text-shadow: 0 1px 3px rgba(45, 55, 135, 0.45), 0 2px 16px rgba(45, 55, 135, 0.3);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 3px rgba(45, 55, 135, 0.45), 0 2px 18px rgba(45, 55, 135, 0.3);
+}
+.ie-home .ie-w3head .ie-title::after {
+  content: " \2726";
+  font-size: 0.6em;
+  color: rgba(255, 255, 255, 0.9);
+  vertical-align: top;
 }
 .ie-home .ie-w3head .ie-sub {
   color: rgba(255, 255, 255, 0.95);
+  font-weight: 400;
   text-shadow: 0 1px 3px rgba(45, 55, 135, 0.5), 0 2px 14px rgba(45, 55, 135, 0.3);
 }
 .ie-home .ie-w3head .ie-meta {
-  color: rgba(255, 255, 255, 0.92);
-  text-shadow: 0 1px 3px rgba(45, 55, 135, 0.55), 0 2px 12px rgba(45, 55, 135, 0.3);
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(45, 55, 135, 0.7), 0 2px 12px rgba(45, 55, 135, 0.45);
 }
 .ie-3map {
   position: absolute;
