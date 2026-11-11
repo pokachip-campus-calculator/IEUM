@@ -18,7 +18,7 @@ import org.springframework.http.HttpStatus;
         |----------------------|--------------------|---------------------|
         | VALIDATION_FAILED    | 400 (BAD_REQUEST)  | 입력 형식 오류        |
         | RECORD_INCOMPLETE    | 400 (BAD_REQUEST)  | 필수 선택이 빠짐      |
-        | UNAUTHORIZED         | 401 (UNAUTHORIZED) | 토큰 없음·만료        |
+        | UNAUTHORIZED         | 401 (UNAUTHORIZED) | 토큰 없음·만료·탈퇴 |
         | BAD_CREDENTIALS      | 401 (UNAUTHORIZED) | 아이디·비밀번호 불일치 |
         | GUARDIAN_PENDING     | 403 (FORBIDDEN)    | 보호자 확인 전 로그인 |
         | FORBIDDEN            | 403 (FORBIDDEN)    | 권한 없음           |
@@ -32,7 +32,7 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
     VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "입력 형식이 올바르지 않습니다."),
     RECORD_INCOMPLETE(HttpStatus.BAD_REQUEST, "필수 선택이 빠졌습니다."),
-    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "토큰이 없거나 만료되었습니다."),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
     BAD_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 맞지 않습니다."),
     GUARDIAN_PENDING(HttpStatus.FORBIDDEN, "보호자 확인이 끝나면 시작할 수 있습니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없습니다."),

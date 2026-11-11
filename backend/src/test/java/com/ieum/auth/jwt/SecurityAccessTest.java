@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** [역할] 공개 경로·로그인 필요 경로·이음쌤 전용 경로의 접근 규칙과 오류 형식을 확인한다. */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(SecurityAccessTest.ProbeController.class)
+@Import({SecurityAccessTest.ProbeController.class, AllAccountsExistConfig.class})
 @TestPropertySource(properties = "jwt.secret=test-secret-test-secret-test-secret-1234")
 class SecurityAccessTest {
 

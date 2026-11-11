@@ -1,5 +1,7 @@
 package com.ieum.notification.controller;
 
+import com.ieum.auth.jwt.AllAccountsExistConfig;
+import org.springframework.context.annotation.Import;
 import com.ieum.auth.jwt.JwtProvider;
 import com.ieum.notification.entity.LinkType;
 import com.ieum.notification.entity.Notification;
@@ -32,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** [역할] /api/v1/notifications 주소의 로그인 필요 여부, 응답 모양, 상태 코드(200·204·400·404)를 확인한다. */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(AllAccountsExistConfig.class)
 @TestPropertySource(properties = {"jwt.secret=test-secret-test-secret-test-secret-1234", "mock.learning.enabled=false"})
 class NotificationApiTest {
 

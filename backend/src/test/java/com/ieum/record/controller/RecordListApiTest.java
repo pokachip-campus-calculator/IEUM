@@ -1,5 +1,7 @@
 package com.ieum.record.controller;
 
+import com.ieum.auth.jwt.AllAccountsExistConfig;
+import org.springframework.context.annotation.Import;
 import com.ieum.auth.jwt.JwtProvider;
 import com.ieum.practice.entity.Practice;
 import com.ieum.practice.entity.PracticeArea;
@@ -36,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** [역할] 학습 기록(11)의 권한, status·sort, 개수, UNIT compare 규칙을 DB 없이 확인한다. */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(AllAccountsExistConfig.class)
 @TestPropertySource(properties = {"jwt.secret=test-secret-test-secret-test-secret-1234", "mock.learning.enabled=false"})
 class RecordListApiTest {
 
