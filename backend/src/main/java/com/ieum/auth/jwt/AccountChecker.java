@@ -18,6 +18,9 @@ public class AccountChecker {
         this.userRepository = userRepository;
     }
 
+    // 해당 메서드에서 사용자의 ID 가 존재하는 치 SQL Query 를 발생시킨다.
+    // where user_id = userId;
+    // user_id 컬럼에 index
     public boolean exists(Long userId) {
         return userRepository.existsById(userId);
     }
