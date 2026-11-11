@@ -29,6 +29,3 @@ jwt:
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:*}   # 쉼표로 구분. 배포 때 Vercel 주소로 좁힌다
 
-mock:
-  learning:
-    enabled: false                       # 홈·연습 목록(07·08)을 mock으로 내린다(#58). 학습 전체 수동 테스트가 끝나면 false로 바꾸고 mock을 지운다

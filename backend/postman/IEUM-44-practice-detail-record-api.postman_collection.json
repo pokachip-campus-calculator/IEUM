@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "IEUM #44 연습 상세·진행 저장 API (09·10)",
-    "description": "db/V3__seed_practices.sql 시드 3건(1 UNIT, 2 SCENARIO, 3 EMOTION)이 들어간 DB와 mock.learning.enabled=false 기준. 위에서 아래로 순서대로 실행한다. 세 연습의 기록을 되돌리거나 덮어쓴다.",
+    "description": "db/V3__seed_practices.sql 시드 3건(1 UNIT, 2 SCENARIO, 3 EMOTION)이 들어간 DB 기준. 위에서 아래로 순서대로 실행한다. 세 연습의 기록을 되돌리거나 덮어쓴다.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

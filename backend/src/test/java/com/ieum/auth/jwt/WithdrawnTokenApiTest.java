@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** [역할] 탈퇴(계정 삭제)한 계정의 토큰으로 로그인 필요 API를 부르면 모두 UNAUTHORIZED(401)인지 확인한다. */
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource(properties = {"jwt.secret=test-secret-test-secret-test-secret-1234", "mock.learning.enabled=false"})
+@TestPropertySource(properties = {"jwt.secret=test-secret-test-secret-test-secret-1234"})
 class WithdrawnTokenApiTest {
 
     @Autowired MockMvc mockMvc;
