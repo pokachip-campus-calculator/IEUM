@@ -39,17 +39,17 @@
   position: absolute;
   width: 38px;
   height: 15px;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.55);
   border-radius: 999px;
   pointer-events: none;
   z-index: 1;
-  filter: drop-shadow(0 3px 5px rgba(120, 105, 190, 0.22));
+  filter: blur(0.6px) drop-shadow(0 3px 5px rgba(120, 105, 190, 0.18));
 }
 .comfort-rotator-cloud::before,
 .comfort-rotator-cloud::after {
   content: "";
   position: absolute;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.55);
   border-radius: 50%;
 }
 .comfort-rotator-cloud::before {
