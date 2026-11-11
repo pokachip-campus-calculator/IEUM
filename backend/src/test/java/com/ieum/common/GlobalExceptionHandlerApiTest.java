@@ -20,14 +20,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * [역할] 처리되지 않던 오류(id 자리에 문자, 없는 주소, 허용되지 않는 메서드, 예상 못 한 예외)도 { code, message } 형식으로 나가는지 확인한다.
- * [동작] mock 컨트롤러가 켜진 상태에서 실제 주소를 불러 상태 코드와 code·message를 검사하고, 500은 핸들러를 직접 불러 확인한다.
+ * [동작] 실제 주소를 불러 상태 코드와 code·message를 검사하고, 500은 핸들러를 직접 불러 확인한다.
  * [연결] GlobalExceptionHandler, ErrorCode
  * [주의] DB 없이 돈다. 500 응답에 예외 내용(원인 문구)이 들어가지 않는 것도 함께 확인한다.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(AllAccountsExistConfig.class)
-@TestPropertySource(properties = {"jwt.secret=test-secret-test-secret-test-secret-1234", "mock.learning.enabled=true"})
+@TestPropertySource(properties = {"jwt.secret=test-secret-test-secret-test-secret-1234"})
 class GlobalExceptionHandlerApiTest {
 
     @Autowired MockMvc mockMvc;

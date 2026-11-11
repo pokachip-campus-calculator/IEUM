@@ -39,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(AllAccountsExistConfig.class)
-@TestPropertySource(properties = {"jwt.secret=test-secret-test-secret-test-secret-1234", "mock.learning.enabled=false"})
+@TestPropertySource(properties = {"jwt.secret=test-secret-test-secret-test-secret-1234"})
 class RecordListApiTest {
 
     @Autowired MockMvc mockMvc;
@@ -174,7 +174,7 @@ class RecordListApiTest {
     private static Practice practice(long id, PracticeType type, PracticeArea area, String contentFile, boolean published)
             throws IOException {
         String content;
-        try (var in = RecordListApiTest.class.getResourceAsStream("/mock/" + contentFile)) {
+        try (var in = RecordListApiTest.class.getResourceAsStream("/practice-content/" + contentFile)) {
             content = new String(in.readAllBytes(), StandardCharsets.UTF_8);
         }
         Practice p = BeanUtils.instantiateClass(Practice.class);
