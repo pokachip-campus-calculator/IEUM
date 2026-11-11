@@ -37,6 +37,17 @@ export default class UnitVideo extends Component<any, any> {
   }
   componentDidMount() {
     this.timer = setInterval(() => this.tick(), 400);
+    // "잠시 쉬기"로 저장해 둔 진행 중 기록이 있으면 사전·사후 답을 이어서 보여 줘요.
+    const draft = recordService.restoreUnitProgress(this.props.record);
+    if (!draft) return;
+    const questionCount = this.props.questions.length;
+    const phase =
+      Object.keys(draft.post).length > 0
+        ? "post"
+        : Object.keys(draft.pre).length === questionCount
+          ? "learn"
+          : "pre";
+    this.setState({ phase, pre: draft.pre, post: draft.post });
   }
   componentWillUnmount() {
     clearInterval(this.timer);
@@ -151,7 +162,22 @@ export default class UnitVideo extends Component<any, any> {
         current: k === pi ? "step" : "false",
       })),
       paused: s.paused,
-      pause: () => this.setState({ paused: true, playing: false }),
+      pause: async () => {
+        this.setState({ paused: true, playing: false, apiError: "" });
+        try {
+          await recordService.saveUnitProgress({
+            practiceId: this.props.practiceId,
+            pre: s.pre,
+            post: s.post,
+            // 같은 학습 단위 기록을 카드 학습 화면과 나눠 쓰므로, 이미 읽은 카드 기록은 그대로 둬요.
+            cardsRead: (this.props.record?.answers?.cardsRead as number[] | undefined) ?? [],
+          });
+        } catch (error) {
+          this.setState({
+            apiError: error instanceof Error ? error.message : "진행 상황을 저장하지 못했어요.",
+          });
+        }
+      },
       resume: () => this.setState({ paused: false }),
       isLearn: s.phase === "learn" && !s.paused,
       notLearn: s.phase !== "learn" && !s.paused,
@@ -384,6 +410,11 @@ export default class UnitVideo extends Component<any, any> {
                 >
                   <h2 className="ie-h2">잠시 쉬어요</h2>
                   <p className="ie-body-lg">보던 곳은 저장돼 있어요. 준비되면 이어서 하면 돼요.</p>
+                  {v.apiError ? (
+                    <p className="ie-error-text" role="alert">
+                      {v.apiError}
+                    </p>
+                  ) : null}
                   <div className="ie-row">
                     <button
                       type="button"
