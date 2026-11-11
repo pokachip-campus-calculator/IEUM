@@ -5,7 +5,6 @@ import com.ieum.practice.dto.PracticeDetailResponse;
 import com.ieum.practice.dto.PracticeDetailResponse.RecordView;
 import com.ieum.practice.dto.SaveRecordRequest;
 import com.ieum.practice.service.PracticeDetailService;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,10 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
  * [동작] 토큰의 사용자 id로 본인 기록만 읽고 쓴다.
  * [연결] 화면 S07·S08·S09 / PracticeDetailService
  * [주의] 실제 주소는 /api/v1/practices/... 이다. 학습자만 쓸 수 있다(이음쌤은 403).
- *        mock.learning.enabled=false일 때만 켜진다(기본은 PracticeDetailMockController).
  */
 @RestController
-@ConditionalOnProperty(name = "mock.learning.enabled", havingValue = "false")
 @RequestMapping("/practices")
 public class PracticeDetailController {
 
