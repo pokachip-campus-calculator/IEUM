@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.ZoneId;
 
 /**
@@ -16,6 +17,7 @@ public class TimeConfig {
 
     @Bean
     public Clock clock() {
-        return Clock.system(ZoneId.of("Asia/Seoul"));
+        // DB의 DATETIME은 초 단위로 저장되므로 시계도 초 단위로 맞춰, 저장 전 응답과 이후 조회의 시각이 같게 한다(#91)
+        return Clock.tick(Clock.system(ZoneId.of("Asia/Seoul")), Duration.ofSeconds(1));
     }
 }
