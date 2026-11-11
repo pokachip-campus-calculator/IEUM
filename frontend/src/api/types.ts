@@ -186,6 +186,10 @@ export interface MyMessage {
   thread: [string, string, string][];
   /** 상세를 불러왔는지. false 면 thread 에 첫 쪽지 미리보기만 있어요. */
   loaded?: boolean;
+  /** 서버가 주는 목록 미리보기(첫 쪽지 앞 40자). 없으면(목업) thread 의 첫 쪽지 본문을 써요. */
+  preview?: string;
+  /** 안 읽은 이음쌤 답장이 있는지(서버 unread). 쪽지를 열면 false 가 돼요. */
+  unread?: boolean;
 }
 
 export interface AppNotification {

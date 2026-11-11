@@ -247,6 +247,7 @@ export default class TeacherSignal extends Component<any, any> {
                     <textarea
                       id="ts-m"
                       className="ie-textarea"
+                      maxLength={500}
                       style={{ minHeight: "110px" }}
                       value={v.memo}
                       onChange={v.onMemo}

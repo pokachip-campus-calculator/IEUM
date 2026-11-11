@@ -17,7 +17,10 @@ export default class TeacherMessages extends Component<any, any> {
     super(props);
     this.state = {
       // 알림에서 특정 쪽지로 들어오면 답장 완료된 쪽지도 보이도록 전체로 시작합니다.
-      f: queryId("thread", (props.messages ?? []).map((m) => m.id)) ? "all" : "need",
+      // 필터: WAITING(답장이 필요해요) · ANSWERED(답장했어요) · all(전체)
+      f: queryId("thread", (props.messages ?? []).map((m) => m.id)) ? "all" : "WAITING",
+      // 답장을 보내면 이 쪽지를 "답장했어요"로 바꿔야 해서, 목록을 화면 state 로 들고 있어요.
+      messages: props.messages ?? [],
       sel:
         queryId("thread", (props.messages ?? []).map((m) => m.id)) ??
         props.messages?.[0]?.id ??
@@ -30,8 +33,17 @@ export default class TeacherMessages extends Component<any, any> {
   }
   renderVals() {
     const s = this.state;
-    const M: any = this.props.messages;
-    const list = M.filter((m) => s.f === "all" || m.need);
+    const M: any = s.messages;
+    // 서버가 준 순서를 그대로 둔 채 거르기만 해요.
+    const list = M.filter(
+      (m) => s.f === "all" || (s.f === "WAITING" ? m.need : !m.need),
+    );
+    const empty =
+      s.f === "WAITING"
+        ? ["답장이 필요한 쪽지가 없어요", "새 쪽지가 오면 여기에 보여요."]
+        : s.f === "ANSWERED"
+          ? ["답장한 쪽지가 없어요", "답장을 보내면 여기에 모여요."]
+          : ["받은 쪽지가 없어요", "새 쪽지가 오면 여기에 보여요."];
     const cur = list.filter((m) => m.id === s.sel)[0] || null;
     const bad = s.tried && s.reply.trim() === "";
     const S = [
@@ -41,7 +53,8 @@ export default class TeacherMessages extends Component<any, any> {
     ];
     return {
       filters: [
-        ["need", "답장이 필요해요"],
+        ["WAITING", "답장이 필요해요"],
+        ["ANSWERED", "답장했어요"],
         ["all", "전체"],
       ].map((f) => ({
         label: f[1],
@@ -59,6 +72,8 @@ export default class TeacherMessages extends Component<any, any> {
         pick: () => this.setState({ sel: m.id, reply: "", tried: false, unsent: false }),
       })),
       noList: list.length === 0,
+      emptyTitle: empty[0],
+      emptyText: empty[1],
       hasCur: cur !== null,
       cur: cur
         ? {
@@ -99,8 +114,20 @@ export default class TeacherMessages extends Component<any, any> {
         }
         this.setState({ apiError: "" });
         try {
-          await teacherService.sendReply(s.sel, s.reply);
-          this.setState({ tried: false, reply: "", unsent: true });
+          const sent = await teacherService.sendReply(s.sel, s.reply);
+          const threadId = sent?.threadId ?? s.sel;
+          const entry = sent?.entry ?? ["t", "방금 · 내가 보낸 답장", s.reply];
+          this.setState((prev) => ({
+            // 서버가 쪽지를 ANSWERED 로 바꾸므로 화면도 "답장했어요"로 바꾸고, 보낸 답장을 대화에 붙여요.
+            messages: prev.messages.map((m) =>
+              m.id === threadId ? { ...m, need: false, thread: [...m.thread, entry] } : m,
+            ),
+            // "답장이 필요해요"만 보고 있었다면 방금 쪽지가 목록에서 사라져 안내가 안 보이니, "답장했어요"로 옮겨 줘요.
+            f: prev.f === "WAITING" ? "ANSWERED" : prev.f,
+            tried: false,
+            reply: "",
+            unsent: true,
+          }));
         } catch (error) {
           this.setState({
             apiError: error instanceof Error ? error.message : "답장을 보내지 못했어요.",
@@ -208,8 +235,8 @@ export default class TeacherMessages extends Component<any, any> {
                 </ul>
                 {v.noList ? (
                   <div className="ie-empty" role="status">
-                    <b className="ie-h3">답장이 필요한 쪽지가 없어요</b>
-                    <p className="ie-body ie-sub">새 쪽지가 오면 여기에 보여요.</p>
+                    <b className="ie-h3">{v.emptyTitle}</b>
+                    <p className="ie-body ie-sub">{v.emptyText}</p>
                   </div>
                 ) : null}
               </section>

@@ -10,6 +10,8 @@ interface ThreadSummary {
   createdAt: string;
   lastMessageAt: string;
   preview: string;
+  /** 안 읽은 이음쌤 답장이 있는지(목록 응답에만 있어요) */
+  unread?: boolean;
   linkedPractice: { id: number; title: string } | null;
 }
 
@@ -54,6 +56,8 @@ function toListMessage(summary: ThreadSummary): MyMessage {
     scenario: summary.linkedPractice?.title ?? "",
     thread: [["l", `${messageDate(summary.createdAt)} · 내가 보낸 쪽지`, summary.preview]],
     loaded: false,
+    preview: summary.preview,
+    unread: summary.unread === true,
   };
 }
 
@@ -80,6 +84,8 @@ function toDetailMessage(summary: ThreadSummary, detail: ThreadDetail): MyMessag
       message.body,
     ]),
     loaded: true,
+    // 상세를 열면 서버가 이음쌤 답장을 읽음 처리해요.
+    unread: false,
   };
 }
 
