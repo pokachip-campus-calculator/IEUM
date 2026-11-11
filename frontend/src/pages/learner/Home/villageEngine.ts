@@ -325,7 +325,7 @@ export function startVillage(this: any): void {
   // 마을 전체를 한 덩어리로 줄여서 여백을 둬요(건물 좌표·이름표 모두 같은 카메라 배율을 쓰므로 어긋나지 않아요).
   // 큰 화면은 약 82%, 작은 화면은 너무 작아지지 않게 92%까지.
   const fitOf = (b) => {
-    const k = W < 720 ? 1.0 : 1.08;
+    const k = W < 720 ? 0.86 : W < 1100 ? 0.76 : 0.7;
     return Math.max(0.05, Math.min((W - 48) / b.w, (H - padT - padB) / b.h) * k);
   };
   const baseFit = () => fitOf(BASE);
@@ -609,8 +609,8 @@ export function startVillage(this: any): void {
   const fit = () => {
     W = st.clientWidth || 1;
     H = st.clientHeight || 1;
-    padB = 16;
-    padT = 56;
+    padB = 28;
+    padT = 72;
     cy0 = padT + (H - padT - padB) / 2;
     for (let k = 0; k < labs.length; k++) LW[k] = 0;
     setGoal();
@@ -664,16 +664,12 @@ export function startVillage(this: any): void {
   const pick = (e) => {
     const r = st.getBoundingClientRect();
     const z = cur.z * uz;
-    // 앱 전체에 CSS zoom 이 걸려 있으면 화면 좌표와 요소 내부 좌표의 비율이 달라서 보정해요
-    const sc = r.width / (st.offsetWidth || r.width) || 1;
-    const gx = (e.clientX - r.left) / sc - W / 2;
-    const gy = (e.clientY - r.top) / sc - cy0;
-    const gx2 = gx / z + cur.x,
-      gy2 = gy / z + cur.y;
+    const gx = (e.clientX - r.left - W / 2) / z + cur.x;
+    const gy = (e.clientY - r.top - cy0) / z + cur.y;
     const bl = blend(),
       fi = bl.u < 0.5 ? bl.i : bl.j,
       d = fi === bl.i ? bl.di : bl.dj;
-    const q = ap(rotM(-d), gx2, gy2);
+    const q = ap(rotM(-d), gx, gy);
     for (let k = 0; k < NB; k++) {
       const h = RING[fi].b[k];
       if (q[0] >= h[4] && q[0] <= h[6] && q[1] >= h[5] && q[1] <= h[7]) return k;
@@ -704,7 +700,7 @@ export function startVillage(this: any): void {
         const now = performance.now(),
           dtm = Math.max(1, now - lt);
         vel = vel * 0.6 + (((lx - e.clientX) * DPX) / dtm) * 1000 * 0.4;
-        lx = e.clientX;
+        lx = e.clientX
         lt = now;
         wake();
       }
