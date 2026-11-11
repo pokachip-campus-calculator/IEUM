@@ -1,5 +1,6 @@
 package com.ieum.user.service;
 
+import com.ieum.auth.jwt.AccountChecker;
 import com.ieum.common.ApiException;
 import com.ieum.common.ErrorCode;
 import com.ieum.user.dto.ChangePasswordRequest;
@@ -36,7 +37,7 @@ class UserServiceTest {
     void setUp() {
         userRepository = mock(UserRepository.class);
         encoder = new BCryptPasswordEncoder();
-        service = new UserService(userRepository, encoder);
+        service = new UserService(userRepository, encoder, new AccountChecker(userRepository));
     }
 
     private User user(long id, Role role, String nickname) {

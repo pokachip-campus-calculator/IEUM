@@ -1,5 +1,6 @@
 package com.ieum.user.service;
 
+import com.ieum.auth.jwt.AccountChecker;
 import com.ieum.common.ApiException;
 import com.ieum.common.ErrorCode;
 import com.ieum.user.dto.ChangePasswordRequest;
@@ -23,10 +24,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AccountChecker accountChecker;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, AccountChecker accountChecker) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.accountChecker = accountChecker;
     }
 
     @Transactional(readOnly = true)
@@ -61,7 +64,9 @@ public class UserService {
         if (user.getRole() != Role.STUDENT) {
             throw new ApiException(ErrorCode.FORBIDDEN);
         }
-        userRepository.delete(user);   // 학습 기록·쪽지·신호·알림은 DB의 ON DELETE CASCADE로 함께 지워진다
+        userRepository.delete(user);
+        accountChecker.forget(userId);   // 계정 확인 기억을 지워 탈퇴 직후 같은 토큰이 바로 401이 되게 한다
+        // 학습 기록·쪽지·신호·알림은 DB의 ON DELETE CASCADE로 함께 지워진다
     }
 
     // 토큰은 맞는데 이미 탈퇴한 계정이면 로그인이 풀린 것으로 본다
