@@ -1,17 +1,12 @@
 .ie-w3stage {
   touch-action: none;
 }
-/* 홈 인사말 영역: 하늘 배경 위에서 읽히도록 흰 글자 + 은은한 그림자 */
-/* 그림자만으로 부족한 작은 글자(.ie-meta)를 위한 아주 옅은 보조 그라데이션 */
-.ie-home .ie-w3head {
-  background: linear-gradient(90deg, rgba(60, 70, 160, 0.22) 0%, rgba(60, 70, 160, 0) 60%);
-}
+/* 홈 인사말 영역: 하늘 배경 위에서 읽히도록 흰 글자 + 아주 은은한 그림자(배경 구분감 없이) */
 .ie-home .ie-w3head .ie-title {
   color: #ffffff;
-  font-size: 36px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  text-shadow: 0 1px 3px rgba(45, 55, 135, 0.45), 0 2px 18px rgba(45, 55, 135, 0.3);
+  text-shadow: 0 1px 2px rgba(45, 55, 135, 0.3), 0 1px 8px rgba(45, 55, 135, 0.18);
 }
 .ie-home .ie-w3head .ie-title::after {
   content: " \2726";
@@ -21,14 +16,12 @@
 }
 .ie-home .ie-w3head .ie-sub {
   color: rgba(255, 255, 255, 0.95);
-  font-size: 17px;
   font-weight: 400;
-  text-shadow: 0 1px 3px rgba(45, 55, 135, 0.5), 0 2px 14px rgba(45, 55, 135, 0.3);
+  text-shadow: 0 1px 2px rgba(45, 55, 135, 0.3), 0 1px 8px rgba(45, 55, 135, 0.18);
 }
 .ie-home .ie-w3head .ie-meta {
   color: rgba(255, 255, 255, 0.85);
-  font-size: 13px;
-  text-shadow: 0 1px 3px rgba(45, 55, 135, 0.7), 0 2px 12px rgba(45, 55, 135, 0.45);
+  text-shadow: 0 1px 2px rgba(45, 55, 135, 0.35), 0 1px 7px rgba(45, 55, 135, 0.2);
 }
 /* 시작 버튼: 공통 .ie-btn--primary는 그대로 두고 홈 인사말 안의 버튼만 동화풍으로 */
 .ie-home .ie-w3head .ie-row .ie-btn--primary {
