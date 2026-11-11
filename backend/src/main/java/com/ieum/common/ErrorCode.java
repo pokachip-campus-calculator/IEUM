@@ -37,7 +37,7 @@ public enum ErrorCode {
     BAD_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 맞지 않습니다."),
     GUARDIAN_PENDING(HttpStatus.FORBIDDEN, "보호자 확인이 끝나면 시작할 수 있습니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없습니다."),
-    TEACHER_SIGNUP_CLOSED(HttpStatus.FORBIDDEN, "이음쌤은 기관 확인을 거친 분만 가입할 수 있어요. 가입 문의는 담당자에게 해 주세요."),
+    TEACHER_SIGNUP_CLOSED(HttpStatus.FORBIDDEN, "이음쌤은 기관 확인을 거친 분만 가입할 수 있어요. 가입 문의는 운영 포카칩(https://github.com/pokachip-campus-calculator/IEUM)으로 연락해 주세요."),
     NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 정보를 찾을 수 없습니다."),
     LOGIN_ID_TAKEN(HttpStatus.CONFLICT, "이미 사용 중인 아이디입니다."),
     NO_TEACHER_AVAILABLE(HttpStatus.CONFLICT, "배정된 이음쌤이 없습니다."),
