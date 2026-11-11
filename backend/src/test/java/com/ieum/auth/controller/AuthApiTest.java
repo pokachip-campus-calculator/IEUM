@@ -29,10 +29,10 @@ class AuthApiTest {
              "birthDate":"1990-05-20","agreeTerms":true,"agreePrivacy":true}""";
 
     @Test
-    void 이음쌤_가입은_토큰_없이_201과_ACTIVE를_준다() throws Exception {
+    void 이음쌤_가입은_403_TEACHER_SIGNUP_CLOSED() throws Exception {
         mockMvc.perform(post("/api/v1/auth/signup").contentType(MediaType.APPLICATION_JSON).content(VALID_TEACHER))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.status").value("ACTIVE"));
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("TEACHER_SIGNUP_CLOSED"));
     }
 
     @Test
