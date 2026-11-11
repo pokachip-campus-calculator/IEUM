@@ -199,8 +199,10 @@
           {
             "key": "Authorization",
             "value": "Bearer {{studentToken}}"
-          }
+          },
+          { "key": "Content-Type", "value": "application/json" }
         ],
+        "body": { "mode": "raw", "raw": "{\"acknowledged\":true}", "options": { "raw": { "language": "json" } } },
         "url": "{{baseUrl}}/me/withdraw"
       }
     },
@@ -311,8 +313,10 @@
           {
             "key": "Authorization",
             "value": "Bearer {{studentToken}}"
-          }
+          },
+          { "key": "Content-Type", "value": "application/json" }
         ],
+        "body": { "mode": "raw", "raw": "{\"acknowledged\":true}", "options": { "raw": { "language": "json" } } },
         "url": "{{baseUrl}}/me/withdraw"
       }
     },
