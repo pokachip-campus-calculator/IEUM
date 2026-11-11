@@ -35,6 +35,35 @@
   color: rgba(255, 255, 255, 0.8);
   pointer-events: none;
 }
+.comfort-rotator-cloud {
+  position: absolute;
+  width: 30px;
+  height: 18px;
+  background: #ffffff;
+  border-radius: 50%;
+  opacity: 0.95;
+  filter: blur(0.5px);
+  pointer-events: none;
+  z-index: 1;
+}
+.comfort-rotator-cloud--tl {
+  top: -13px;
+  left: -15px;
+  box-shadow:
+    15px -7px 0 1px #fff,
+    -13px 3px 0 -3px #fff,
+    9px 7px 0 4px #fff,
+    -5px -9px 0 0 #fff;
+}
+.comfort-rotator-cloud--br {
+  bottom: -13px;
+  right: -15px;
+  box-shadow:
+    -15px 7px 0 1px #fff,
+    13px -3px 0 -3px #fff,
+    -9px -7px 0 4px #fff,
+    5px 9px 0 0 #fff;
+}
 .comfort-rotator:hover,
 .comfort-rotator:focus-visible {
   background: linear-gradient(160deg, rgba(185, 167, 245, 0.6) 0%, rgba(147, 125, 220, 0.5) 100%);

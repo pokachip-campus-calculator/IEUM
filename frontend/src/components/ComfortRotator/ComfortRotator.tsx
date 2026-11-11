@@ -43,6 +43,8 @@ export default function ComfortRotator() {
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
     >
+      <span className="comfort-rotator-cloud comfort-rotator-cloud--tl" aria-hidden="true" />
+      <span className="comfort-rotator-cloud comfort-rotator-cloud--br" aria-hidden="true" />
       {item.image && (
         <img className="comfort-rotator-image" src={item.image} alt={item.imageAlt ?? ""} />
       )}
