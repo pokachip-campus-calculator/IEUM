@@ -1,5 +1,7 @@
 package com.ieum.user.controller;
 
+import com.ieum.auth.jwt.AllAccountsExistConfig;
+import org.springframework.context.annotation.Import;
 import com.ieum.auth.jwt.JwtProvider;
 import com.ieum.message.entity.Message;
 import com.ieum.message.entity.MessageThread;
@@ -50,6 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** [역할] 이음쌤 쪽지함(19)·신호 목록(20)·신호 대응 기록(21)의 권한, 필터·정렬, 담당 검사, memo 규칙을 DB 없이 확인한다. */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(AllAccountsExistConfig.class)
 @TestPropertySource(properties = {"jwt.secret=test-secret-test-secret-test-secret-1234", "mock.learning.enabled=false"})
 class TeacherInboxApiTest {
 

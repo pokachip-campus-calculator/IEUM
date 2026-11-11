@@ -29,6 +29,18 @@ export default class Scenario extends Component<any, any> {
       apiError: "",
     };
   }
+  componentDidMount() {
+    // "잠시 쉬기"로 저장해 둔 진행 중 기록이 있으면 고른 방법·마음·한 줄을 그대로 이어서 보여 줘요.
+    const sc = this.props.scenarios[this.state.sid] || this.props.scenarios.secret;
+    const draft = recordService.restoreScenarioProgress(this.props.record, sc.choices.length);
+    if (!draft) return;
+    this.setState({
+      pick: draft.pick,
+      feels: draft.feels,
+      note: draft.note,
+      phase: draft.pick === null ? "choose" : "result",
+    });
+  }
   renderVals() {
     const SC: any = this.props.scenarios;
     const s = this.state;
@@ -125,7 +137,21 @@ export default class Scenario extends Component<any, any> {
       toResult: () => this.setState({ phase: "result" }),
       toReflect: () => this.setState({ phase: "reflect" }),
       rechoose: () => this.setState({ phase: "choose" }),
-      pause: () => this.setState({ paused: true }),
+      pause: async () => {
+        this.setState({ paused: true, apiError: "" });
+        try {
+          await recordService.saveScenarioProgress({
+            practiceId: this.props.practiceId,
+            choice: s.pick,
+            feelings: s.feels,
+            note: s.note,
+          });
+        } catch (error) {
+          this.setState({
+            apiError: error instanceof Error ? error.message : "진행 상황을 저장하지 못했어요.",
+          });
+        }
+      },
       resume: () => this.setState({ paused: false }),
     };
   }
@@ -205,6 +231,11 @@ export default class Scenario extends Component<any, any> {
                   <p className="ie-body-lg">
                     고른 내용은 이 화면에 그대로 있어요. 준비되면 이어서 하면 돼요.
                   </p>
+                  {v.apiError ? (
+                    <p className="ie-error-text" role="alert">
+                      {v.apiError}
+                    </p>
+                  ) : null}
                   <div className="ie-row">
                     <button
                       type="button"

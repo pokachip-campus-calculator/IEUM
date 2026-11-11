@@ -27,6 +27,21 @@ export default class Emotion extends Component<any, any> {
       apiError: "",
     };
   }
+  componentDidMount() {
+    // "잠시 쉬기"로 저장해 둔 진행 중 기록이 있으면 고른 단서·마음을 그대로 이어서 보여 줘요.
+    const draft = recordService.restoreEmotionProgress(this.props.record);
+    if (draft) this.setState({ clues: draft.clues, feels: draft.feels });
+  }
+  /** "잠시 쉬기": 홈으로 나가기 전에 지금까지 고른 것을 진행 중으로 저장해요(이동은 막지 않아요). */
+  pauseAndLeave = () => {
+    void recordService
+      .saveEmotionProgress({
+        practiceId: this.props.practiceId,
+        clues: this.state.clues,
+        feelings: this.state.feels,
+      })
+      .catch(() => undefined);
+  };
   renderVals() {
     const CL: any = this.props.clues;
     const FE: any = this.props.feelings;
@@ -129,7 +144,11 @@ export default class Emotion extends Component<any, any> {
                   <h1 id="em-h" className="ie-title">
                     혼자 떨어져 앉은 친구
                   </h1>
-                  <A className="ie-btn ie-btn--outline" href={ROUTES.home}>
+                  <A
+                    className="ie-btn ie-btn--outline"
+                    href={ROUTES.home}
+                    onClick={this.pauseAndLeave}
+                  >
                     잠시 쉬기
                   </A>
                 </div>

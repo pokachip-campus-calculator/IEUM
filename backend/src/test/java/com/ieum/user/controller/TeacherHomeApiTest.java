@@ -1,5 +1,7 @@
 package com.ieum.user.controller;
 
+import com.ieum.auth.jwt.AllAccountsExistConfig;
+import org.springframework.context.annotation.Import;
 import com.ieum.auth.jwt.JwtProvider;
 import com.ieum.message.entity.MessageThread;
 import com.ieum.message.entity.ThreadStatus;
@@ -49,6 +51,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** [역할] 이음쌤 홈 요약(16)·담당 학습자 목록(17)·상세(18)의 권한, 집계, 정렬·검색, compare/emotion을 DB 없이 확인한다. */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(AllAccountsExistConfig.class)
 @TestPropertySource(properties = {"jwt.secret=test-secret-test-secret-test-secret-1234", "mock.learning.enabled=false"})
 class TeacherHomeApiTest {
 

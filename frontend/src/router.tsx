@@ -185,7 +185,7 @@ const pageRoutes: RouteObject[] = [
       const practiceId = practiceIdOf(a, 2);
       return {
         practiceId,
-        scenarios: await loadLearnerData(() => contentService.getScenarios(practiceId)),
+        ...(await loadLearnerData(() => contentService.getScenarioContent(practiceId))),
       };
     },
   },

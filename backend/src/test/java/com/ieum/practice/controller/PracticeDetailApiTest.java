@@ -1,5 +1,7 @@
 package com.ieum.practice.controller;
 
+import com.ieum.auth.jwt.AllAccountsExistConfig;
+import org.springframework.context.annotation.Import;
 import com.ieum.auth.jwt.JwtProvider;
 import com.ieum.practice.entity.Practice;
 import com.ieum.practice.entity.PracticeArea;
@@ -44,6 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** [역할] 연습 상세(09)·진행 저장(10)의 권한, 기록 유무, done/restart 규칙, answers 검증을 DB 없이 확인한다. */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(AllAccountsExistConfig.class)
 @TestPropertySource(properties = {"jwt.secret=test-secret-test-secret-test-secret-1234", "mock.learning.enabled=false"})
 class PracticeDetailApiTest {
 

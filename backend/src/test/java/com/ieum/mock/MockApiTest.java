@@ -1,5 +1,7 @@
 package com.ieum.mock;
 
+import com.ieum.auth.jwt.AllAccountsExistConfig;
+import org.springframework.context.annotation.Import;
 import com.ieum.auth.jwt.JwtProvider;
 import com.ieum.user.entity.Role;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** [역할] mock API(19~21 제외: 이음쌤 API는 실제 구현, TeacherInboxApiTest가 맡는다)의 접근 규칙, 응답 모양, 기준서 오류 코드를 DB 없이 확인한다. */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(AllAccountsExistConfig.class)
 @TestPropertySource(properties = {"jwt.secret=test-secret-test-secret-test-secret-1234", "mock.learning.enabled=true"})   // yaml 값과 무관하게 학습 mock(07~10)을 켠다
 class MockApiTest {
 

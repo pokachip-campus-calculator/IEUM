@@ -14,6 +14,8 @@ import * as unitVideo from "../mock/unitVideo";
 import { practiceService } from "./practiceService";
 import type { PracticeDetailResponse } from "./practiceService";
 
+type PracticeRecord = PracticeDetailResponse["record"];
+
 interface ApiOption {
   id: string;
   label: string;
@@ -92,41 +94,60 @@ export const contentService = {
     };
   },
   /** GET /practices/1; video media remains bundled because the API has no video endpoint. */
-  async getUnitVideoContent(_level?: string, practiceId = 1): Promise<UnitVideoContent> {
-    if (USE_MOCK) return { questions: unitVideo.unitVideoQuestions, videos: unitVideo.unitVideos };
+  async getUnitVideoContent(
+    _level?: string,
+    practiceId = 1,
+  ): Promise<UnitVideoContent & { record: PracticeRecord }> {
+    if (USE_MOCK) {
+      return { questions: unitVideo.unitVideoQuestions, videos: unitVideo.unitVideos, record: null };
+    }
     const practice = await practiceService.getPractice(practiceId);
     const cards = practice.content.cards as unknown[] | undefined;
     return {
       questions: mapQuestions(practice.content),
       videos: unitVideo.unitVideos,
       cardCount: Array.isArray(cards) ? cards.length : 0,
+      record: practice.record,
     };
   },
-  /** GET /practices/2 */
-  async getScenarios(practiceId = 2): Promise<Record<string, ScenarioItem>> {
-    if (USE_MOCK) return scenario.scenarios;
+  /** GET /practices/2 — 이어서 하기를 위해 저장된 기록(record)도 함께 돌려줘요. */
+  async getScenarioContent(
+    practiceId = 2,
+  ): Promise<{ scenarios: Record<string, ScenarioItem>; record: PracticeRecord }> {
+    if (USE_MOCK) return { scenarios: scenario.scenarios, record: null };
     const practice = await practiceService.getPractice(practiceId);
     const content = practice.content as unknown as ApiScenario;
     const base = scenario.scenarios.secret;
     return {
-      secret: {
-        ...base,
-        title: practice.title,
-        alt: content.scene,
-        situation: content.situation,
-        remember: content.remember,
-        choices: content.choices.map(({ id, text, follow, hear }) => ({ id, text, follow, hear })),
+      scenarios: {
+        secret: {
+          ...base,
+          title: practice.title,
+          alt: content.scene,
+          situation: content.situation,
+          remember: content.remember,
+          choices: content.choices.map(({ id, text, follow, hear }) => ({
+            id,
+            text,
+            follow,
+            hear,
+          })),
+        },
       },
+      record: practice.record,
     };
   },
   /** GET /practices/3 */
-  async getEmotionScene(practiceId = 3): Promise<EmotionScene> {
-    if (USE_MOCK) return { clues: emotion.emotionClues, feelings: emotion.emotionFeelings };
+  async getEmotionScene(practiceId = 3): Promise<EmotionScene & { record: PracticeRecord }> {
+    if (USE_MOCK) {
+      return { clues: emotion.emotionClues, feelings: emotion.emotionFeelings, record: null };
+    }
     const practice = await practiceService.getPractice(practiceId);
     const content = practice.content as unknown as ApiEmotion;
     return {
       clues: content.clues.map(({ label }) => label),
       feelings: content.feelings.map(({ label }) => label),
+      record: practice.record,
     };
   },
   /** GET /content/terms */
