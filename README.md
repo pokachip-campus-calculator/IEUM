@@ -64,7 +64,6 @@
 | [API명세서](docs/2-설계/API명세서.md) | API 24개 요청·응답 |
 | [DB설계](docs/2-설계/DB설계.md) | ERD, 테이블 정의서, 설계 결정과 대안 비교 |
 | [ERD 그림](docs/2-설계/ERD.png) | 테이블 8개와 관계 |
-| [프론트-API 연동 안내](docs/2-설계/프론트-API연동안내.md) | 화면과 API 연결 방법 |
 | [db/readme.md](db/readme.md) | SQL 파일 설명과 실행 순서 |
 
 ## 협업 규칙
