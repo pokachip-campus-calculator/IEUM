@@ -20,12 +20,12 @@ export default class UnitVideo extends Component<any, any> {
   constructor(props) {
     super(props);
     this.state = {
-      phase: "learn",
-      pre: { 0: 0, 1: 2, 2: 0, 3: 1, 4: 1, 5: 2, 6: 1, 7: 1 },
+      phase: "pre",
+      pre: {},
       post: {},
-      v: 1,
-      prog: [100, 38, 0],
-      max: [100, 38, 0],
+      v: 0,
+      prog: [0, 0, 0],
+      max: [0, 0, 0],
       playing: false,
       cap: true,
       text: false,

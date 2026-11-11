@@ -20,7 +20,7 @@ export default class Scenario extends Component<any, any> {
     super(props);
     this.state = {
       sid: "secret",
-      phase: "choose",
+      phase: "meet",
       pick: null,
       paused: false,
       feels: [],
@@ -46,10 +46,10 @@ export default class Scenario extends Component<any, any> {
     const s = this.state;
     const sc = SC[s.sid] || SC.secret;
     const C = sc.choices;
-    const order = ["choose", "result", "reflect"];
+    const order = ["meet", "choose", "result", "reflect"];
     const idx = order.indexOf(s.phase);
     const labels = ["상황 만나기", "선택하기", "결과 살펴보기", "했어요 기록"];
-    const cur = idx + 1;
+    const cur = idx;
     const steps = labels.map((l, i) => ({
       label: l,
       mark: i < cur ? "✓" : String(i + 1),
@@ -72,7 +72,7 @@ export default class Scenario extends Component<any, any> {
         pick: () =>
           this.setState({
             sid: k,
-            phase: "choose",
+            phase: "meet",
             pick: null,
             paused: false,
             feels: [],
@@ -82,6 +82,7 @@ export default class Scenario extends Component<any, any> {
       })),
       paused: s.paused,
       active: !s.paused,
+      meeting: s.phase === "meet",
       choosing: s.phase === "choose",
       showResult: s.phase === "result" || s.phase === "reflect",
       inResult: s.phase === "result",
@@ -134,6 +135,7 @@ export default class Scenario extends Component<any, any> {
       },
       editSaved: () => this.setState({ saved: false }),
       onNote: (e) => this.setState({ note: e.target.value, saved: false }),
+      toChoose: () => this.setState({ phase: "choose" }),
       toResult: () => this.setState({ phase: "result" }),
       toReflect: () => this.setState({ phase: "reflect" }),
       rechoose: () => this.setState({ phase: "choose" }),
@@ -283,6 +285,19 @@ export default class Scenario extends Component<any, any> {
                       </h2>
                     </div>
                   </figure>
+                  {v.meeting ? (
+                    <section className="ie-ask" aria-label="상황 만나기">
+                      <div className="ie-dock">
+                        <button
+                          type="button"
+                          className="ie-btn ie-btn--primary ie-btn--lg"
+                          onClick={v.toChoose}
+                        >
+                          너라면 어떻게 할까요?
+                        </button>
+                      </div>
+                    </section>
+                  ) : null}{" "}
                   {v.choosing ? (
                     <section className="ie-ask" aria-labelledby="ask">
                       <div className="ie-ask-head">
