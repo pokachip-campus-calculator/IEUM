@@ -3,40 +3,41 @@
   top: 11%;
   right: 2%;
   z-index: 3;
-  width: clamp(260px, 23vw, 400px);
+  width: clamp(320px, 24vw, 410px);
   min-height: 120px;
-  padding: 44px 30px 26px;
+  padding: 34px 34px 28px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 8px;
   color: #ffffff;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
-  -webkit-backdrop-filter: blur(22px) saturate(170%);
-  backdrop-filter: blur(22px) saturate(170%);
+  /* 라벤더/화이트 계열 글래스모피즘 */
+  background: linear-gradient(160deg, rgba(185, 167, 245, 0.5) 0%, rgba(147, 125, 220, 0.4) 100%);
+  -webkit-backdrop-filter: blur(20px) saturate(165%);
+  backdrop-filter: blur(20px) saturate(165%);
   border: 1px solid rgba(255, 255, 255, 0.45);
-  border-radius: 36px;
+  border-radius: 32px;
   box-shadow:
-    0 12px 40px rgba(80, 90, 190, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.15);
+    0 12px 36px rgba(67, 86, 165, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.12);
   transition: background 0.3s ease;
   outline-offset: 4px;
 }
 .comfort-rotator::before {
   content: "\201C";
   position: absolute;
-  top: 12px;
-  left: 28px;
+  top: 6px;
+  left: 26px;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 56px;
+  font-size: 46px;
   line-height: 1;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.8);
   pointer-events: none;
 }
 .comfort-rotator:hover,
 .comfort-rotator:focus-visible {
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.16) 100%);
+  background: linear-gradient(160deg, rgba(185, 167, 245, 0.6) 0%, rgba(147, 125, 220, 0.5) 100%);
 }
 .comfort-rotator-image {
   width: 48px;
@@ -48,29 +49,29 @@
 }
 .comfort-rotator-text {
   margin: 0;
-  font-size: 15.5px;
+  font-size: 19px;
   font-weight: 500;
-  line-height: 1.85;
+  line-height: 1.7;
   color: #ffffff;
-  text-shadow: 0 1px 4px rgba(55, 65, 165, 0.5), 0 2px 14px rgba(55, 65, 165, 0.3);
+  text-shadow: 0 1px 3px rgba(45, 40, 110, 0.55), 0 2px 12px rgba(45, 40, 110, 0.35);
   animation: comfort-rotator-fade 0.6s ease both;
 }
 .comfort-rotator-from {
   display: block;
-  margin-top: 12px;
-  font-size: 12.5px;
+  margin-top: 10px;
+  font-size: 13.5px;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.8);
 }
 @keyframes comfort-rotator-fade {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: none; }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .comfort-rotator { background: rgba(110, 120, 215, 0.7); }
+  .comfort-rotator { background: rgba(130, 115, 200, 0.75); }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .comfort-rotator { background: rgba(110, 120, 215, 0.85); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .comfort-rotator { background: rgba(130, 115, 200, 0.88); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .comfort-rotator-text { animation: none; }
