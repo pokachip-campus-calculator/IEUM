@@ -1023,6 +1023,9 @@ a.ie-card:hover,.ie-card--link:hover,.ie-pcard3:hover{
 .ie-option--card[aria-checked="true"] .ie-opt-ck{opacity:1;transform:scale(1)}
 .ie-option--card[aria-checked="true"] .ie-letter::before{color:#fff;background:linear-gradient(160deg,#6B7CCF,#5366AF);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 3px 0 #3E4E92}
 .ie-option--card .ie-dot{display:none}
+.ie-dot--fill{transition:background .15s,border-color .15s}
+[aria-checked="true"] .ie-dot--fill{background:#6A4BC9;border-color:#6A4BC9}
+[aria-checked="true"] .ie-dot--fill::after{content:"";width:8px;height:8px;border-radius:50%;background:#FFFFFF}
 .ie-option--row{padding:14px 16px;border-radius:18px}
 .ie-chip--lg{min-height:52px;padding:10px 20px;font-size:15.5px;font-weight:600}
 

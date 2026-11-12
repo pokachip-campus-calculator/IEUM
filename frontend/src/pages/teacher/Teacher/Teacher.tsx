@@ -31,6 +31,10 @@ export default class Teacher extends Component<any, any> {
       memos: {},
       kept: {},
       help: false,
+      transferTo: "",
+      transferBusy: false,
+      transferMsg: "",
+      transferError: "",
     };
   }
   renderVals() {
@@ -136,6 +140,9 @@ export default class Teacher extends Component<any, any> {
                 reply: "",
                 replyTried: false,
                 replyUnsent: false,
+                transferTo: "",
+                transferMsg: "",
+                transferError: "",
               }),
           },
           sigOf(x),
@@ -154,6 +161,33 @@ export default class Teacher extends Component<any, any> {
         emo: s.tab === "emo",
         note: s.tab === "note",
         memo: s.tab === "memo",
+      },
+      transferTo: s.transferTo,
+      transferBusy: s.transferBusy,
+      transferMsg: s.transferMsg,
+      transferError: s.transferError,
+      onTransferTo: (e) =>
+        this.setState({ transferTo: e.target.value, transferMsg: "", transferError: "" }),
+      requestTransfer: async () => {
+        if (!p) return;
+        if (s.transferTo.trim() === "") {
+          this.setState({ transferError: "받는 이음쌤 아이디를 적어 주세요.", transferMsg: "" });
+          return;
+        }
+        this.setState({ transferBusy: true, transferError: "", transferMsg: "" });
+        try {
+          await teacherService.requestTransfer(p.id, s.transferTo);
+          this.setState({
+            transferBusy: false,
+            transferTo: "",
+            transferMsg: "이관을 신청했어요. 받는 이음쌤이 수락하면 담당이 바뀌어요.",
+          });
+        } catch (error) {
+          this.setState({
+            transferBusy: false,
+            transferError: error instanceof Error ? error.message : "이관을 신청하지 못했어요.",
+          });
+        }
       },
       reply: s.reply,
       replyCount: s.reply.length,
@@ -364,7 +398,7 @@ export default class Teacher extends Component<any, any> {
                           }}
                         >
                           <span className="ie-row" style={{ gap: "12px", flex: "1 1 220px" }}>
-                            <span className="ie-dot" />
+                            <span className="ie-dot ie-dot--fill" />
                             <span className={p.ava} aria-hidden="true">
                               {p.ini}
                             </span>
@@ -454,6 +488,42 @@ export default class Teacher extends Component<any, any> {
                               </Fragment>
                             ))}
                           </ul>
+                        </div>
+                        <div className="ie-card ie-card--flat" style={{ gap: "10px" }}>
+                          <label className="ie-label" htmlFor="t-transfer">
+                            다른 이음쌤에게 이관하기
+                          </label>
+                          <p className="ie-help">
+                            받는 이음쌤이 수락하면 이 학습자와 쪽지가 그 이음쌤에게 넘어가요.
+                          </p>
+                          <div className="ie-row">
+                            <input
+                              id="t-transfer"
+                              className="ie-input"
+                              placeholder="받는 이음쌤 아이디"
+                              value={v.transferTo}
+                              onChange={v.onTransferTo}
+                              style={{ flex: "1 1 200px" }}
+                            />
+                            <button
+                              type="button"
+                              className="ie-btn ie-btn--secondary"
+                              disabled={v.transferBusy}
+                              onClick={v.requestTransfer}
+                            >
+                              이관 신청
+                            </button>
+                          </div>
+                          {v.transferError ? (
+                            <p className="ie-error-text" role="alert">
+                              {v.transferError}
+                            </p>
+                          ) : null}
+                          {v.transferMsg ? (
+                            <p className="ie-help" role="status">
+                              {v.transferMsg}
+                            </p>
+                          ) : null}
                         </div>
                         {v.cur.sig ? (
                           <div
