@@ -107,9 +107,19 @@ export default class Notifications extends Component<any, any> {
         isSig: n.type === "signal",
         isDone: n.type === "done",
         isTransfer: n.transferId !== undefined,
+        // 서버가 준 신청 상태(transferStatus)로 정해요. 상태가 없으면(옛 서버) 수락 가능으로 봐요.
         canAccept:
-          n.transferId !== undefined && s.accepted[n.id] !== true && s.closed[n.id] !== true,
-        didAccept: n.transferId !== undefined && s.accepted[n.id] === true,
+          n.transferId !== undefined &&
+          (n.transferStatus === undefined || n.transferStatus === "PENDING") &&
+          s.accepted[n.id] !== true &&
+          s.closed[n.id] !== true,
+        didAccept:
+          n.transferId !== undefined &&
+          (n.transferStatus === "ACCEPTED" || s.accepted[n.id] === true),
+        didExpire:
+          n.transferId !== undefined &&
+          s.accepted[n.id] !== true &&
+          (n.transferStatus === "EXPIRED" || s.closed[n.id] === true),
         accept: async () => {
           this.setState({ apiError: "" });
           try {
@@ -347,6 +357,15 @@ export default class Notifications extends Component<any, any> {
                                   style={{ marginTop: "6px" }}
                                 >
                                   수락했어요. 이제 이 학습자를 내가 맡아요.
+                                </span>
+                              ) : null}
+                              {n.didExpire ? (
+                                <span
+                                  className="ie-help"
+                                  role="status"
+                                  style={{ marginTop: "6px" }}
+                                >
+                                  더 이상 수락할 수 없는 신청이에요.
                                 </span>
                               ) : null}
                             </span>{" "}
