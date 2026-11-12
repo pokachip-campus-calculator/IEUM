@@ -33,7 +33,7 @@ export default class Landing extends Component<any, any> {
           <main className="ie-main ie-landmain" style={{ margin: "0 auto", width: "100%" }}>
             <div
               className="ie-stack"
-              style={{ maxWidth: "1160px", margin: "0 auto", width: "100%", gap: "40px" }}
+              style={{ maxWidth: "none", margin: "0", width: "100%", gap: "0" }}
             >
               <section className="ie-landhero ie-landhero--center ie-in" aria-labelledby="ld-h">
                 <div className="ie-dandy ie-dandy--l" aria-hidden="true">
@@ -18555,8 +18555,9 @@ export default class Landing extends Component<any, any> {
                     오늘도 나의 속도로
                   </h1>
                   <p className="ie-body-lg">
-                    상황을 연습해 보고, 내 마음을 돌아보는 학습 공간이에요. 점수도 순위도 없고,
-                    언제든 쉬어도 괜찮아요.
+                    상황을 연습해 보고, 내 마음을 돌아보는 학습 공간이에요.
+                    <br />
+                    점수도 순위도 없고, 언제든 쉬어도 괜찮아요.
                   </p>
                   <div className="ie-row">
                     <A
@@ -18569,15 +18570,14 @@ export default class Landing extends Component<any, any> {
                   </div>
                   <p className="ie-help">처음이라면 로그인 화면에서 회원 가입을 할 수 있어요.</p>
                 </div>
-              </section>
-              <section className="ie-stack-s" aria-labelledby="ld-w" style={{ gap: "20px" }}>
-                <h2 id="ld-w" className="ie-h2">
+              <section className="ie-stack-s ie-landsteps" aria-labelledby="ld-w" style={{ gap: "20px" }}>
+                <h2 id="ld-w" className="ie-h2 ie-sr">
                   이음에서는 이런 걸 해요
                 </h2>
                 <div className="ie-steps3">
                   <section className="ie-step3 ie-pop" style={{ "--d": "1" } as CSSProperties}>
                     <span className="ie-step3-no" aria-hidden="true">
-                      1
+                      01
                     </span>
                     <span className="ie-tile" aria-hidden="true">
                       <svg width="28" height="28" viewBox="0 0 256 256" aria-hidden="true">
@@ -18596,7 +18596,7 @@ export default class Landing extends Component<any, any> {
                   </section>
                   <section className="ie-step3 ie-pop" style={{ "--d": "2" } as CSSProperties}>
                     <span className="ie-step3-no" aria-hidden="true">
-                      2
+                      02
                     </span>
                     <span className="ie-tile" aria-hidden="true">
                       <svg width="28" height="28" viewBox="0 0 256 256" aria-hidden="true">
@@ -18618,7 +18618,7 @@ export default class Landing extends Component<any, any> {
                   </section>
                   <section className="ie-step3 ie-pop" style={{ "--d": "3" } as CSSProperties}>
                     <span className="ie-step3-no" aria-hidden="true">
-                      3
+                      03
                     </span>
                     <span className="ie-tile" aria-hidden="true">
                       <svg width="28" height="28" viewBox="0 0 256 256" aria-hidden="true">
@@ -18640,6 +18640,7 @@ export default class Landing extends Component<any, any> {
               <footer className="ie-row" style={{ justifyContent: "center" }}>
                 <span className="ie-meta">운영 포카칩</span>
               </footer>
+              </section>
             </div>
           </main>
         </div>
