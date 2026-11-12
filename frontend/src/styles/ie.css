@@ -1906,3 +1906,60 @@ a.ie-card:hover,.ie-card--link:hover{border-color:rgba(150,140,225,.6);box-shado
 .ie-btn--primary:not(:disabled):not([aria-disabled="true"]):hover{background:var(--ie-pc-action-hover);transform:translateY(-1px);box-shadow:0 16px 28px -10px rgba(95,85,200,.68),0 3px 6px rgba(60,60,140,.14),inset 0 1px 0 rgba(255,255,255,.3)}
 .ie-btn--primary:not(:disabled):not([aria-disabled="true"]):active{background:linear-gradient(135deg,#7468D6,#5046B5);transform:translateY(1px);box-shadow:inset 0 2px 5px rgba(20,20,80,.3)}
 .ie-option--card::before{content:none}
+
+/* ========== 처음 화면: 화면 전체 민들레 무대 + 유리 카드 ========== */
+.ie-main.ie-landmain{max-width:none;padding:0;gap:0;width:100%;container-type:normal}
+.ie-landhero.ie-landhero--center{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:28px;
+  min-height:calc(100vh / var(--ie-ui));padding:44px 40px 26px;border-radius:0;border:0;box-shadow:none;
+  background:
+    radial-gradient(60% 45% at 50% 18%,rgba(255,255,255,.75),rgba(255,255,255,0) 70%),
+    linear-gradient(125deg,#DDEEFF 0%,#E7E3FF 42%,#FAE8F1 72%,#FFE9DC 100%)}
+.ie-landhero--center>.ie-stack-s{margin-top:8px}
+.ie-landhero--center .ie-landlogo{height:210px;margin:0 0 -6px}
+.ie-landhero--center .ie-title{font-size:46px}
+.ie-landhero .ie-landsteps{width:100%;max-width:1120px;position:relative;z-index:2;gap:0}
+.ie-landhero .ie-steps3{width:100%;gap:22px}
+.ie-landhero .ie-steps3::before{display:none}
+/* 유리 카드: 뒤의 민들레가 흐리게 비쳐 보여요 */
+.ie-landhero .ie-step3,
+.ie-landhero .ie-step3:nth-child(1),.ie-landhero .ie-step3:nth-child(2),.ie-landhero .ie-step3:nth-child(3){
+  position:relative;overflow:hidden;gap:10px;padding:24px 24px 26px;border-radius:30px;
+  background:linear-gradient(145deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,.22) 100%);
+  -webkit-backdrop-filter:blur(16px) saturate(1.5);backdrop-filter:blur(16px) saturate(1.5);
+  border:1px solid rgba(255,255,255,.75);
+  box-shadow:0 22px 44px -24px rgba(90,80,180,.4),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.35)}
+.ie-landhero .ie-step3::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(135deg,rgba(255,255,255,.5) 0%,rgba(255,255,255,0) 42%)}
+.ie-landhero .ie-step3>*{position:relative}
+.ie-landhero .ie-step3:hover{transform:translateY(-4px);box-shadow:0 28px 50px -24px rgba(90,80,180,.5),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.35)}
+.ie-landhero .ie-step3 .ie-tile{width:46px;height:46px;border-radius:16px;background:rgba(255,255,255,.88);box-shadow:0 8px 16px -10px rgba(90,80,180,.45),inset 0 1px 0 #fff}
+.ie-landhero .ie-step3-no{position:absolute;top:18px;right:22px;font-size:13px;font-weight:700;letter-spacing:.04em;line-height:1}
+.ie-landhero .ie-step3:nth-child(1) .ie-step3-no{color:#5B57B8}
+.ie-landhero .ie-step3:nth-child(2) .ie-step3-no{color:#C04A83}
+.ie-landhero .ie-step3:nth-child(3) .ie-step3-no{color:#2C8C73}
+.ie-landhero .ie-step3 .ie-h3{margin-top:4px}
+.ie-landhero--center>footer{position:relative;z-index:2}
+@media (max-width:1023px){
+  .ie-landhero.ie-landhero--center{padding:28px 18px 22px;min-height:0}
+  .ie-landhero--center .ie-landlogo{height:150px}
+  .ie-landhero--center .ie-title{font-size:32px}
+  .ie-landhero .ie-steps3{grid-template-columns:1fr;gap:14px}
+}
+@media (min-width:1024px){
+.ie-main.ie-landmain{padding:0!important;gap:0;height:calc(100dvh / var(--ie-ui));min-height:640px}
+.ie-landmain>.ie-stack{gap:0!important}
+.ie-landmain .ie-landhero{padding:22px 40px 18px!important;gap:12px;border-radius:0}
+.ie-landmain .ie-landlogo{height:clamp(110px,calc(17dvh / var(--ie-ui)),160px);margin:0 0 -8px}
+.ie-landmain .ie-landhero h1{font-size:42px}
+.ie-landmain .ie-landhero .ie-btn--lg{border-radius:999px;min-height:60px;padding:0 44px;font-size:18px}
+.ie-landmain .ie-step3{padding:14px 18px 16px!important;min-height:0}
+.ie-landhero .ie-landsteps{max-width:940px}
+.ie-landhero .ie-step3 .ie-tile{width:38px;height:38px;border-radius:13px}
+.ie-landmain .ie-step3 h3,.ie-landmain .ie-step3 b{font-size:16.5px}
+.ie-landmain .ie-step3 p{font-size:13px}
+.ie-landmain .ie-step3 p{line-height:1.45}
+.ie-landhero .ie-dandy{width:47%}
+.ie-landhero .ie-dandy--l{left:-2%}.ie-landhero .ie-dandy--r{right:-2%}
+/* 설명 문구와 로그인 버튼 사이를 넓혀요 */
+.ie-landhero--center>.ie-stack-s>.ie-row{margin-top:26px}
+}
