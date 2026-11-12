@@ -1,7 +1,7 @@
 # API 명세서
 
-> 기준은 `이음 MVP 개발 기준서` 3장(공유 아티팩트 정본)입니다. 이 문서는 그 내용을 옮긴 것이고, 2026-11-11 기준 develop 코드와 맞춰 두었습니다.
-> 학습자 화면 14개·공용 알림 화면 1개·이음쌤 화면 3개가 API 24개로 모두 동작합니다. 학습자·이음쌤이 같이 쓰는 API(03–05, 14, 15, 22–24)는 한 번만 정의합니다.
+> 기준은 `이음 MVP 개발 기준서` 3장(공유 아티팩트 정본)입니다. 이 문서는 그 내용을 옮긴 것이고, 2026-11-12 기준 develop 코드와 맞춰 두었습니다.
+> 학습자 화면 14개·공용 알림 화면 1개·이음쌤 화면 3개가 API 26개로 모두 동작합니다. 학습자·이음쌤이 같이 쓰는 API(03–05, 14, 15, 22–24)는 한 번만 정의합니다. 25·26(이관 신청·수락)은 이음쌤 학습자 상세와 알림 화면에 붙는 API입니다.
 
 ## 공통 규약
 
@@ -30,6 +30,8 @@
 | `METHOD_NOT_ALLOWED` | 405 | 주소는 맞지만 허용하지 않는 요청 방식 | 지원하지 않는 요청 방식입니다. |
 | `LOGIN_ID_TAKEN` | 409 | 가입 아이디 중복 | 이미 사용 중인 아이디입니다. |
 | `NO_TEACHER_AVAILABLE` | 409 | 쪽지를 맡을 활성 이음쌤이 없음 | 배정된 이음쌤이 없습니다. |
+| `TRANSFER_ALREADY_PENDING` | 409 | 그 학습자에게 기다리는 이관 신청이 이미 있음(25) | 이미 기다리는 이관 신청이 있습니다. |
+| `TRANSFER_NOT_PENDING` | 409 | 이미 수락했거나 신청한 뒤 담당이 바뀐 신청을 수락함(26) | 이미 처리됐거나 더 이상 수락할 수 없는 신청입니다. |
 | `INTERNAL_ERROR` | 500 | 서버 내부 오류 (원인은 응답에 넣지 않는다) | 서버에 문제가 생겼습니다. 잠시 뒤 다시 시도해 주세요. |
 
 표에 없는 오류도 같은 형식으로 내립니다. 주소의 id 자리에 숫자가 아닌 값이 오면(예: /threads/abc) `VALIDATION_FAILED` 400이고 `fieldErrors`에 항목 이름이 들어갑니다. 필수 파라미터 누락·지원하지 않는 본문 형식(415) 같은 그 밖의 4xx는 상태 코드를 그대로 두고 `code`만 `VALIDATION_FAILED`로 내립니다.
@@ -64,6 +66,8 @@
 | 22 | GET /notifications?unread= | 학습자, 이음쌤(본인 것만) | S15, 사이드 메뉴 배지 | notifications |
 | 23 | PATCH /notifications/{id}/read | 학습자, 이음쌤(본인 것만) | S15 | notifications |
 | 24 | PATCH /notifications/read-all | 학습자, 이음쌤(본인 것만) | S15 | notifications |
+| 25 | `POST /teacher/students/{studentId}/transfer-requests` | 이음쌤(담당) | T01 | transfer_requests, users, notifications |
+| 26 | `POST /teacher/transfer-requests/{id}/accept` | 이음쌤(받는 사람) | S15 | transfer_requests, users, message_threads, notifications |
 
 ## 인증·내 정보 (01–06)
 
@@ -306,6 +310,25 @@
 
 `handled:true`면 status=HANDLED, `handled_at`=처음 처리한 시각(이미 값이 있으면 다시 눌러도 그대로 둔다). `false`면 OPEN으로 되돌리며 `handled_at`은 지우지 않고 응답에서만 뺀다(다시 처리하면 처음 시각으로 돌아온다). `memo`는 500자 이하이고 생략하면 그대로 두며 학습자에게는 절대 보이지 않는다. 담당 학습자의 신호가 아니면 `FORBIDDEN`.
 
+## 이관 (25–26)
+
+이음쌤끼리 담당 학습자를 넘기는 기능입니다(V6의 `transfer_requests`). 이음쌤 A가 자기 학습자를 이음쌤 B에게 신청하면 B에게 알림이 가고, B가 수락하면 담당이 바뀌고 A에게 알림이 갑니다. 거절은 없고, 학습자에게는 알림을 보내지 않습니다.
+
+**25 `POST /teacher/students/{studentId}/transfer-requests`** — 내 담당 학습자를 다른 이음쌤에게 이관 신청. 응답은 201.
+
+```json
+// 요청
+{ "toLoginId": "ieumtea02" }
+// 응답 201
+{ "id": 7, "status": "PENDING", "createdAt": "2026-11-12T10:00:00+09:00" }
+```
+
+받는 이음쌤은 `toLoginId`(이음쌤 아이디, 대소문자 구분 없음)로 지정합니다. 받는 사람은 role=TEACHER이고 status=ACTIVE여야 하고, 아니면 `NOT_FOUND`. 없는 학습자도 `NOT_FOUND`, 내 담당이 아닌 학습자는 `FORBIDDEN`(18과 같은 규칙). 나 자신에게 신청하거나 `toLoginId`가 비면 `VALIDATION_FAILED`. 그 학습자에게 기다리는(`PENDING`) 신청이 이미 있으면 `TRANSFER_ALREADY_PENDING`(409)이며, 이 규칙은 DB가 아니라 이 API가 확인합니다. 성공하면 `transfer_requests`에 `PENDING` 1행을 만들고 받는 이음쌤에게 `TRANSFER_REQUESTED` 알림(누르면 `TRANSFER`, 신청 번호)을 같은 트랜잭션에서 만듭니다.
+
+**26 `POST /teacher/transfer-requests/{id}/accept`** — 받는 이음쌤이 이관을 수락. 응답은 204(본문 없음).
+
+받는 이음쌤(`to_teacher_id`)만 수락할 수 있습니다. 없는 번호와 남의 신청은 구분 없이 `NOT_FOUND`. 이미 수락한 신청이거나, 신청한 뒤 학습자의 담당이 이미 바뀌었으면 `TRANSFER_NOT_PENDING`(409). 수락하면 한 트랜잭션에서 `users.teacher_id`·`teacher_assigned_at`과 그 학습자의 모든 `message_threads.teacher_id`를 받는 이음쌤으로 바꾸고, 신청을 `ACCEPTED`로 하며 `handled_at`을 채우고, 신청한 이음쌤에게 `TRANSFER_ACCEPTED` 알림(누르면 `TRANSFER`, 신청 번호)을 만듭니다. 학습자에게는 알림을 만들지 않습니다.
+
 ## 알림 (22–24)
 
 학습자와 이음쌤이 같은 API를 쓰고, 서버는 토큰의 사용자 id로 본인 알림만 내려줍니다. 알림 행은 따로 만드는 API가 없고, 쪽지·배정 API가 자기 일을 처리하는 같은 트랜잭션 안에서 함께 저장합니다.
@@ -334,7 +357,7 @@
 
 ### 알림이 만들어지는 때
 
-쪽지 12·15번 API와 14번, 배정 로직이 같은 트랜잭션 안에서 `notifications`에 행을 넣습니다. 쪽지 저장이 실패하면 알림도 남지 않습니다.
+쪽지 12·15번 API와 14번, 이관 25·26번, 배정 로직이 같은 트랜잭션 안에서 `notifications`에 행을 넣습니다. 쪽지 저장이 실패하면 알림도 남지 않습니다.
 
 | 일어난 일 | 만들어지는 알림 | 받는 사람 | 누르면 가는 곳 |
 | --- | --- | --- | --- |
@@ -344,6 +367,8 @@
 | 이음쌤이 처음 쪽지 묶음을 엶(14, `read_at`이 비어 있을 때만) | `NOTE_READ` 이음쌤이 쪽지를 읽었어요 | 해당 학습자 | 쪽지 묶음(S12) |
 | 첫 쪽지로 담당 이음쌤이 정해짐(12) | `TEACHER_ASSIGNED` 담당 이음쌤이 정해졌어요 | 해당 학습자 | 내 정보(S14) |
 | 같은 배정 | `LEARNER_ASSIGNED` 새 학습자가 배정됐어요 | 담당 이음쌤 | 학습자(T01) |
+| 이음쌤이 이관을 신청함(25) | `TRANSFER_REQUESTED` 이관 신청이 도착했어요 | 받는 이음쌤 | 이관 신청(알림 화면의 수락 버튼) |
+| 받는 이음쌤이 수락함(26) | `TRANSFER_ACCEPTED` 이관이 수락됐어요 | 신청한 이음쌤만(학습자에게는 알림 없음) | 이관 신청 |
 
 알림의 제목과 본문은 서버가 정해 둔 문구만 씁니다. 쪽지 본문, 학습자가 쓴 글, 찾은 낱말은 넣지 않고, 학습자 계정에는 `SIGNAL_FLAGGED`를 만들지 않습니다. 문자나 메일로는 보내지 않고 앱 안에서만 보여 줍니다.
 
@@ -357,6 +382,8 @@
 | `NOTE_READ` | 쪽지함에서 확인해 보세요 | THREAD | 쪽지 묶음 id |
 | `TEACHER_ASSIGNED` | 내 정보에서 확인해 보세요 | PROFILE | 없음(null) |
 | `LEARNER_ASSIGNED` | 이음쌤 홈에서 확인해 보세요 | STUDENT | 학습자 id |
+| `TRANSFER_REQUESTED` | 알림에서 확인하고 수락할 수 있어요 | TRANSFER | 신청 번호 |
+| `TRANSFER_ACCEPTED` | 학습자의 담당이 새 이음쌤으로 바뀌었어요 | TRANSFER | 신청 번호 |
 
 ## content_json·answers_json 형식
 

@@ -26,6 +26,7 @@ com.ieum
 ├─ message       (controller, dto, entity, repository, service)   쪽지
 ├─ signal        (entity, repository, service)   신호 검사
 ├─ notification  (controller, dto, entity, repository, service)   알림
+├─ transfer      (controller, dto, entity, repository, service)   이음쌤 이관 신청·수락
 ├─ common        ErrorCode, ApiException, ErrorResponse, GlobalExceptionHandler
 └─ config        SecurityConfig, TimeConfig, ApiPathConfig
 ```
