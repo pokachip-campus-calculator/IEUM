@@ -31,6 +31,8 @@ export default class Header extends Component<any, any> {
   }
 
   refreshBadges = () => {
+    // 로그인 전 화면(메뉴가 없는 헤더)은 배지가 필요 없어서 서버에 묻지 않아요.
+    if (["guest", "guest-plain"].indexOf(this.props.role ?? "learner") >= 0) return;
     badgeService.getCounts().then(
       (counts) => this.setState(counts),
       (error) => console.error("메뉴 배지 정보를 불러오지 못했습니다:", error),
