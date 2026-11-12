@@ -1,0 +1,671 @@
+{
+  "info": {
+    "name": "IEUM #51 이음쌤 쪽지·신호 API (19~21)",
+    "description": "위에서 아래로 순서대로 실행한다.\n\n준비: MySQL에 db/ 스키마·시드(signal_keywords 포함), .env의 JWT_SECRET, 서버(localhost:8080), DB에 이음쌤(TEACHER, ACTIVE)이 있어야 한다. 이 컬렉션은 이음쌤을 가입시키지 않는다. teacherLoginId·teacherPassword를 DB에 있는 이음쌤으로 채운다.\n\n주의: 학습자의 첫 쪽지(12)는 맡은 학생이 가장 적은 이음쌤에게 자동 배정된다. 이음쌤이 여러 명이면 teacherLoginId와 다른 이음쌤이 배정될 수 있으니, 그때는 DB에서 학생을 teacherLoginId의 이음쌤으로 맞춘다.\nUPDATE users s JOIN users t ON t.login_id = '<teacherLoginId>' SET s.teacher_id = t.id, s.teacher_assigned_at = NOW() WHERE s.login_id = 'sig5101';\n(이미 쪽지를 보냈다면 message_threads.teacher_id도 같은 이음쌤으로 바꾼다.)\n\n확인할 것: 19·20은 내 담당 학습자의 것만 내려오고 20의 정렬은 OPEN 먼저 → CRITICAL 먼저 → 최신 순이다. 응답에 신호 등급이 없고, memo는 학습자 API(14)에 나오지 않는다.\n\n뒷정리: 테스트 데이터(sig5101 학습자, 쪽지, 신호)는 DB에 남는다.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "password",
+      "value": "ieumtest1234"
+    },
+    {
+      "key": "studentLoginId",
+      "value": "ieumstu01"
+    },
+    {
+      "key": "teacherLoginId",
+      "value": "ieumtea01"
+    },
+    {
+      "key": "teacherPassword",
+      "value": "ieumteach1234"
+    },
+    {
+      "key": "studentToken",
+      "value": ""
+    },
+    {
+      "key": "teacherToken",
+      "value": ""
+    },
+    {
+      "key": "threadId",
+      "value": ""
+    },
+    {
+      "key": "studentId",
+      "value": ""
+    },
+    {
+      "key": "signalId",
+      "value": ""
+    },
+    {
+      "key": "longMemo",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "00 사전 - 학습자 가입 (이미 있으면 409여도 괜찮음)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"STUDENT\",\n  \"loginId\": \"{{studentLoginId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"테스트\",\n  \"nickname\": \"신호쌤확인\",\n  \"birthDate\": \"2008-01-01\",\n  \"phone\": \"01012345678\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "00 사전 - 학습자 로그인 (토큰 자동 저장)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('studentToken', pm.response.json().token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loginId\": \"{{studentLoginId}}\",\n  \"password\": \"{{password}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "00 사전 - 이음쌤 로그인 (DB에 있는 이음쌤 계정, 토큰 자동 저장)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('teacherToken', pm.response.json().token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{teacherPassword}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "00 사전 - 학습자가 신호 낱말이 든 쪽지 보내기 (12, 첫 쪽지면 담당 배정, threadId 저장)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('threadId', pm.response.json().id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/threads",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"topic\": \"ONLINE\",\n  \"body\": \"게임에서 알게 된 사람이 사진을 보내 달래요. 죽고 싶다는 생각까지 들어요.\"\n}"
+        }
+      }
+    },
+    {
+      "name": "19-A 쪽지함 (200, 방금 보낸 쪽지가 맨 위, hasSignal true, signalStatus OPEN)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const first = pm.response.json().items[0];",
+              "pm.test('최신 쪽지가 맨 위', () => pm.expect(String(first.id)).to.eql(String(pm.collectionVariables.get('threadId'))));",
+              "pm.test('항목 모양', () => pm.expect(first).to.have.all.keys('id', 'student', 'topic', 'status', 'lastMessageAt', 'preview', 'linkedPractice', 'hasSignal', 'signalStatus'));",
+              "pm.test('학습자 정보', () => { pm.expect(first.student).to.have.all.keys('id', 'nickname'); pm.collectionVariables.set('studentId', first.student.id); });",
+              "pm.test('대기 중 + 신호 있음', () => { pm.expect(first.status).to.eql('WAITING'); pm.expect(first.hasSignal).to.eql(true); pm.expect(first.signalStatus).to.eql('OPEN'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/teacher/threads"
+      }
+    },
+    {
+      "name": "19-B status=ANSWERED (200, WAITING인 방금 쪽지는 빠진다)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.test('ANSWERED만', () => pm.response.json().items.forEach(i => pm.expect(i.status).to.eql('ANSWERED')));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/teacher/threads?status=ANSWERED",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "teacher",
+            "threads"
+          ],
+          "query": [
+            {
+              "key": "status",
+              "value": "ANSWERED"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "19-C status=OPEN (400 VALIDATION_FAILED)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));",
+              "pm.test('코드', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_FAILED'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/teacher/threads?status=OPEN",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "teacher",
+            "threads"
+          ],
+          "query": [
+            {
+              "key": "status",
+              "value": "OPEN"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "19-D 학습자 토큰 (403)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('403', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/teacher/threads"
+      }
+    },
+    {
+      "name": "20-A 신호 목록 (200, OPEN이 앞, 등급 필드 없음, signalId 저장)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const list = pm.response.json().items;",
+              "const mine = list.find(i => String(i.message.threadId) === String(pm.collectionVariables.get('threadId')));",
+              "pm.test('방금 쪽지의 신호가 있다', () => pm.expect(mine).to.not.be.undefined);",
+              "pm.collectionVariables.set('signalId', mine.id);",
+              "pm.test('항목 모양', () => pm.expect(mine).to.have.all.keys('id', 'status', 'matchedText', 'student', 'message', 'handledAt', 'responseMemo', 'createdAt'));",
+              "pm.test('OPEN이 HANDLED보다 앞', () => { const s = list.map(i => i.status); pm.expect(s.lastIndexOf('OPEN')).to.be.below(s.indexOf('HANDLED') === -1 ? 9999 : s.indexOf('HANDLED')); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/teacher/signals"
+      }
+    },
+    {
+      "name": "20-B status=OPEN (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.test('OPEN만', () => pm.response.json().items.forEach(i => pm.expect(i.status).to.eql('OPEN')));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/teacher/signals?status=OPEN",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "teacher",
+            "signals"
+          ],
+          "query": [
+            {
+              "key": "status",
+              "value": "OPEN"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "20-C status=WAITING (400 VALIDATION_FAILED)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));",
+              "pm.test('코드', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_FAILED'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/teacher/signals?status=WAITING",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "teacher",
+            "signals"
+          ],
+          "query": [
+            {
+              "key": "status",
+              "value": "WAITING"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "21-A 처리 완료 + 메모 (200, HANDLED, handledAt 채워짐)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test('HANDLED', () => { pm.expect(r.status).to.eql('HANDLED'); pm.expect(r.handledAt).to.be.a('string'); pm.expect(r.responseMemo).to.eql('다음 날 담임과 통화했다'); pm.collectionVariables.set('firstHandledAt', r.handledAt); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/teacher/signals/{{signalId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"handled\": true,\n  \"memo\": \"다음 날 담임과 통화했다\"\n}"
+        }
+      }
+    },
+    {
+      "name": "21-B handled=true만 다시 (200, 메모 그대로, handledAt은 처음 시각 유지)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.test('메모 유지', () => pm.expect(pm.response.json().responseMemo).to.eql('다음 날 담임과 통화했다'));",
+              "pm.test('처음 처리한 시각 유지', () => pm.expect(pm.response.json().handledAt).to.eql(pm.collectionVariables.get('firstHandledAt')));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/teacher/signals/{{signalId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"handled\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "21-C 학습자 쪽지 상세 14 (신호·메모가 학습자 응답에 없다)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.test('memo 없음', () => { const t = pm.response.text(); pm.expect(t).to.not.include('responseMemo'); pm.expect(t).to.not.include('다음 날 담임과 통화했다'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/threads/{{threadId}}"
+      }
+    },
+    {
+      "name": "21-D 다시 미처리로 (200, OPEN, handledAt null, 메모 유지)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test('OPEN', () => { pm.expect(r.status).to.eql('OPEN'); pm.expect(r.handledAt).to.eql(null); pm.expect(r.responseMemo).to.eql('다음 날 담임과 통화했다'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/teacher/signals/{{signalId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"handled\": false\n}"
+        }
+      }
+    },
+    {
+      "name": "21-E memo 501자 (400 VALIDATION_FAILED)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('longMemo', 'a'.repeat(501));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));",
+              "pm.test('코드', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_FAILED'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/teacher/signals/{{signalId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"handled\": true,\n  \"memo\": \"{{longMemo}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "21-F handled 없음 (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/teacher/signals/{{signalId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"memo\": \"통화함\"\n}"
+        }
+      }
+    },
+    {
+      "name": "21-G 없는 신호 (404)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/teacher/signals/99999999",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"handled\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "21-H 학습자 토큰 (403)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('403', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/teacher/signals/{{signalId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"handled\": true\n}"
+        }
+      }
+    }
+  ]
+}

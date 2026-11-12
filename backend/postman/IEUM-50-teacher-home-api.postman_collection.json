@@ -1,0 +1,244 @@
+{
+  "info": {
+    "name": "IEUM #50 이음쌤 홈 API (16~18)",
+    "description": "위에서 아래로 순서대로 실행한다.\n\n준비: DB에 이음쌤(TEACHER, ACTIVE) 2명이 있어야 한다. 이 컬렉션은 이음쌤을 가입시키지 않는다. teacherLoginId·teacherPassword와 otherTeacherLoginId·otherTeacherPassword를 DB에 있는 이음쌤 2명으로 채운다. 00 사전 요청으로 학습자 2명을 만든 뒤, 담당 배정은 아직 자동(12번 쪽지 보내기)이 없으므로 DB에서 한 번만 연결한다.\n\nUPDATE users s JOIN users t ON t.login_id = '<teacherLoginId>'\nSET s.teacher_id = t.id, s.teacher_assigned_at = NOW()\nWHERE s.login_id IN ('learn5001', 'learn5002');\n\n확인할 것: 담당인 학습자만 보이고(비담당은 403, 없는 id는 404), 응답에 점수·신호 등급·my_note·answers가 없다.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api/v1" },
+    { "key": "password", "value": "ieumtest1234" },
+    { "key": "teacherLoginId", "value": "ieumtea01" },
+    { "key": "teacherPassword", "value": "ieumteach1234" },
+    { "key": "teacherToken", "value": "" },
+    { "key": "otherTeacherLoginId", "value": "여기에다른이음쌤아이디" },
+    { "key": "otherTeacherPassword", "value": "여기에다른이음쌤비밀번호" },
+    { "key": "otherTeacherToken", "value": "" },
+    { "key": "studentLoginId", "value": "ieumstu01" },
+    { "key": "studentToken", "value": "" },
+    { "key": "studentId", "value": "" },
+    { "key": "studentNickname", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "00 사전 - 학습자 하늘 가입 (이미 있으면 409여도 괜찮음)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": { "mode": "raw", "raw": "{\n  \"role\": \"STUDENT\",\n  \"loginId\": \"{{studentLoginId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"테스트\",\n  \"nickname\": \"하늘\",\n  \"birthDate\": \"2008-01-01\",\n  \"phone\": \"01012345678\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}" }
+      }
+    },
+    {
+      "name": "00 사전 - 학습자 바다 가입 (이미 있으면 409여도 괜찮음)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": { "mode": "raw", "raw": "{\n  \"role\": \"STUDENT\",\n  \"loginId\": \"learn5002\",\n  \"password\": \"{{password}}\",\n  \"name\": \"테스트\",\n  \"nickname\": \"바다\",\n  \"birthDate\": \"2008-02-02\",\n  \"phone\": \"01012345679\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}" }
+      }
+    },
+    {
+      "name": "00 사전 - 이음쌤 로그인 (DB에 있는 이음쌤 계정, teacherToken 자동 저장)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.collectionVariables.set('teacherToken', pm.response.json().token);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": { "mode": "raw", "raw": "{\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{teacherPassword}}\"\n}" }
+      }
+    },
+    {
+      "name": "00 사전 - 다른 이음쌤 로그인 (DB에 있는 다른 이음쌤 계정, otherTeacherToken 자동 저장)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "if (pm.response.code === 200) {",
+        "  pm.test('200', () => pm.response.to.have.status(200));",
+        "  pm.collectionVariables.set('otherTeacherToken', pm.response.json().token);",
+        "} else {",
+        "  pm.test.skip('다른 이음쌤 계정이 없어서 건너뜀(otherTeacherLoginId·otherTeacherPassword를 채우면 실행)', () => {});",
+        "}"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": { "mode": "raw", "raw": "{\n  \"loginId\": \"{{otherTeacherLoginId}}\",\n  \"password\": \"{{otherTeacherPassword}}\"\n}" }
+      }
+    },
+    {
+      "name": "00 사전 - 학습자 로그인 (studentToken 자동 저장)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.collectionVariables.set('studentToken', pm.response.json().token);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": { "mode": "raw", "raw": "{\n  \"loginId\": \"{{studentLoginId}}\",\n  \"password\": \"{{password}}\"\n}" }
+      }
+    },
+    {
+      "name": "00 사전 - 학습자 내 정보 (닉네임 저장)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('studentNickname', pm.response.json().nickname);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/me"
+      }
+    },
+    {
+      "name": "16 요약 조회 (200)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "const b = pm.response.json();",
+        "pm.test('필드 3개', () => pm.expect(b).to.have.keys('studentCount','waitingThreadCount','openSignalCount'));",
+        "pm.test('담당 학습자 수는 1명 이상', () => pm.expect(b.studentCount).to.be.at.least(1));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{teacherToken}}" }], "url": "{{baseUrl}}/teacher/summary" }
+    },
+    {
+      "name": "16 토큰 없이 조회 (401)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('401', () => pm.response.to.have.status(401));",
+        "pm.test('UNAUTHORIZED', () => pm.expect(pm.response.json().code).to.eql('UNAUTHORIZED'));"
+      ] } }],
+      "request": { "method": "GET", "url": "{{baseUrl}}/teacher/summary" }
+    },
+    {
+      "name": "16 학습자 토큰으로 조회 (403)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('403', () => pm.response.to.have.status(403));",
+        "pm.test('FORBIDDEN', () => pm.expect(pm.response.json().code).to.eql('FORBIDDEN'));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }], "url": "{{baseUrl}}/teacher/summary" }
+    },
+    {
+      "name": "17 학습자 목록 - 기본 정렬(nickname) (200)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "const items = pm.response.json().items;",
+        "pm.test('내 담당 1명 이상', () => pm.expect(items.length).to.be.at.least(1));",
+        "pm.test('항목 모양', () => items.forEach(i => pm.expect(i).to.have.keys('id','nickname','assignedAt','lastActivityAt','doneCount','waitingThreadCount','hasOpenSignal')));",
+        "pm.test('점수·신호 등급은 없다', () => items.forEach(i => { pm.expect(i).to.not.have.property('score'); pm.expect(i).to.not.have.property('severity'); }));",
+        "pm.test('닉네임 가나다 오름차순', () => { const n = items.map(i => i.nickname); pm.expect(n).to.eql([...n].sort()); });",
+        "pm.test('시각은 +09:00', () => items.forEach(i => { if (i.assignedAt) pm.expect(i.assignedAt).to.include('+09:00'); }));",
+        "pm.collectionVariables.set('studentId', items.find(i => i.nickname === pm.collectionVariables.get('studentNickname')).id);"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{teacherToken}}" }], "url": "{{baseUrl}}/teacher/students" }
+    },
+    {
+      "name": "17 닉네임 부분 일치 q=하 (200)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.test('모두 하를 포함', () => pm.response.json().items.forEach(i => pm.expect(i.nickname).to.include('하')));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{teacherToken}}" }], "url": "{{baseUrl}}/teacher/students?q=하" }
+    },
+    {
+      "name": "17 q=% 는 글자 그대로 찾는다 (200, 보통 0건)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.test('% 를 전체 일치로 쓰지 않는다', () => pm.expect(pm.response.json().items.length).to.eql(0));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{teacherToken}}" }], "url": "{{baseUrl}}/teacher/students?q=%25" }
+    },
+    {
+      "name": "17 sort=assigned (200, 최근 배정 먼저)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "const at = pm.response.json().items.map(i => i.assignedAt);",
+        "pm.test('내림차순', () => pm.expect(at).to.eql([...at].sort().reverse()));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{teacherToken}}" }], "url": "{{baseUrl}}/teacher/students?sort=assigned" }
+    },
+    {
+      "name": "17 sort=recent (200, 활동 없음은 맨 뒤)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "const at = pm.response.json().items.map(i => i.lastActivityAt);",
+        "pm.test('null은 맨 뒤', () => { const firstNull = at.indexOf(null); if (firstNull >= 0) pm.expect(at.slice(firstNull).every(v => v === null)).to.be.true; });"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{teacherToken}}" }], "url": "{{baseUrl}}/teacher/students?sort=recent" }
+    },
+    {
+      "name": "17 잘못된 sort (400 VALIDATION_FAILED, field=sort)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('400', () => pm.response.to.have.status(400));",
+        "const b = pm.response.json();",
+        "pm.test('VALIDATION_FAILED', () => pm.expect(b.code).to.eql('VALIDATION_FAILED'));",
+        "pm.test('field=sort', () => pm.expect(b.fieldErrors[0].field).to.eql('sort'));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{teacherToken}}" }], "url": "{{baseUrl}}/teacher/students?sort=score" }
+    },
+    {
+      "name": "17 다른 이음쌤은 내 학습자가 안 보인다 (200, 0건)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "const T = (n, f) => pm.collectionVariables.get('otherTeacherToken') ? pm.test(n, f) : pm.test.skip(n, f);",
+        "T('200', () => pm.response.to.have.status(200));",
+        "T('담당이 없으면 빈 목록', () => pm.expect(pm.response.json().items.length).to.eql(0));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{otherTeacherToken}}" }], "url": "{{baseUrl}}/teacher/students" }
+    },
+    {
+      "name": "18 학습자 상세 (200)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "const b = pm.response.json();",
+        "pm.test('필드', () => pm.expect(b).to.have.keys('id','nickname','assignedAt','hasOpenSignal','doneCount','records','threads'));",
+        "pm.test('records는 DONE만, compare는 UNIT에만 emotion은 EMOTION에만', () => b.records.forEach(r => {",
+        "  pm.expect(r).to.have.keys('practiceId','title','type','area','level','completedAt','compare','emotion');",
+        "  if (r.type === 'UNIT') { pm.expect(r.compare).to.be.an('array'); pm.expect(r.emotion).to.be.null; }",
+        "  if (r.type === 'EMOTION') { pm.expect(r.compare).to.be.null; pm.expect(r.emotion).to.have.keys('clues','feelings'); }",
+        "  if (r.type === 'SCENARIO') { pm.expect(r.compare).to.be.null; pm.expect(r.emotion).to.be.null; }",
+        "}));",
+        "pm.test('my_note·answers·점수는 없다', () => b.records.forEach(r => { pm.expect(r).to.not.have.property('myNote'); pm.expect(r).to.not.have.property('answers'); pm.expect(r).to.not.have.property('score'); }));",
+        "pm.test('마친 날짜 최신 순', () => { const at = b.records.map(r => r.completedAt); pm.expect(at).to.eql([...at].sort().reverse()); });",
+        "pm.test('threads 모양', () => b.threads.forEach(t => pm.expect(t).to.have.keys('id','topic','status','createdAt')));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{teacherToken}}" }], "url": "{{baseUrl}}/teacher/students/{{studentId}}" }
+    },
+    {
+      "name": "18 담당이 아닌 학습자 (403 FORBIDDEN)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "const T = (n, f) => pm.collectionVariables.get('otherTeacherToken') ? pm.test(n, f) : pm.test.skip(n, f);",
+        "T('403', () => pm.response.to.have.status(403));",
+        "T('FORBIDDEN', () => pm.expect(pm.response.json().code).to.eql('FORBIDDEN'));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{otherTeacherToken}}" }], "url": "{{baseUrl}}/teacher/students/{{studentId}}" }
+    },
+    {
+      "name": "18 없는 id (404 NOT_FOUND)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('404', () => pm.response.to.have.status(404));",
+        "pm.test('NOT_FOUND', () => pm.expect(pm.response.json().code).to.eql('NOT_FOUND'));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{teacherToken}}" }], "url": "{{baseUrl}}/teacher/students/99999999" }
+    },
+    {
+      "name": "18 학습자 토큰으로 조회 (403)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('403', () => pm.response.to.have.status(403));"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }], "url": "{{baseUrl}}/teacher/students/{{studentId}}" }
+    }
+  ]
+}

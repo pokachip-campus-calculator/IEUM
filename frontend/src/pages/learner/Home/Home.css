@@ -1,0 +1,75 @@
+.ie-w3stage {
+  touch-action: none;
+}
+/* 홈 인사말 영역: 하늘 배경 위에서 읽히도록 흰 글자 + 아주 은은한 그림자(배경 구분감 없이) */
+.ie-home .ie-w3head .ie-title {
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 2px rgba(45, 55, 135, 0.3), 0 1px 8px rgba(45, 55, 135, 0.18);
+}
+.ie-home .ie-w3head .ie-title::after {
+  content: " \2726";
+  font-size: 0.55em;
+  color: rgba(255, 255, 255, 0.85);
+  vertical-align: top;
+}
+.ie-home .ie-w3head .ie-sub {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 400;
+  text-shadow: 0 1px 2px rgba(45, 55, 135, 0.3), 0 1px 8px rgba(45, 55, 135, 0.18);
+}
+.ie-home .ie-w3head .ie-meta {
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 2px rgba(45, 55, 135, 0.35), 0 1px 7px rgba(45, 55, 135, 0.2);
+}
+/* 시작 버튼: 공통 .ie-btn--primary는 그대로 두고 홈 인사말 안의 버튼만 동화풍으로 */
+.ie-home .ie-w3head .ie-row .ie-btn--primary {
+  min-width: 230px;
+  min-height: 52px;
+  padding: 0 22px;
+  border-radius: 999px;
+  font-size: 15px;
+  background: linear-gradient(135deg, #afcbff 0%, #8fa3e8 45%, #9b86e0 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 10px 28px -10px rgba(67, 86, 165, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, filter 0.2s ease;
+}
+.ie-home .ie-w3head .ie-row .ie-btn--primary:hover,
+.ie-home .ie-w3head .ie-row .ie-btn--primary:focus-visible {
+  transform: translateY(-3px);
+  filter: brightness(1.06);
+  box-shadow: 0 14px 32px -10px rgba(67, 86, 165, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.ie-home .ie-w3head .ie-row .ie-btn--primary:active {
+  transform: translateY(0);
+}
+.ie-3map {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 44px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 44px);
+}
+.ie-root .ie-3map .ie-3fr {
+  max-width: none;
+  max-height: none;
+  filter: none;
+  object-fit: fill;
+}
+.ie-3fr {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: none;
+  transform-origin: 0 0;
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
+  visibility: hidden;
+  backface-visibility: hidden;
+}

@@ -1,0 +1,143 @@
+{
+  "info": {
+    "name": "IEUM #42 내 정보 API (03~06)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api/v1" },
+    { "key": "loginId", "value": "test1234" },
+    { "key": "password", "value": "password123" },
+    { "key": "newPassword", "value": "newpass1234" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "00 사전 - 학습자 가입 (만 14세 이상)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": { "mode": "raw", "raw": "{\n  \"role\": \"STUDENT\",\n  \"loginId\": \"{{loginId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"테스트\",\n  \"nickname\": \"테스트\",\n  \"birthDate\": \"2000-01-01\",\n  \"phone\": \"01012345678\",\n  \"email\": \"test@example.com\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}" }
+      }
+    },
+    {
+      "name": "00 사전 - 로그인 (토큰 자동 저장)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.collectionVariables.set('token', pm.response.json().token);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": { "mode": "raw", "raw": "{\n  \"loginId\": \"{{loginId}}\",\n  \"password\": \"{{password}}\"\n}" }
+      }
+    },
+    {
+      "name": "03 내 정보 조회 (200)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "const b = pm.response.json();",
+        "pm.test('필드', () => { pm.expect(b).to.have.keys('id','loginId','nickname','email','role','teacher'); });"
+      ] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/me" }
+    },
+    {
+      "name": "03 토큰 없이 조회 (401)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('401', () => pm.response.to.have.status(401));"] } }],
+      "request": { "method": "GET", "url": "{{baseUrl}}/me" }
+    },
+    {
+      "name": "04 닉네임·이메일 수정 (200)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.test('닉네임 변경', () => pm.expect(pm.response.json().nickname).to.eql('새닉네임'));"
+      ] } }],
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/me",
+        "body": { "mode": "raw", "raw": "{\n  \"nickname\": \"새닉네임\",\n  \"email\": \"new@example.com\"\n}" }
+      }
+    },
+    {
+      "name": "04 이메일 삭제 (email \"\" → null, 200)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.test('email null', () => pm.expect(pm.response.json().email).to.eql(null));"
+      ] } }],
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/me",
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"\"\n}" }
+      }
+    },
+    {
+      "name": "04 닉네임 21자 (400)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('400', () => pm.response.to.have.status(400));"] } }],
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/me",
+        "body": { "mode": "raw", "raw": "{\n  \"nickname\": \"123456789012345678901\"\n}" }
+      }
+    },
+    {
+      "name": "04 이메일 형식 오류 (400)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('400', () => pm.response.to.have.status(400));"] } }],
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/me",
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"not-an-email\"\n}" }
+      }
+    },
+    {
+      "name": "05 비밀번호 변경 - 현재 비밀번호 틀림 (400, 401 아님)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('400', () => pm.response.to.have.status(400));"] } }],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/me/password",
+        "body": { "mode": "raw", "raw": "{\n  \"currentPassword\": \"wrong-password\",\n  \"newPassword\": \"{{newPassword}}\"\n}" }
+      }
+    },
+    {
+      "name": "05 비밀번호 변경 (204)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('204', () => pm.response.to.have.status(204));",
+        "pm.collectionVariables.set('password', pm.collectionVariables.get('newPassword'));"
+      ] } }],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/me/password",
+        "body": { "mode": "raw", "raw": "{\n  \"currentPassword\": \"{{password}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}" }
+      }
+    },
+    {
+      "name": "05 새 비밀번호로 재로그인 (200)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.collectionVariables.set('token', pm.response.json().token);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": { "mode": "raw", "raw": "{\n  \"loginId\": \"{{loginId}}\",\n  \"password\": \"{{password}}\"\n}" }
+      }
+    },
+    {
+      "name": "06 탈퇴 - 학습자 (204)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('204', () => pm.response.to.have.status(204));"] } }],
+      "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"acknowledged\":true}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/me/withdraw" }
+    },
+    {
+      "name": "06 탈퇴 후 같은 토큰으로 조회 (401)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('401', () => pm.response.to.have.status(401));"] } }],
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/me" }
+    }
+  ]
+}

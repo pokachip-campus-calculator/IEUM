@@ -1,0 +1,136 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# 이음(IEUM) 프로젝트용 CodeRabbit 설정
+# 기술 스택: Java 21 · Spring Boot · JPA · MySQL · JWT(Spring Security) / React · TypeScript · Vite
+
+language: "ko-KR"
+tone_instructions: "리뷰 대상은 부트캠프 수강생입니다. 쉬운 한국어로 왜 문제인지와 고친 코드 예시를 함께 보여 주세요. 전문 용어는 한글(영어)로 병기하고, 지금 필요 없는 과한 추상화는 제안하지 마세요."
+early_access: false
+
+reviews:
+  profile: "chill"
+  high_level_summary: true
+  high_level_summary_instructions: |
+    맨 첫 줄에 "변경 영역: backend, frontend, db, docs 중 이 PR이 수정한 곳"을 적는다.
+    이어서 변경 내용을 한국어 글머리표 3~5개로 요약한다.
+  collapse_walkthrough: false
+  sequence_diagrams: true
+  estimate_code_review_effort: true
+  review_status: true
+  poem: false
+  in_progress_fortune: false
+  enable_prompt_for_ai_agents: true
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "^develop$"
+    ignore_title_keywords:
+      - "WIP"
+
+  path_filters:
+    - "!**/build/**"
+    - "!**/.gradle/**"
+    - "!**/gradle/wrapper/**"
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+    - "!**/package-lock.json"
+    - "!frontend/public/models/**"
+    - "!**/*.png"
+    - "!**/*.glb"
+    - "!backend/postman/**"
+
+  path_instructions:
+    - path: "backend/src/main/java/**/*.java"
+      instructions: |
+        [구조]
+        - 패키지는 기능(auth, user, practice, record, message, signal, notification)별이고 공통은 config, common에 둔다. 의존 방향은 Controller → Service → Repository 한 방향이다. 거꾸로 의존하거나 계층을 건너뛰면 지적한다.
+        - 다른 기능의 Repository를 직접 수정하는 코드는 그 기능의 Service 메소드를 통하도록 안내한다.
+        [보안] 이 서비스는 위기청소년의 쪽지와 위험 신호를 다룬다.
+        - 요청 본문으로 role, status, teacherId처럼 권한이나 소유자를 정하는 값을 받아 그대로 쓰면 "[필수]"로 지적한다(권한 상승 위험).
+        - id로 데이터를 찾는 코드는 "본인(또는 담당)의 것인지" 확인하는지 본다. 없으면 "[필수]".
+        - 학습자 응답에 신호(signal), 나의 한 줄(my_note), 비밀번호·해시가 들어가면 "[필수]".
+        - 로그에 비밀번호, 토큰, 쪽지 본문을 남기면 지적한다.
+        [품질]
+        - 중복 코드, 설명 없는 숫자·문자열은 메소드 추출, 상수, Enum으로 바꾸도록 제안한다. 깊은 if 중첩은 조기 반환으로 줄이도록 제안한다.
+        - 주석은 한글, 변수명·메소드명은 영어 camelCase. System.out 디버깅 출력이 있으면 Logger를 안내한다.
+        - 반드시 고쳐야 하는 문제는 "[필수]", 선택 개선은 "[제안]"으로 시작해 구분한다. 지금 요구사항에 필요 없는 디자인 패턴은 제안하지 않는다.
+    - path: "backend/**/*Controller.java"
+      instructions: |
+        - Controller는 요청 받기, 입력 검증(@Valid), Service 호출, 응답 반환만 한다. 비즈니스 로직과 Repository 직접 호출은 Service로 옮기도록 안내한다.
+        - 요청은 Entity가 아닌 요청 DTO(record)로 받고, 응답에 Entity를 그대로 담지 않는다.
+    - path: "backend/**/*Service*.java"
+      instructions: |
+        - 비즈니스 규칙과 권한 확인(본인 것만, 담당 학습자만)은 Service에 둔다.
+        - 읽기 메소드에 @Transactional(readOnly = true), 데이터를 바꾸는 메소드에 @Transactional을 붙였는지 본다.
+        - 생성자 주입(final 필드)을 쓰고 필드 주입(@Autowired 필드)은 지적한다. Optional.get() 대신 orElseThrow로 ApiException을 던지게 한다.
+    - path: "backend/**/*Repository.java"
+      instructions: |
+        - @Query에 문자열을 더해 조건을 만들면 SQL 인젝션 위험을 설명하고 파라미터 바인딩을 안내한다.
+        - 목록 조회에서 반복 조회(N+1)가 보이면 IN 조회나 fetch join을 안내한다. 새 조회 조건은 db/V1__init.sql의 인덱스를 타는지 확인한다.
+    - path: "backend/**/entity/**/*.java"
+      instructions: |
+        - 컬럼 이름, 길이, null 여부가 db/ 폴더의 SQL과 일치하는지 확인한다. 스키마는 SQL이 기준이다(ddl-auto: none).
+        - @Setter와 @Data 대신 의미 있는 변경 메소드로 상태를 바꾸게 한다. Enum은 @Enumerated(EnumType.STRING)을 쓴다.
+    - path: "backend/**/dto/**/*.java"
+      instructions: |
+        - 요청 DTO와 응답 DTO를 나누고, 응답에 비밀번호·해시 같은 민감 정보가 들어가지 않게 한다. 입력 길이·형식은 Bean Validation으로 검증한다.
+    - path: "backend/**/config/**/*.java"
+      instructions: |
+        - JWT(Bearer) 방식이라 CSRF 비활성화는 정상이다. 세션이 STATELESS인지 확인한다.
+        - permitAll이 /auth 외로 넓어지지 않았는지, /teacher/** 같은 권한 규칙이 빠지지 않았는지 확인한다.
+        - CORS 허용 출처가 *로 남아 있으면 배포 때 프론트 주소로 좁히도록 안내한다. 비밀번호는 BCrypt로 저장·비교한다.
+    - path: "frontend/src/**/*.{ts,tsx}"
+      instructions: |
+        - dangerouslySetInnerHTML, innerHTML, eval처럼 HTML을 직접 넣는 코드는 [필수]로 지적한다(XSS).
+        - 서버 호출은 src/api의 services와 client를 거치게 한다. 화면 컴포넌트가 fetch를 직접 부르면 안내한다.
+        - 토큰, 비밀번호, 개인정보를 console에 출력하거나 VITE_ 환경변수에 비밀값을 넣으면 [필수]로 지적한다.
+        - 이미지에는 alt를 쓰고, 클릭 요소는 button 또는 a로 만들어 키보드로 쓸 수 있는지 본다.
+    - path: "db/**/*.sql"
+      instructions: |
+        - 이미 실행한 V 파일(V1~V5)을 고치면 "[필수]"로 지적한다. 변경은 새 번호 파일로 쌓는다.
+        - 비밀번호, 비밀번호 해시, 접속 주소가 들어 있으면 "[필수]". 파일에 USE나 CREATE DATABASE가 있으면 지적한다.
+        - 시드는 다시 실행해도 중복되지 않는지(WHERE NOT EXISTS 등), 외래키 삭제 규칙과 인덱스가 의도와 맞는지 확인한다.
+    - path: "backend/src/main/resources/**/application*.{yml,yaml,properties}"
+      instructions: |
+        - DB 비밀번호, JWT 비밀키, API 키가 값으로 직접 들어 있으면 반드시 지적하고 환경변수로 분리하게 한다.
+        - spring.jpa.hibernate.ddl-auto가 none이 아니면 공용 DB가 바뀔 수 있음을 알린다.
+    - path: "backend/src/test/**/*.java"
+      instructions: |
+        - 테스트 이름이 무엇을 검증하는지 드러나는지, 실패·권한 없음(FORBIDDEN) 경우도 검증하는지 확인한다.
+
+  pre_merge_checks:
+    title:
+      mode: "warning"
+      requirements: "'타입: 한글 설명 #이슈번호' 형식. 타입은 feat, fix, refactor, docs, test, chore, style, sql 중 하나다."
+    description:
+      mode: "warning"
+    docstrings:
+      mode: "off"
+    custom_checks:
+      - name: "이슈 연결"
+        mode: "warning"
+        instructions: |
+          PR 설명에 Closes #번호 또는 Refs #번호가 없으면 실패. 있으면 통과.
+      - name: "담당 폴더"
+        mode: "warning"
+        instructions: |
+          변경 파일이 frontend, backend, db 중 2곳 이상에 걸쳐 있고 PR 설명에 이유가 없으면 실패. 1곳만 바꿨거나 이유가 적혀 있으면 통과.
+
+  tools:
+    pmd:
+      enabled: true
+    gitleaks:
+      enabled: true
+    languagetool:
+      enabled: false
+    markdownlint:
+      enabled: false
+
+chat:
+  auto_reply: true
+  allow_non_org_members: false
+
+code_generation:
+  docstrings:
+    language: "ko-KR"

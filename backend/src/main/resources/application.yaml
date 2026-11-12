@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: backend
+  config:
+    # .env 파일이 있으면 읽는다(비밀값은 .env에만 두고 레포에는 올리지 않는다)
+    import: optional:file:.env[.properties]
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/ieum?serverTimezone=Asia/Seoul}
+    username: ${DB_USER:ieum}
+    password: ${DB_PASSWORD:}
+    hikari:
+      initialization-fail-timeout: -1   # DB가 꺼져 있어도 서버는 뜬다(첫 쿼리 때 연결)
+  jpa:
+    hibernate:
+      ddl-auto: none                    # 스키마는 db/ SQL이 기준이라 자동 생성하지 않는다
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        boot.allow_jdbc_metadata_access: false   # 시작할 때 DB에 물어보지 않는다
+        jdbc.time_zone: Asia/Seoul
+  jackson:
+    time-zone: Asia/Seoul
+
+jwt:
+  secret: ${JWT_SECRET:}
+  expiration-minutes: 60                # 액세스 토큰 유효 기간(분). 갱신 API는 없어서 지나면 다시 로그인한다
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:*}   # 쉼표로 구분. 배포 때 Vercel 주소로 좁힌다
+

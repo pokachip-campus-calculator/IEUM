@@ -1,0 +1,168 @@
+package com.ieum.notification.service;
+
+import com.ieum.common.ApiException;
+import com.ieum.common.ErrorCode;
+import com.ieum.notification.dto.NotificationListResponse;
+import com.ieum.notification.dto.ReadAllResponse;
+import com.ieum.notification.entity.LinkType;
+import com.ieum.notification.entity.Notification;
+import com.ieum.notification.entity.NotificationType;
+import com.ieum.notification.repository.NotificationRepository;
+import com.ieum.transfer.entity.TransferRequest;
+import com.ieum.transfer.entity.TransferStatus;
+import com.ieum.transfer.repository.TransferRequestRepository;
+import com.ieum.user.entity.User;
+import com.ieum.user.repository.UserRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+/**
+ * [역할] 알림 목록·읽음(22~24)을 처리하고, 쪽지·신호·배정이 일어날 때 알림 행을 만든다.
+ * [동작] 생성 메서드는 받는 사람·종류·고정 문구·이동할 곳을 정해 저장만 한다. 조회·읽음은 토큰의 사용자 본인 알림만 다룬다.
+ * [연결] ThreadService·ThreadDetailService·SignalCheckService가 쪽지를 저장한 같은 트랜잭션에서 부른다 / NotificationRepository
+ * [주의] 제목·본문은 서버가 정한 문구만 쓰고 쪽지 내용·찾은 낱말은 절대 넣지 않는다. SIGNAL_FLAGGED는 이음쌤에게만 만든다.
+ */
+@Service
+public class NotificationService {
+
+    private final NotificationRepository repository;
+    private final TransferRequestRepository transferRepository;
+    private final UserRepository userRepository;
+    private final Clock clock;
+
+    public NotificationService(NotificationRepository repository, TransferRequestRepository transferRepository,
+                               UserRepository userRepository, Clock clock) {
+        this.repository = repository;
+        this.transferRepository = transferRepository;
+        this.userRepository = userRepository;
+        this.clock = clock;
+    }
+
+    // ---- 생성: 호출한 쪽의 트랜잭션에 합류하므로 쪽지 저장이 실패하면 알림도 남지 않는다 ----
+
+    // NOTE_RECEIVED: 담당 이음쌤에게 "새 쪽지가 도착했어요" (누르면 쪽지 묶음)
+    @Transactional
+    public void noteReceived(Long teacherId, Long threadId) {
+        create(teacherId, NotificationType.NOTE_RECEIVED, "새 쪽지가 도착했어요",
+                "쪽지 모아 보기에서 확인해 보세요", LinkType.THREAD, threadId);
+    }
+
+    // SIGNAL_FLAGGED: 담당 이음쌤에게만 "확인이 필요한 쪽지가 있어요" (누르면 그 신호). 학습자에게는 만들지 않는다
+    @Transactional
+    public void signalFlagged(Long teacherId, Long signalId) {
+        create(teacherId, NotificationType.SIGNAL_FLAGGED, "확인이 필요한 쪽지가 있어요",
+                "신호 목록에서 확인해 보세요", LinkType.SIGNAL, signalId);
+    }
+
+    // NOTE_READ: 학습자에게 "이음쌤이 쪽지를 읽었어요" (누르면 쪽지 묶음)
+    @Transactional
+    public void noteRead(Long studentId, Long threadId) {
+        create(studentId, NotificationType.NOTE_READ, "이음쌤이 쪽지를 읽었어요",
+                "쪽지함에서 확인해 보세요", LinkType.THREAD, threadId);
+    }
+
+    // REPLY_ARRIVED: 학습자에게 "이음쌤의 답이 도착했어요" (누르면 쪽지 묶음)
+    @Transactional
+    public void replyArrived(Long studentId, Long threadId) {
+        create(studentId, NotificationType.REPLY_ARRIVED, "이음쌤의 답장이 도착했어요",
+                "쪽지함에서 확인해 보세요", LinkType.THREAD, threadId);
+    }
+
+    // TEACHER_ASSIGNED: 학습자에게 "담당 이음쌤이 정해졌어요" (누르면 내 정보, 이동 대상 번호 없음)
+    @Transactional
+    public void teacherAssigned(Long studentId) {
+        create(studentId, NotificationType.TEACHER_ASSIGNED, "담당 이음쌤이 정해졌어요",
+                "내 정보에서 확인해 보세요", LinkType.PROFILE, null);
+    }
+
+    // LEARNER_ASSIGNED: 이음쌤에게 "새 학습자가 배정됐어요" (누르면 이음쌤 홈에서 그 학습자)
+    @Transactional
+    public void learnerAssigned(Long teacherId, Long studentId) {
+        create(teacherId, NotificationType.LEARNER_ASSIGNED, "새 학습자가 배정됐어요",
+                "이음쌤 홈에서 확인해 보세요", LinkType.STUDENT, studentId);
+    }
+
+    // TRANSFER_REQUESTED: 받는 이음쌤에게 "이관 신청이 도착했어요" (누르면 그 신청, 알림 화면에서 수락)
+    @Transactional
+    public void transferRequested(Long toTeacherId, Long requestId) {
+        create(toTeacherId, NotificationType.TRANSFER_REQUESTED, "이관 신청이 도착했어요",
+                "알림에서 확인하고 수락할 수 있어요", LinkType.TRANSFER, requestId);
+    }
+
+    // TRANSFER_ACCEPTED: 신청한 이음쌤에게 "이관이 수락됐어요". 학습자에게는 만들지 않는다
+    @Transactional
+    public void transferAccepted(Long fromTeacherId, Long requestId) {
+        create(fromTeacherId, NotificationType.TRANSFER_ACCEPTED, "이관이 수락됐어요",
+                "학습자의 담당이 새 이음쌤으로 바뀌었어요", LinkType.TRANSFER, requestId);
+    }
+
+    private void create(Long userId, NotificationType type, String title, String body, LinkType linkType, Long linkId) {
+        repository.save(new Notification(userId, type, title, body, linkType, linkId));
+    }
+
+    // ---- 조회·읽음(22~24) ----
+
+    // 22: 본인 알림만 최신순 최대 50건. unreadOnly면 안 읽은 것만. unreadCount는 항상 전체 안 읽음 수
+    @Transactional(readOnly = true)
+    public NotificationListResponse list(Long userId, boolean unreadOnly) {
+        List<Notification> found = unreadOnly
+                ? repository.findTop50ByUserIdAndReadFalseOrderByCreatedAtDescIdDesc(userId)
+                : repository.findTop50ByUserIdOrderByCreatedAtDescIdDesc(userId);
+        long unreadCount = repository.countByUserIdAndReadFalse(userId);
+        Map<Long, String> transferStatus = transferStatuses(found);
+        return new NotificationListResponse(unreadCount,
+                found.stream().map(n -> toItem(n, transferStatus)).toList());
+    }
+
+    // TRANSFER 알림의 신청 상태: 수락됐으면 ACCEPTED, 기다리는 중인데 학습자 담당이 이미 바뀌었으면 EXPIRED, 아니면 PENDING
+    private Map<Long, String> transferStatuses(List<Notification> found) {
+        List<Long> requestIds = found.stream().filter(n -> n.getLinkType() == LinkType.TRANSFER)
+                .map(Notification::getLinkId).distinct().toList();
+        if (requestIds.isEmpty()) {
+            return Map.of();
+        }
+        List<TransferRequest> requests = transferRepository.findAllById(requestIds);
+        Map<Long, User> students = userRepository
+                .findAllById(requests.stream().map(TransferRequest::getStudentId).distinct().toList())
+                .stream().collect(Collectors.toMap(User::getId, Function.identity()));
+        return requests.stream().collect(Collectors.toMap(TransferRequest::getId, r -> {
+            if (r.getStatus() == TransferStatus.ACCEPTED) {
+                return "ACCEPTED";
+            }
+            User student = students.get(r.getStudentId());
+            boolean stale = student == null || !r.getFromTeacherId().equals(student.getTeacherId());
+            return stale ? "EXPIRED" : "PENDING";
+        }));
+    }
+
+    // 23: 이미 읽은 알림은 그대로 두고, 남의 알림·없는 id는 구분 없이 NOT_FOUND
+    @Transactional
+    public void markRead(Long userId, Long id) {
+        Notification n = repository.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
+        if (!n.isRead()) {
+            n.markRead(LocalDateTime.now(clock));
+        }
+    }
+
+    // 24: 내 안 읽은 알림을 모두 읽음으로 바꾸고 바뀐 개수를 돌려준다
+    @Transactional
+    public ReadAllResponse markAllRead(Long userId) {
+        return new ReadAllResponse(repository.markAllRead(userId, LocalDateTime.now(clock)));
+    }
+
+    private NotificationListResponse.Item toItem(Notification n, Map<Long, String> transferStatus) {
+        OffsetDateTime created = n.getCreatedAt().atZone(clock.getZone()).toOffsetDateTime();
+        return new NotificationListResponse.Item(n.getId(), n.getType(), n.getTitle(), n.getBody(),
+                n.getLinkType(), n.getLinkId(), n.isRead(), created,
+                n.getLinkType() == LinkType.TRANSFER ? transferStatus.get(n.getLinkId()) : null);
+    }
+}

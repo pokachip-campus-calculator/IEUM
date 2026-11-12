@@ -1,0 +1,839 @@
+{
+  "info": {
+    "name": "IEUM #45 내 학습 기록 API (11)",
+    "description": "db/V3__seed_practices.sql 시드 3건(1 UNIT·2 SCENARIO·3 EMOTION)이 들어간 DB에서 띄운 서버 기준. 위에서 아래로 순서대로 실행한다. 사전 단계에서 세 연습을 처음 상태로 되돌리므로 테스트 계정의 학습 기록이 바뀐다.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "loginId",
+      "value": "ieumstu01"
+    },
+    {
+      "key": "password",
+      "value": "ieumtest1234"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "teacherLoginId",
+      "value": "ieumtea01"
+    },
+    { "key": "teacherPassword", "value": "ieumteach1234" },
+    {
+      "key": "teacherToken",
+      "value": ""
+    },
+    {
+      "key": "total",
+      "value": ""
+    },
+    {
+      "key": "doneCount",
+      "value": ""
+    },
+    {
+      "key": "inProgressCount",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "00 사전 - 학습자 가입 (이미 있으면 409여도 괜찮음)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"STUDENT\",\n  \"loginId\": \"{{loginId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"테스트\",\n  \"nickname\": \"테스트\",\n  \"birthDate\": \"2000-01-01\",\n  \"phone\": \"01012345678\",\n  \"email\": \"learn@example.com\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "00 사전 - 로그인 (토큰 자동 저장)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('token', pm.response.json().token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loginId\": \"{{loginId}}\",\n  \"password\": \"{{password}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "00 사전 - 이음쌤 로그인 (teacherToken 자동 저장)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('teacherToken', pm.response.json().token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{teacherPassword}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "07 홈 조회 (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "pm.test('필드', () => { pm.expect(b).to.have.keys('nickname','unreadMessages','doneTotal','resume','inProgress','areas','recent'); });",
+              "pm.test('areas 3개(SAFETY·HELP·EMOTION)', () => pm.expect(b.areas.map(a => a.area)).to.eql(['SAFETY','HELP','EMOTION']));",
+              "pm.test('inProgress 최대 2개, recent 최대 3개', () => { pm.expect(b.inProgress.length).to.be.at.most(2); pm.expect(b.recent.length).to.be.at.most(3); });",
+              "pm.test('resume은 기준서 모양 또는 null', () => { if (b.resume) pm.expect(b.resume).to.have.keys('practiceId','title','type','area','level','estMinutes','myStatus'); });",
+              "pm.test('areas 항목은 area·doneCount', () => b.areas.forEach(a => pm.expect(a).to.have.keys('area','doneCount')));",
+              "pm.test('inProgress 항목 모양', () => b.inProgress.forEach(i => pm.expect(i).to.have.keys('practiceId','title','area','level')));",
+              "pm.test('recent 항목 모양, completedAt은 +09:00', () => b.recent.forEach(i => { pm.expect(i).to.have.keys('practiceId','title','area','completedAt'); pm.expect(i.completedAt).to.match(/[+]09:00$/); }));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/home"
+      }
+    },
+    {
+      "name": "07 토큰 없이 홈 조회 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/home"
+      }
+    },
+    {
+      "name": "00 사전 - UNIT 처음부터 (restart)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/practices/1/record",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"restart\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "00 사전 - SCENARIO 처음부터 (restart)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/practices/2/record",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"restart\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "00 사전 - EMOTION 처음부터 (restart)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/practices/3/record",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"restart\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "11 전체 - 모두 하는 중, compare 모두 null (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "pm.test('최상위 필드', () => pm.expect(b).to.have.keys('doneCount','inProgressCount','items'));pm.test('항목 필드', () => b.items.forEach(i => pm.expect(i).to.have.keys('practiceId','title','type','area','level','status','completedAt','updatedAt','compare')));",
+              "pm.test('시드 3건 모두 IN_PROGRESS', () => [1,2,3].forEach(id => pm.expect(b.items.find(i => i.practiceId === id).status).to.eql('IN_PROGRESS')));",
+              "pm.test('답이 없으니 compare는 null', () => b.items.forEach(i => pm.expect(i.compare).to.eql(null)));",
+              "pm.test('개수 = 목록 길이', () => pm.expect(b.doneCount + b.inProgressCount).to.eql(b.items.length));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/records"
+      }
+    },
+    {
+      "name": "10 사전 - UNIT 사전 답만 저장 (done:false)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/practices/1/record",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"answers\": {\n    \"pre\": {\n      \"q1\": \"a\",\n      \"q2\": \"a\",\n      \"q3\": \"a\",\n      \"q4\": \"a\",\n      \"q5\": \"a\",\n      \"q6\": \"a\",\n      \"q7\": \"a\",\n      \"q8\": \"a\"\n    }\n  },\n  \"done\": false\n}"
+        }
+      }
+    },
+    {
+      "name": "11 UNIT 사전만 있으면 compare null (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "pm.test('UNIT compare null', () => pm.expect(b.items.find(i => i.practiceId === 1).compare).to.eql(null));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/records"
+      }
+    },
+    {
+      "name": "10 사전 - UNIT 사전 q1=잘 모르겠어요, 사후 q1=멈춘다로 마침",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "pm.test('DONE', () => pm.expect(pm.response.json().status).to.eql('DONE'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/practices/1/record",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"answers\": {\n    \"pre\": {\n      \"q1\": \"c\",\n      \"q2\": \"a\",\n      \"q3\": \"a\",\n      \"q4\": \"a\",\n      \"q5\": \"a\",\n      \"q6\": \"a\",\n      \"q7\": \"a\",\n      \"q8\": \"a\"\n    },\n    \"cardsRead\": [\n      1,\n      2,\n      3,\n      4,\n      5\n    ],\n    \"post\": {\n      \"q1\": \"b\",\n      \"q2\": \"a\",\n      \"q3\": \"a\",\n      \"q4\": \"a\",\n      \"q5\": \"a\",\n      \"q6\": \"a\",\n      \"q7\": \"a\",\n      \"q8\": \"a\"\n    }\n  },\n  \"done\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "10 사전 - SCENARIO 진행 저장 (done:false)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/practices/2/record",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"answers\": {\n    \"choice\": \"c2\"\n  },\n  \"done\": false\n}"
+        }
+      }
+    },
+    {
+      "name": "10 사전 - EMOTION 마침",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/practices/3/record",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"answers\": {\n    \"clues\": [\n      \"k1\"\n    ],\n    \"feelings\": [\n      \"f1\"\n    ]\n  },\n  \"done\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "11 전체 - 개수와 목록 (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "pm.test('최상위 필드', () => pm.expect(b).to.have.keys('doneCount','inProgressCount','items'));pm.test('항목 필드', () => b.items.forEach(i => pm.expect(i).to.have.keys('practiceId','title','type','area','level','status','completedAt','updatedAt','compare')));",
+              "pm.collectionVariables.set('total', String(b.items.length));",
+              "pm.collectionVariables.set('doneCount', String(b.doneCount));",
+              "pm.collectionVariables.set('inProgressCount', String(b.inProgressCount));",
+              "pm.test('개수 = 목록 길이', () => pm.expect(b.doneCount + b.inProgressCount).to.eql(b.items.length));",
+              "pm.test('UNIT·EMOTION은 DONE, SCENARIO는 IN_PROGRESS', () => { const m = id => b.items.find(i => i.practiceId === id).status; pm.expect(m(1)).to.eql('DONE'); pm.expect(m(3)).to.eql('DONE'); pm.expect(m(2)).to.eql('IN_PROGRESS'); });",
+              "pm.test('DONE이면 completedAt이 +09:00', () => b.items.filter(i => i.status === 'DONE').forEach(i => pm.expect(i.completedAt).to.match(/[+]09:00$/)));",
+              "pm.test('IN_PROGRESS 기록의 completedAt은 null이거나 완료한 적 있는 시각(다시 하는 중)이다', () => { const c = b.items.find(i => i.practiceId === 2).completedAt; pm.expect(c === null || /\\+09:00$/.test(c)).to.eql(true); });",
+              "pm.test('updatedAt은 +09:00', () => b.items.forEach(i => pm.expect(i.updatedAt).to.match(/[+]09:00$/)));",
+              "pm.test('기본은 최신순(updatedAt 내림차순)', () => { for (let k = 1; k < b.items.length; k++) pm.expect(b.items[k-1].updatedAt >= b.items[k].updatedAt).to.eql(true); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/records"
+      }
+    },
+    {
+      "name": "11 UNIT compare - 사전·사후 문구와 changed (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "const u = b.items.find(i => i.practiceId === 1);",
+              "pm.test('문항 8개', () => pm.expect(u.compare.length).to.eql(8));",
+              "pm.test('compare 필드', () => u.compare.forEach(c => pm.expect(c).to.have.keys('questionId','text','then','now','changed')));",
+              "pm.test('q1은 then=잘 모르겠어요, now=보내지 않고 대화를 멈춘다, changed true', () => { const c = u.compare[0]; pm.expect(c.questionId).to.eql('q1'); pm.expect(c.then).to.eql('잘 모르겠어요'); pm.expect(c.now).to.eql('보내지 않고 대화를 멈춘다'); pm.expect(c.changed).to.eql(true); });",
+              "pm.test('나머지는 changed false, 점수 필드 없음', () => u.compare.slice(1).forEach(c => { pm.expect(c.changed).to.eql(false); pm.expect(c).to.not.have.property('score'); }));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/records"
+      }
+    },
+    {
+      "name": "11 UNIT이 아니면 compare null (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "pm.test('SCENARIO·EMOTION compare null', () => { pm.expect(b.items.find(i => i.practiceId === 2).compare).to.eql(null); pm.expect(b.items.find(i => i.practiceId === 3).compare).to.eql(null); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/records"
+      }
+    },
+    {
+      "name": "11 sort=old - 오래된 순 (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "pm.test('updatedAt 오름차순', () => { for (let k = 1; k < b.items.length; k++) pm.expect(b.items[k-1].updatedAt <= b.items[k].updatedAt).to.eql(true); });",
+              "pm.test('개수는 그대로', () => pm.expect(String(b.items.length)).to.eql(pm.collectionVariables.get('total')));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/records?sort=old"
+      }
+    },
+    {
+      "name": "11 sort=recent 명시 (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "pm.test('updatedAt 내림차순', () => { for (let k = 1; k < b.items.length; k++) pm.expect(b.items[k-1].updatedAt >= b.items[k].updatedAt).to.eql(true); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/records?sort=recent"
+      }
+    },
+    {
+      "name": "11 status=DONE (200, 개수는 전체 기준)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "pm.test('모두 DONE', () => b.items.forEach(i => pm.expect(i.status).to.eql('DONE')));",
+              "pm.test('목록 길이 = doneCount', () => pm.expect(b.items.length).to.eql(b.doneCount));",
+              "pm.test('개수는 필터와 무관', () => { pm.expect(String(b.doneCount)).to.eql(pm.collectionVariables.get('doneCount')); pm.expect(String(b.inProgressCount)).to.eql(pm.collectionVariables.get('inProgressCount')); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/records?status=DONE"
+      }
+    },
+    {
+      "name": "11 status=IN_PROGRESS (200, 개수는 전체 기준)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "pm.test('모두 IN_PROGRESS', () => b.items.forEach(i => pm.expect(i.status).to.eql('IN_PROGRESS')));",
+              "pm.test('목록 길이 = inProgressCount', () => pm.expect(b.items.length).to.eql(b.inProgressCount));",
+              "pm.test('개수는 필터와 무관', () => pm.expect(String(b.doneCount)).to.eql(pm.collectionVariables.get('doneCount')));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/records?status=IN_PROGRESS"
+      }
+    },
+    {
+      "name": "11 status와 sort 같이 (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "pm.test('DONE만, 오래된 순', () => { b.items.forEach(i => pm.expect(i.status).to.eql('DONE')); for (let k = 1; k < b.items.length; k++) pm.expect(b.items[k-1].updatedAt <= b.items[k].updatedAt).to.eql(true); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/records?status=DONE&sort=old"
+      }
+    },
+    {
+      "name": "10 UNIT 다시 하기 (restart)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/practices/1/record",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"restart\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "11 다시 하는 UNIT은 IN_PROGRESS + completedAt 유지 + compare null (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "const u = b.items.find(i => i.practiceId === 1);",
+              "pm.test('IN_PROGRESS', () => pm.expect(u.status).to.eql('IN_PROGRESS'));",
+              "pm.test('완료한 적 있어 completedAt 유지', () => pm.expect(u.completedAt).to.match(/[+]09:00$/));",
+              "pm.test('답을 비웠으니 compare null', () => pm.expect(u.compare).to.eql(null));",
+              "pm.test('inProgressCount가 1 늘고 doneCount가 1 줆', () => { pm.expect(b.inProgressCount).to.eql(Number(pm.collectionVariables.get('inProgressCount')) + 1); pm.expect(b.doneCount).to.eql(Number(pm.collectionVariables.get('doneCount')) - 1); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/records"
+      }
+    },
+    {
+      "name": "11 잘못된 status (400 VALIDATION_FAILED)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));",
+              "const b = pm.response.json();",
+              "pm.test('VALIDATION_FAILED', () => pm.expect(b.code).to.eql('VALIDATION_FAILED'));",
+              "pm.test('fieldErrors에 status', () => pm.expect(b.fieldErrors[0].field).to.eql('status'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/records?status=NONE"
+      }
+    },
+    {
+      "name": "11 잘못된 sort (400 VALIDATION_FAILED)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));",
+              "const b = pm.response.json();",
+              "pm.test('VALIDATION_FAILED', () => pm.expect(b.code).to.eql('VALIDATION_FAILED'));",
+              "pm.test('fieldErrors에 sort', () => pm.expect(b.fieldErrors[0].field).to.eql('sort'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/records?sort=x"
+      }
+    },
+    {
+      "name": "11 토큰 없이 조회 (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/records"
+      }
+    },
+    {
+      "name": "11 이음쌤 토큰으로 조회 (403)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('403', () => pm.response.to.have.status(403));",
+              "pm.test('FORBIDDEN', () => pm.expect(pm.response.json().code).to.eql('FORBIDDEN'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{teacherToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/records"
+      }
+    }
+  ]
+}
