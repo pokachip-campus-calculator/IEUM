@@ -254,6 +254,16 @@ export default class Scenario extends Component<any, any> {
                   {v.choosing ? (
                     <section className="ie-ask" aria-labelledby="ask">
                       <div className="ie-ask-head">
+                        <svg className="ie-ask-spark" viewBox="0 0 48 48" aria-hidden="true">
+                          <defs>
+                            <linearGradient id="ask-sp" x1="0" y1="1" x2="1" y2="0">
+                              <stop offset="0" stopColor="#FFB88C" />
+                              <stop offset="1" stopColor="#B8A4FF" />
+                            </linearGradient>
+                          </defs>
+                          <path d="M20 6 L24 20 L38 24 L24 28 L20 42 L16 28 L2 24 L16 20Z" fill="url(#ask-sp)" />
+                          <path d="M36 4 L38 10 L44 12 L38 14 L36 20 L34 14 L28 12 L34 10Z" fill="#C8B8FF" />
+                        </svg>
                         <h2 id="ask" className="ie-h2">
                           어떻게 해야 할까요?
                         </h2>
@@ -300,6 +310,7 @@ export default class Scenario extends Component<any, any> {
                             onClick={v.toResult}
                           >
                             결과 살펴보기
+                            <svg width="18" height="18" viewBox="0 0 256 256" aria-hidden="true"><path d="M40 128h176M144 56l72 72-72 72" fill="none" stroke="currentColor" strokeWidth="22" strokeLinecap="round" strokeLinejoin="round" /></svg>
                           </button>
                         ) : null}{" "}
                         {v.noPick ? (
@@ -310,6 +321,7 @@ export default class Scenario extends Component<any, any> {
                               aria-disabled="true"
                             >
                               결과 살펴보기
+                              <svg width="18" height="18" viewBox="0 0 256 256" aria-hidden="true"><path d="M40 128h176M144 56l72 72-72 72" fill="none" stroke="currentColor" strokeWidth="22" strokeLinecap="round" strokeLinejoin="round" /></svg>
                             </button>
                             <span className="ie-help">
                               선택지를 하나 고르면 결과를 볼 수 있어요.

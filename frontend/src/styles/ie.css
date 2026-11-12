@@ -1837,3 +1837,72 @@ a.ie-card:hover,.ie-card--link:hover,.ie-pcard:hover{box-shadow:0 2px 4px rgba(6
 .ie-3lic{background:#fff;box-shadow:0 2px 6px -2px rgba(94,84,190,.45),inset 0 0 0 1.5px var(--soft)}
 .ie-3lab:hover,.ie-3lab:focus-visible{border-color:var(--c);background:linear-gradient(180deg,rgba(255,255,255,.94) 0%,rgba(250,247,255,.78) 100%)}
 .ie-w3.is-near .ie-3lab.is-front{box-shadow:0 14px 26px -12px rgba(94,84,190,.65),inset 0 1px 0 rgba(255,255,255,.95)}
+
+
+/* ========== 파스텔 카드·버튼 (맨 아래에 두어 앞선 규칙을 덮어써요) ========== */
+:root{
+  --ie-pc-r:28px; --ie-pc-r-lg:32px;
+  --ie-pc-line:rgba(185,175,240,.38);
+  --ie-pc-shadow:0 12px 32px -14px rgba(110,96,200,.28),0 2px 6px rgba(110,96,200,.06);
+  --ie-pc-shadow-hi:0 18px 40px -14px rgba(110,96,200,.38),0 3px 8px rgba(110,96,200,.08);
+  --ie-pc-action:linear-gradient(135deg,#7F88DB 0%,#5B57B8 100%);
+  --ie-pc-action-hover:linear-gradient(135deg,#7079D2 0%,#4E4AAA 100%);
+  --ie-pc-ring:#5B57B8;
+}
+/* 카드 */
+.ie-card,.ie-ask,.ie-noti{border-radius:var(--ie-pc-r);border:1px solid var(--ie-pc-line);
+  background:linear-gradient(160deg,#FFFFFF 0%,#F9F7FF 100%);box-shadow:var(--ie-pc-shadow),inset 0 1px 0 #fff}
+.ie-card--hero{border-radius:var(--ie-pc-r-lg);background:linear-gradient(135deg,#FFF3EE 0%,#F7F0FF 55%,#ECF1FF 100%);box-shadow:var(--ie-pc-shadow-hi),inset 0 1px 0 #fff}
+.ie-card--sky{background:linear-gradient(150deg,#F7FBFF 0%,#E4F0FF 100%)}
+.ie-card--lav{background:linear-gradient(150deg,#FBF9FF 0%,#EBE6FF 100%)}
+.ie-card--mint{background:linear-gradient(150deg,#F7FDFA 0%,#DFF4EA 100%)}
+.ie-card--peach{background:linear-gradient(150deg,#FFFAF6 0%,#FFE6D8 100%)}
+.ie-card--flat{border-radius:22px;background:#F7F6FD;border-color:transparent;box-shadow:none}
+a.ie-card:hover,.ie-card--link:hover{border-color:rgba(150,140,225,.6);box-shadow:var(--ie-pc-shadow-hi);transform:translateY(-2px)}
+.ie-noti{border-radius:24px}
+.ie-noti.is-unread{background:linear-gradient(150deg,#FFFFFF 0%,#F1EDFF 100%);border-color:rgba(150,140,225,.5)}
+/* 선택 카드·칩 */
+.ie-option{border-radius:24px;border:1.5px solid var(--ie-pc-line);background:#FFFFFF;box-shadow:var(--ie-pc-shadow)}
+.ie-option:hover{border-color:rgba(150,140,225,.7);box-shadow:var(--ie-pc-shadow-hi)}
+.ie-option--card{border-radius:26px}
+.ie-option[aria-checked="true"]{background:#FFFFFF;border-color:var(--ie-pc-ring);box-shadow:0 0 0 1px var(--ie-pc-ring),0 16px 34px -14px rgba(91,87,184,.45)}
+.ie-option--card[aria-checked="true"] .ie-letter::before{background:var(--ie-pc-action);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 6px 12px -4px rgba(91,87,184,.5)}
+.ie-letter::before{border-radius:14px;background:linear-gradient(160deg,#F7F5FF,#E4DFFB);box-shadow:inset 0 1px 0 #fff,0 4px 10px -4px rgba(110,96,200,.3)}
+.ie-opt-ck{background:var(--ie-pc-action);box-shadow:0 6px 12px -4px rgba(91,87,184,.55)}
+.ie-chip{border-radius:999px;border:1.5px solid var(--ie-pc-line);background:#FFFFFF;box-shadow:0 6px 16px -10px rgba(110,96,200,.3)}
+.ie-chip[aria-pressed="true"],.ie-chip[aria-checked="true"],.ie-chip[aria-selected="true"]{background:linear-gradient(135deg,#F3F1FF,#E6E2FC);border-color:var(--ie-pc-ring);box-shadow:0 0 0 1px var(--ie-pc-ring),0 10px 20px -10px rgba(91,87,184,.45)}
+/* 버튼: 알약 모양 */
+.ie-btn{border-radius:999px;font-weight:700;letter-spacing:-.01em;gap:8px}
+.ie-btn--lg{min-height:46px;padding:10px 22px;font-size:14.5px}
+.ie-btn--sm{min-height:38px;padding:7px 16px}
+.ie-btn--primary{background:var(--ie-pc-action);color:#FFFFFF;box-shadow:0 12px 24px -10px rgba(91,87,184,.6),0 2px 4px rgba(60,60,140,.14),inset 0 1px 0 rgba(255,255,255,.28)}
+.ie-btn--primary:hover,.ie-btn--primary.is-hover{background:var(--ie-pc-action-hover);transform:translateY(-1px);box-shadow:0 16px 28px -10px rgba(91,87,184,.68),0 3px 6px rgba(60,60,140,.16),inset 0 1px 0 rgba(255,255,255,.28)}
+.ie-btn--primary:active,.ie-btn--primary.is-press{background:linear-gradient(135deg,#6A72C8,#46439B);transform:none;box-shadow:inset 0 2px 5px rgba(20,20,80,.35)}
+.ie-btn--secondary{background:linear-gradient(135deg,#F4F1FF,#E5E0FC);color:#4E3FA6;border-color:rgba(150,140,225,.35);box-shadow:0 8px 18px -10px rgba(110,96,200,.35)}
+.ie-btn--secondary:hover,.ie-btn--secondary.is-hover{background:linear-gradient(135deg,#ECE8FF,#DCD6FA);transform:translateY(-1px)}
+.ie-btn--outline{background:#FFFFFF;color:#4E3FA6;border-color:rgba(150,140,225,.45);box-shadow:0 8px 18px -10px rgba(110,96,200,.3)}
+.ie-btn--outline:hover,.ie-btn--outline.is-hover{background:#FBFAFF;border-color:var(--ie-pc-ring);box-shadow:0 12px 22px -10px rgba(110,96,200,.4);transform:translateY(-1px)}
+.ie-btn--help{background:linear-gradient(135deg,#FFF6F0,#FFE3D3);border-color:#F4C9B3;box-shadow:0 8px 18px -10px rgba(220,130,90,.4)}
+.ie-btn--danger{border-radius:999px}
+.ie-btn--text{box-shadow:none;background:transparent;border-radius:999px}
+.ie-btn:disabled,.ie-btn[aria-disabled="true"]{background:#EFEEF7;color:#8C8AA6;box-shadow:none;transform:none;border-color:transparent}
+.ie-iconbtn{border-radius:999px;border:1px solid var(--ie-pc-line);background:#FFFFFF;box-shadow:0 6px 14px -8px rgba(110,96,200,.35)}
+@media (prefers-reduced-motion:reduce){.ie-btn--primary:hover,.ie-btn--secondary:hover,.ie-btn--outline:hover,a.ie-card:hover,.ie-card--link:hover{transform:none}}
+
+/* ----- 선택 카드 화면 다듬기(시안 2) ----- */
+:root{--ie-pc-action:linear-gradient(135deg,#8579E4 0%,#5F55C8 100%);--ie-pc-action-hover:linear-gradient(135deg,#766AD9 0%,#5348BA 100%);--ie-pc-ring:#6A5BE0}
+.ie-dock{padding:0;background:none;backdrop-filter:none;box-shadow:none;border-radius:0}
+.ie-ask-head{position:relative;padding-left:44px;gap:2px}
+.ie-ask-head .ie-h2{color:#2B2870;font-weight:800;letter-spacing:-.02em}
+.ie-ask-head .ie-sub{color:#6F6B95;font-size:13.5px}
+.ie-ask-spark{position:absolute;left:0;top:2px;width:34px;height:34px}
+.ie-option--card{background:rgba(255,255,255,.9);border:1.5px solid rgba(190,180,245,.55);box-shadow:0 10px 24px -16px rgba(110,96,200,.35)}
+.ie-option--card[aria-checked="true"]{background:linear-gradient(160deg,#F6F2FF 0%,#EAE4FF 100%);border-color:var(--ie-pc-ring);box-shadow:0 0 0 1px var(--ie-pc-ring),0 18px 36px -16px rgba(106,91,224,.5)}
+.ie-letter::before{width:46px;height:46px;border-radius:50%;color:#4E3FA6;background:linear-gradient(160deg,#F4F1FF,#E3DDFC);box-shadow:0 6px 14px -8px rgba(110,96,200,.45),inset 0 1px 0 #fff}
+.ie-option--card[aria-checked="true"] .ie-letter::before{color:#fff;background:var(--ie-pc-action);box-shadow:0 8px 16px -6px rgba(95,85,200,.6),inset 0 1px 0 rgba(255,255,255,.35)}
+.ie-opt-ck{background:var(--ie-pc-action);width:30px;height:30px}
+/* 키캡(입체) 규칙을 덮어쓰고, 평평한 알약+부드러운 그림자로 */
+.ie-btn--primary:not(:disabled):not([aria-disabled="true"]){background:var(--ie-pc-action);box-shadow:0 12px 24px -10px rgba(95,85,200,.6),0 2px 4px rgba(60,60,140,.12),inset 0 1px 0 rgba(255,255,255,.3)}
+.ie-btn--primary:not(:disabled):not([aria-disabled="true"]):hover{background:var(--ie-pc-action-hover);transform:translateY(-1px);box-shadow:0 16px 28px -10px rgba(95,85,200,.68),0 3px 6px rgba(60,60,140,.14),inset 0 1px 0 rgba(255,255,255,.3)}
+.ie-btn--primary:not(:disabled):not([aria-disabled="true"]):active{background:linear-gradient(135deg,#7468D6,#5046B5);transform:translateY(1px);box-shadow:inset 0 2px 5px rgba(20,20,80,.3)}
+.ie-option--card::before{content:none}
