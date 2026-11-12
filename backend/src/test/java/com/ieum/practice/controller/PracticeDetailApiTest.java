@@ -20,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -157,6 +158,20 @@ class PracticeDetailApiTest {
         save(2, "{\"answers\":{\"choice\":\"c3\",\"feelings\":[\"f1\"]}}").andExpect(status().isOk());
         assertEquals("{\"choice\":\"c3\",\"feelings\":[\"f1\"]}", savedRecord().getAnswersJson());
         assertEquals(r, savedRecord());
+    }
+
+    @Test
+    void 첫_저장이_동시에_겹쳐_유니크_키에_걸리면_한_번_다시_처리해_200() throws Exception {
+        PracticeRecord existing = new PracticeRecord(1L, 2L, "{\"choice\":\"c1\"}");
+        when(recordRepository.findByUserIdAndPracticeId(1L, 2L))
+                .thenReturn(Optional.empty())          // 첫 시도: 아직 기록이 없어 새로 만들려 한다
+                .thenReturn(Optional.of(existing));    // 다시 시도: 다른 요청이 만든 기록이 보인다
+        when(recordRepository.saveAndFlush(any(PracticeRecord.class)))
+                .thenThrow(new DataIntegrityViolationException("uq_records_user_practice"))
+                .thenAnswer(i -> i.getArgument(0));
+        save(2, "{\"answers\":{\"choice\":\"c3\"}}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.answers.choice").value("c3"));
     }
 
     @Test

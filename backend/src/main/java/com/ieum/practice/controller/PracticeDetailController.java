@@ -5,6 +5,7 @@ import com.ieum.practice.dto.PracticeDetailResponse;
 import com.ieum.practice.dto.PracticeDetailResponse.RecordView;
 import com.ieum.practice.dto.SaveRecordRequest;
 import com.ieum.practice.service.PracticeDetailService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,6 +38,11 @@ public class PracticeDetailController {
     @PutMapping("/{id}/record")
     public RecordView saveRecord(@AuthenticationPrincipal AuthUser user, @PathVariable long id,
                                  @RequestBody SaveRecordRequest request) {
-        return detailService.saveRecord(user.id(), user.role(), id, request);
+        try {
+            return detailService.saveRecord(user.id(), user.role(), id, request);
+        } catch (DataIntegrityViolationException e) {
+            // 같은 연습의 첫 저장이 동시에 두 번 오면 한쪽이 유니크 키에 걸린다. 앞선 저장이 끝났으니 한 번만 다시 처리한다
+            return detailService.saveRecord(user.id(), user.role(), id, request);
+        }
     }
 }
