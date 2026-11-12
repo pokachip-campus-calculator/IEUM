@@ -246,7 +246,7 @@ export default class Scenario extends Component<any, any> {
                           className="ie-btn ie-btn--primary ie-btn--lg"
                           onClick={v.toChoose}
                         >
-                          너라면 어떻게 할까요?
+                          어떻게 해야 할까요?
                         </button>
                       </div>
                     </section>
@@ -255,7 +255,7 @@ export default class Scenario extends Component<any, any> {
                     <section className="ie-ask" aria-labelledby="ask">
                       <div className="ie-ask-head">
                         <h2 id="ask" className="ie-h2">
-                          너라면 어떻게 해 볼까요?
+                          어떻게 해야 할까요?
                         </h2>
                         <p className="ie-body ie-sub">
                           하나를 골라요. 결과를 본 뒤 다른 선택도 언제든 해 볼 수 있어요.
