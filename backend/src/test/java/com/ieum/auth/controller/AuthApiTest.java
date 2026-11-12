@@ -67,4 +67,17 @@ class AuthApiTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("BAD_CREDENTIALS"));
     }
+
+    @Test
+    void 같은_아이디로_5번_틀리면_6번째는_429_TOO_MANY_ATTEMPTS() throws Exception {
+        String body = "{\"loginId\":\"locktest\",\"password\":\"password1\"}";
+        for (int i = 0; i < 5; i++) {
+            mockMvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isUnauthorized());
+        }
+        mockMvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.code").value("TOO_MANY_ATTEMPTS"))
+                .andExpect(jsonPath("$.message").value("로그인 시도가 너무 많아요. 잠시 후 다시 시도해 주세요."));
+    }
 }

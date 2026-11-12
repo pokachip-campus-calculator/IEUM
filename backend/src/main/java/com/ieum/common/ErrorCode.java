@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
         | RECORD_INCOMPLETE    | 400 (BAD_REQUEST)  | 필수 선택이 빠짐      |
         | UNAUTHORIZED         | 401 (UNAUTHORIZED) | 토큰 없음·만료·탈퇴 |
         | BAD_CREDENTIALS      | 401 (UNAUTHORIZED) | 아이디·비밀번호 불일치 |
+        | TOO_MANY_ATTEMPTS    | 429 (TOO_MANY_REQUESTS) | 로그인 5회 연속 실패로 5분 잠김 |
         | GUARDIAN_PENDING     | 403 (FORBIDDEN)    | 보호자 확인 전 로그인 |
         | FORBIDDEN            | 403 (FORBIDDEN)    | 권한 없음           |
         | TEACHER_SIGNUP_CLOSED | 403 (FORBIDDEN)   | 이음쌤 가입 시도      |
@@ -37,6 +38,7 @@ public enum ErrorCode {
     RECORD_INCOMPLETE(HttpStatus.BAD_REQUEST, "필수 선택이 빠졌습니다."),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
     BAD_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 맞지 않습니다."),
+    TOO_MANY_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "로그인 시도가 너무 많아요. 잠시 후 다시 시도해 주세요."),
     GUARDIAN_PENDING(HttpStatus.FORBIDDEN, "보호자 확인이 끝나면 시작할 수 있습니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없습니다."),
     TEACHER_SIGNUP_CLOSED(HttpStatus.FORBIDDEN, "이음쌤은 기관 확인을 거친 분만 가입할 수 있어요. 가입 문의는 운영 포카칩(https://github.com/pokachip-campus-calculator/IEUM)으로 연락해 주세요."),
