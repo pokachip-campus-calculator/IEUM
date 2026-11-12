@@ -105,7 +105,7 @@ export const recordService = {
     scenario: string;
     choice: number | null;
     feelings: string[];
-    note: string;
+    note?: string;
   }): Promise<void> {
     if (USE_MOCK) return;
     if (req.choice === null) throw new Error("선택한 방법을 먼저 골라 주세요.");
@@ -114,7 +114,7 @@ export const recordService = {
         choice: `c${req.choice + 1}`,
         feelings: selectedIds(req.feelings, scenarioFeelings, "f"),
       },
-      myNote: req.note,
+      myNote: req.note ?? "",
       done: true,
     });
   },
@@ -143,17 +143,17 @@ export const recordService = {
     practiceId: number;
     choice: number | null;
     feelings: string[];
-    note: string;
+    note?: string;
   }): Promise<void> {
     if (USE_MOCK) return;
     const answers: Record<string, unknown> = {};
     if (req.choice !== null) answers.choice = `c${req.choice + 1}`;
     const feelings = selectedIds(req.feelings, scenarioFeelings, "f");
     if (feelings.length > 0) answers.feelings = feelings;
-    if (Object.keys(answers).length === 0 && req.note.trim() === "") return; // 저장할 게 없어요
+    if (Object.keys(answers).length === 0 && (req.note ?? "").trim() === "") return; // 저장할 게 없어요
     await http("PUT", `/practices/${req.practiceId}/record`, {
       answers,
-      myNote: req.note,
+      myNote: req.note ?? "",
       done: false,
     });
   },
@@ -206,6 +206,7 @@ export const recordService = {
     feelings: string[];
   }): Promise<void> {
     if (USE_MOCK) return;
+    if (req.clues.length + req.feelings.length === 0) return; // 단서·마음이 없으면 완료하지 않아요
     await http("PUT", `/practices/${req.practiceId}/record`, {
       answers: {
         clues: selectedIds(req.clues, emotionClues, "k"),
