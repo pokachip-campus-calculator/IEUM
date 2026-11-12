@@ -63,6 +63,9 @@ public class MessageThread {
 
     public Long getId() { return id; }
     public Long getStudentId() { return studentId; }
+    // 이관 수락: 쪽지 묶음의 이음쌤을 받는 이음쌤으로 바꾼다
+    public void reassignTeacher(Long teacherId) { this.teacherId = teacherId; }
+
     public Long getTeacherId() { return teacherId; }
     public ThreadTopic getTopic() { return topic; }
     public Long getPracticeId() { return practiceId; }

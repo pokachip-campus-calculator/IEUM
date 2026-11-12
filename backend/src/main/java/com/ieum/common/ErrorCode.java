@@ -26,6 +26,8 @@ import org.springframework.http.HttpStatus;
         | NOT_FOUND            | 404 (NOT_FOUND)    | 없는 id            |
         | LOGIN_ID_TAKEN       | 409 (CONFLICT)     | 아이디 중복         |
         | NO_TEACHER_AVAILABLE | 409 (CONFLICT)     | 맡을 이음쌤 없음     |
+        | TRANSFER_ALREADY_PENDING | 409 (CONFLICT) | 기다리는 이관 신청이 이미 있음 |
+        | TRANSFER_NOT_PENDING | 409 (CONFLICT)     | 이미 수락했거나 담당이 바뀐 신청 |
         | METHOD_NOT_ALLOWED   | 405                | 지원하지 않는 요청 방식 |
         | INTERNAL_ERROR       | 500                | 서버 내부 오류        | */
 
@@ -41,6 +43,8 @@ public enum ErrorCode {
     NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 정보를 찾을 수 없습니다."),
     LOGIN_ID_TAKEN(HttpStatus.CONFLICT, "이미 사용 중인 아이디입니다."),
     NO_TEACHER_AVAILABLE(HttpStatus.CONFLICT, "배정된 이음쌤이 없습니다."),
+    TRANSFER_ALREADY_PENDING(HttpStatus.CONFLICT, "이미 기다리는 이관 신청이 있습니다."),
+    TRANSFER_NOT_PENDING(HttpStatus.CONFLICT, "이미 처리됐거나 더 이상 수락할 수 없는 신청입니다."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "지원하지 않는 요청 방식입니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버에 문제가 생겼습니다. 잠시 뒤 다시 시도해 주세요.");
 
