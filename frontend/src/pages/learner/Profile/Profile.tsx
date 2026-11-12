@@ -459,7 +459,7 @@ export default class Profile extends Component<any, any> {
                   </div>
                   <p className="ie-body">
                     쪽지로 이야기를 시작하면 이음쌤이 직접 읽고 답해요. 이음쌤은 질문지 응답과 비교
-                    결과를 볼 수 있고, 내가 남긴 한 줄 메모는 볼 수 없어요.
+                    결과를 볼 수 있어요.
                   </p>
                   <div className="ie-row">
                     <A className="ie-btn ie-btn--secondary ie-btn--sm" href={ROUTES.messages}>

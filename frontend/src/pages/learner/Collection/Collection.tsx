@@ -393,8 +393,7 @@ export default class Collection extends Component<any, any> {
                 <section className="ie-card ie-card--flat" style={{ gap: "8px" }}>
                   <b className="ie-body ie-strong">내 기록은 누가 볼 수 있나요?</b>
                   <p className="ie-body">
-                    나와, 배정된 이음쌤이에요. 이음쌤은 질문지 응답과 비교 결과를 볼 수 있어요. 내가
-                    남긴 한 줄 메모는 이음쌤에게 보이지 않아요.
+                    나와, 배정된 이음쌤이에요. 이음쌤은 질문지 응답과 비교 결과를 볼 수 있어요.
                   </p>
                   <p className="ie-meta">
                     탈퇴하면 기록을 바로 지우고, 마지막 이용 뒤 1년이 지나도 지워요.
