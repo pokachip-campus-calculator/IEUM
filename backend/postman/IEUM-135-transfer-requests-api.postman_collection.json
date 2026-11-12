@@ -1,0 +1,248 @@
+{
+  "info": {
+    "name": "IEUM #135 이음쌤 이관 신청·수락 API (25·26)",
+    "description": "위에서 아래로 순서대로 실행한다.\n\n준비: MySQL에 db/ 스키마(V6까지), .env의 JWT_SECRET, 서버(localhost:8080), DB에 이음쌤(TEACHER, ACTIVE) 두 명이 있어야 한다. 이 컬렉션은 이음쌤을 가입시키지 않는다. teacherLoginId(신청하는 이음쌤 A)·teacher2LoginId(받는 이음쌤 B)와 비밀번호를 DB에 있는 계정으로 채운다.\n\n주의: 학습자의 첫 쪽지(12)는 맡은 학생이 가장 적은 이음쌤에게 자동 배정된다. A가 아닌 이음쌤에게 배정되면 '03 A의 담당 학습자 찾기'에서 학습자가 안 나오니, 그때는 DB에서 학생을 A의 담당으로 맞춘다.\nUPDATE users s JOIN users t ON t.login_id = '<teacherLoginId>' SET s.teacher_id = t.id, s.teacher_assigned_at = NOW() WHERE s.login_id = 'xfer13501';\nUPDATE message_threads m JOIN users s ON s.id = m.student_id JOIN users t ON t.login_id = '<teacherLoginId>' SET m.teacher_id = t.id WHERE s.login_id = 'xfer13501';\n\n확인할 것: 신청하면 B에게 TRANSFER_REQUESTED 알림(linkType TRANSFER, linkId=신청 번호)이 생기고, 수락하면 학습자의 담당이 B로 바뀌며 A에게 TRANSFER_ACCEPTED 알림이 생긴다. 학습자에게는 알림이 생기지 않는다.\n\n뒷정리: 테스트 데이터(xfer13501 학습자, 쪽지, 신청, 알림)는 DB에 남고 학습자의 담당은 B로 바뀐 채로 남는다. 다시 돌리려면 위 UPDATE로 담당을 A로 되돌린다.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api/v1" },
+    { "key": "password", "value": "ieumtest1234" },
+    { "key": "studentLoginId", "value": "xfer13501" },
+    { "key": "teacherLoginId", "value": "ieumtea01" },
+    { "key": "teacherPassword", "value": "ieumteach1234" },
+    { "key": "teacher2LoginId", "value": "ieumtea02" },
+    { "key": "teacher2Password", "value": "ieumteach1234" },
+    { "key": "studentToken", "value": "" },
+    { "key": "teacherToken", "value": "" },
+    { "key": "teacher2Token", "value": "" },
+    { "key": "studentId", "value": "" },
+    { "key": "requestId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "00 사전 - 학습자 가입 (이미 있으면 409여도 괜찮음)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"STUDENT\",\n  \"loginId\": \"{{studentLoginId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"테스트\",\n  \"nickname\": \"이관확인\",\n  \"birthDate\": \"2008-01-01\",\n  \"phone\": \"01012345678\",\n  \"agreeTerms\": true,\n  \"agreePrivacy\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "00 사전 - 학습자 로그인 (토큰 자동 저장)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.collectionVariables.set('studentToken', pm.response.json().token);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": { "mode": "raw", "raw": "{\n  \"loginId\": \"{{studentLoginId}}\",\n  \"password\": \"{{password}}\"\n}" }
+      }
+    },
+    {
+      "name": "00 사전 - 학습자 첫 쪽지 (담당 이음쌤 배정)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+        ],
+        "url": "{{baseUrl}}/threads",
+        "body": { "mode": "raw", "raw": "{\n  \"topic\": \"ONLINE\",\n  \"body\": \"이관 확인용 쪽지예요\"\n}" }
+      }
+    },
+    {
+      "name": "01 사전 - 이음쌤 A 로그인 (토큰 자동 저장)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.collectionVariables.set('teacherToken', pm.response.json().token);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": { "mode": "raw", "raw": "{\n  \"loginId\": \"{{teacherLoginId}}\",\n  \"password\": \"{{teacherPassword}}\"\n}" }
+      }
+    },
+    {
+      "name": "01 사전 - 이음쌤 B 로그인 (토큰 자동 저장)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.collectionVariables.set('teacher2Token', pm.response.json().token);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": { "mode": "raw", "raw": "{\n  \"loginId\": \"{{teacher2LoginId}}\",\n  \"password\": \"{{teacher2Password}}\"\n}" }
+      }
+    },
+    {
+      "name": "03 A의 담당 학습자 찾기 (17, studentId 자동 저장)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "const found = pm.response.json().items.find(s => s.nickname === '이관확인');",
+        "pm.test('A의 담당에 이관확인 학습자가 있다(없으면 위 UPDATE로 맞춘다)', () => pm.expect(found).to.not.equal(undefined));",
+        "pm.collectionVariables.set('studentId', found.id);"
+      ] } }],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{teacherToken}}" }],
+        "url": "{{baseUrl}}/teacher/students?q=이관확인"
+      }
+    },
+    {
+      "name": "25-1 이관 신청 → 201 (requestId 자동 저장)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('201', () => pm.response.to.have.status(201));",
+        "const j = pm.response.json();",
+        "pm.test('PENDING + createdAt +09:00', () => { pm.expect(j.status).to.eql('PENDING'); pm.expect(j.createdAt).to.match(/\\+09:00$/); });",
+        "pm.collectionVariables.set('requestId', j.id);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{teacherToken}}" }
+        ],
+        "url": "{{baseUrl}}/teacher/students/{{studentId}}/transfer-requests",
+        "body": { "mode": "raw", "raw": "{\n  \"toLoginId\": \"{{teacher2LoginId}}\"\n}" }
+      }
+    },
+    {
+      "name": "25-2 같은 학습자 다시 신청 → 409 TRANSFER_ALREADY_PENDING",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('409', () => pm.response.to.have.status(409));",
+        "pm.test('code', () => pm.expect(pm.response.json().code).to.eql('TRANSFER_ALREADY_PENDING'));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{teacherToken}}" }
+        ],
+        "url": "{{baseUrl}}/teacher/students/{{studentId}}/transfer-requests",
+        "body": { "mode": "raw", "raw": "{\n  \"toLoginId\": \"{{teacher2LoginId}}\"\n}" }
+      }
+    },
+    {
+      "name": "25-3 나 자신에게 신청 → 400 VALIDATION_FAILED",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('400', () => pm.response.to.have.status(400));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{teacherToken}}" }
+        ],
+        "url": "{{baseUrl}}/teacher/students/{{studentId}}/transfer-requests",
+        "body": { "mode": "raw", "raw": "{\n  \"toLoginId\": \"{{teacherLoginId}}\"\n}" }
+      }
+    },
+    {
+      "name": "25-4 내 담당이 아닌 이음쌤(B)이 신청 → 403 FORBIDDEN",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('403', () => pm.response.to.have.status(403));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{teacher2Token}}" }
+        ],
+        "url": "{{baseUrl}}/teacher/students/{{studentId}}/transfer-requests",
+        "body": { "mode": "raw", "raw": "{\n  \"toLoginId\": \"{{teacherLoginId}}\"\n}" }
+      }
+    },
+    {
+      "name": "25-5 B의 알림에 TRANSFER_REQUESTED가 왔는지 (22)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "const n = pm.response.json().items.find(i => i.type === 'TRANSFER_REQUESTED' && i.linkId == pm.collectionVariables.get('requestId'));",
+        "pm.test('TRANSFER_REQUESTED, linkType TRANSFER, linkId=신청 번호', () => { pm.expect(n).to.not.equal(undefined); pm.expect(n.linkType).to.eql('TRANSFER'); });"
+      ] } }],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{teacher2Token}}" }],
+        "url": "{{baseUrl}}/notifications?unread=true"
+      }
+    },
+    {
+      "name": "26-1 신청한 A가 수락 시도 → 404 NOT_FOUND",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('404', () => pm.response.to.have.status(404));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{teacherToken}}" }],
+        "url": "{{baseUrl}}/teacher/transfer-requests/{{requestId}}/accept"
+      }
+    },
+    {
+      "name": "26-2 받는 B가 수락 → 204",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('204', () => pm.response.to.have.status(204));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{teacher2Token}}" }],
+        "url": "{{baseUrl}}/teacher/transfer-requests/{{requestId}}/accept"
+      }
+    },
+    {
+      "name": "26-3 같은 신청 다시 수락 → 409 TRANSFER_NOT_PENDING",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('409', () => pm.response.to.have.status(409));",
+        "pm.test('code', () => pm.expect(pm.response.json().code).to.eql('TRANSFER_NOT_PENDING'));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{teacher2Token}}" }],
+        "url": "{{baseUrl}}/teacher/transfer-requests/{{requestId}}/accept"
+      }
+    },
+    {
+      "name": "26-4 B의 담당 학습자에 이관된 학습자가 있다 (17)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.test('B의 담당에 학습자가 있다', () => pm.expect(pm.response.json().items.some(s => s.id == pm.collectionVariables.get('studentId'))).to.eql(true));"
+      ] } }],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{teacher2Token}}" }],
+        "url": "{{baseUrl}}/teacher/students?q=이관확인"
+      }
+    },
+    {
+      "name": "26-5 A의 알림에 TRANSFER_ACCEPTED가 왔는지 (22)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "const n = pm.response.json().items.find(i => i.type === 'TRANSFER_ACCEPTED' && i.linkId == pm.collectionVariables.get('requestId'));",
+        "pm.test('TRANSFER_ACCEPTED가 있다', () => pm.expect(n).to.not.equal(undefined));"
+      ] } }],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{teacherToken}}" }],
+        "url": "{{baseUrl}}/notifications?unread=true"
+      }
+    },
+    {
+      "name": "26-6 학습자 알림에는 이관 알림이 없다 (22)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.test('이관 알림 없음', () => pm.expect(pm.response.json().items.some(i => i.type.startsWith('TRANSFER'))).to.eql(false));"
+      ] } }],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+        "url": "{{baseUrl}}/notifications"
+      }
+    }
+  ]
+}

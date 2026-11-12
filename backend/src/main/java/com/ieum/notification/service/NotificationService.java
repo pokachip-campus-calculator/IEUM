@@ -77,6 +77,20 @@ public class NotificationService {
                 "이음쌤 홈에서 확인해 보세요", LinkType.STUDENT, studentId);
     }
 
+    // TRANSFER_REQUESTED: 받는 이음쌤에게 "이관 신청이 도착했어요" (누르면 그 신청, 알림 화면에서 수락)
+    @Transactional
+    public void transferRequested(Long toTeacherId, Long requestId) {
+        create(toTeacherId, NotificationType.TRANSFER_REQUESTED, "이관 신청이 도착했어요",
+                "알림에서 확인하고 수락할 수 있어요", LinkType.TRANSFER, requestId);
+    }
+
+    // TRANSFER_ACCEPTED: 신청한 이음쌤에게 "이관이 수락됐어요". 학습자에게는 만들지 않는다
+    @Transactional
+    public void transferAccepted(Long fromTeacherId, Long requestId) {
+        create(fromTeacherId, NotificationType.TRANSFER_ACCEPTED, "이관이 수락됐어요",
+                "학습자의 담당이 새 이음쌤으로 바뀌었어요", LinkType.TRANSFER, requestId);
+    }
+
     private void create(Long userId, NotificationType type, String title, String body, LinkType linkType, Long linkId) {
         repository.save(new Notification(userId, type, title, body, linkType, linkId));
     }
