@@ -20,9 +20,9 @@ export default class Emotion extends Component<any, any> {
   constructor(props) {
     super(props);
     this.state = {
-      phase: "pick",
-      clues: ["표정 · 시선을 아래로 향해요"],
-      feels: ["서운함", "걱정"],
+      phase: "look",
+      clues: [],
+      feels: [],
       note: "",
       apiError: "",
     };
@@ -30,7 +30,12 @@ export default class Emotion extends Component<any, any> {
   componentDidMount() {
     // "잠시 쉬기"로 저장해 둔 진행 중 기록이 있으면 고른 단서·마음을 그대로 이어서 보여 줘요.
     const draft = recordService.restoreEmotionProgress(this.props.record);
-    if (draft) this.setState({ clues: draft.clues, feels: draft.feels });
+    if (!draft) return;
+    this.setState({
+      clues: draft.clues,
+      feels: draft.feels,
+      phase: draft.clues.length + draft.feels.length > 0 ? "pick" : "look",
+    });
   }
   /** "잠시 쉬기": 홈으로 나가기 전에 지금까지 고른 것을 진행 중으로 저장해요(이동은 막지 않아요). */
   pauseAndLeave = () => {
@@ -66,7 +71,7 @@ export default class Emotion extends Component<any, any> {
         });
       }
     };
-    const idx = s.phase === "pick" ? 1 : 2;
+    const idx = s.phase === "look" ? 0 : s.phase === "pick" ? 1 : 2;
     const steps = ["장면 보기", "단서와 마음 고르기", "생각 정리하기"].map((l, i) => ({
       label: l,
       mark: i < idx ? "✓" : String(i + 1),
@@ -76,6 +81,7 @@ export default class Emotion extends Component<any, any> {
     const any = s.clues.length + s.feels.length > 0;
     return {
       steps,
+      looking: s.phase === "look",
       picking: s.phase === "pick",
       reflecting: s.phase === "reflect",
       clues: CL.map((c) => {
@@ -116,6 +122,7 @@ export default class Emotion extends Component<any, any> {
           });
         }
       },
+      toPick: () => this.setState({ phase: "pick" }),
       back: () => this.setState({ phase: "pick" }),
     };
   }
@@ -197,6 +204,17 @@ export default class Emotion extends Component<any, any> {
                     </h2>
                   </div>
                 </figure>
+                {v.looking ? (
+                  <div className="ie-dock ie-dock--span">
+                    <button
+                      type="button"
+                      className="ie-btn ie-btn--primary ie-btn--lg"
+                      onClick={v.toPick}
+                    >
+                      단서 찾으러 가기
+                    </button>
+                  </div>
+                ) : null}{" "}
                 {v.picking ? (
                   <div className="ie-twin">
                     <section className="ie-ask" aria-labelledby="q1">
