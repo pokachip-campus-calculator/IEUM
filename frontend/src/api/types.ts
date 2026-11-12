@@ -202,6 +202,8 @@ export interface AppNotification {
   body: string;
   href: string;
   unread: boolean;
+  /** 이관 신청 알림이면 수락할 신청 번호 */
+  transferId?: number;
 }
 
 /* ---------- 이음쌤 ---------- */

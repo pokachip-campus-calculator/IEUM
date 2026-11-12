@@ -252,6 +252,18 @@ export const teacherService = {
       memo: req.memo,
     });
   },
+  /** POST /teacher/students/{studentId}/transfer-requests — 내 담당 학습자를 다른 이음쌤에게 이관 신청(25). */
+  async requestTransfer(studentId: string, toLoginId: string): Promise<void> {
+    if (USE_MOCK) return;
+    await http("POST", `/teacher/students/${encodeURIComponent(studentId)}/transfer-requests`, {
+      toLoginId: toLoginId.trim(),
+    });
+  },
+  /** POST /teacher/transfer-requests/{id}/accept — 받는 이음쌤이 이관을 수락(26). */
+  async acceptTransfer(transferId: number): Promise<void> {
+    if (USE_MOCK) return;
+    await http("POST", `/teacher/transfer-requests/${transferId}/accept`);
+  },
   /** No teacher materials endpoint is currently provided by the backend. */
   async publishMaterials(_req: PublishMaterialsRequest): Promise<void> {
     if (USE_MOCK) return;

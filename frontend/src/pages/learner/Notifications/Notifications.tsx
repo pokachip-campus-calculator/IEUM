@@ -3,7 +3,7 @@
  * (원본 디자인: Notifications.dc.html)
  */
 import { Component, Fragment } from "react";
-import { notificationService, session } from "@/api";
+import { notificationService, session, teacherService } from "@/api";
 import { A } from "@/lib/A";
 import type { CSSProperties } from "react";
 import { img } from "@/assets";
@@ -12,12 +12,30 @@ import Header from "@/components/Header/Header";
 import SideNav from "@/components/SideNav/SideNav";
 import TeacherNav from "@/components/TeacherNav/TeacherNav";
 
+/** 이관 신청 카드는 안에 버튼이 있어서 링크(<a>) 대신 div로 그려요. */
+function NotiCard({ asDiv, href, className, onClick, children }: any) {
+  return asDiv ? (
+    <div className={className}>{children}</div>
+  ) : (
+    <A className={className} href={href} onClick={onClick}>
+      {children}
+    </A>
+  );
+}
+
 export default class Notifications extends Component<any, any> {
   [key: string]: any;
 
   constructor(props) {
     super(props);
-    this.state = { role: session.user.role, f: "all", read: {}, apiError: "" };
+    this.state = {
+      role: session.user.role,
+      f: "all",
+      read: {},
+      accepted: {},
+      closed: {},
+      apiError: "",
+    };
   }
   renderVals() {
     const s = this.state;
@@ -88,6 +106,28 @@ export default class Notifications extends Component<any, any> {
         isMsg: n.type === "msg",
         isSig: n.type === "signal",
         isDone: n.type === "done",
+        isTransfer: n.transferId !== undefined,
+        canAccept:
+          n.transferId !== undefined && s.accepted[n.id] !== true && s.closed[n.id] !== true,
+        didAccept: n.transferId !== undefined && s.accepted[n.id] === true,
+        accept: async () => {
+          this.setState({ apiError: "" });
+          try {
+            await teacherService.acceptTransfer(n.transferId);
+            await notificationService.markRead([n.id]);
+            this.setState({
+              accepted: Object.assign({}, s.accepted, { [n.id]: true }),
+              read: Object.assign({}, s.read, { [n.id]: true }),
+            });
+          } catch (error) {
+            // 이미 처리된 신청(409)이면 다시 눌러도 소용없으니 버튼을 없애요.
+            const handled = (error as { status?: number })?.status === 409;
+            this.setState({
+              apiError: error instanceof Error ? error.message : "이관을 수락하지 못했어요.",
+              closed: handled ? Object.assign({}, s.closed, { [n.id]: true }) : s.closed,
+            });
+          }
+        },
         read: async () => {
           this.setState({ apiError: "" });
           try {
@@ -188,7 +228,12 @@ export default class Notifications extends Component<any, any> {
                       <Fragment key={__i0}>
                         <li>
                           {n.showGroup ? <h2 className="ie-noti-group">{n.group}</h2> : null}{" "}
-                          <A className={n.cls} href={n.href} onClick={n.read}>
+                          <NotiCard
+                            asDiv={n.isTransfer}
+                            className={n.cls}
+                            href={n.href}
+                            onClick={n.read}
+                          >
                             <span className={n.icoCls} aria-hidden="true">
                               {n.isReply ? (
                                 <svg
@@ -281,20 +326,50 @@ export default class Notifications extends Component<any, any> {
                               </span>
                               <span className="ie-body ie-sub">{n.body}</span>
                               <span className="ie-meta">{n.when}</span>
+                              {n.canAccept ? (
+                                <span className="ie-row" style={{ gap: "10px", marginTop: "6px" }}>
+                                  <button
+                                    type="button"
+                                    className="ie-btn ie-btn--primary ie-btn--sm"
+                                    onClick={n.accept}
+                                  >
+                                    이관 수락하기
+                                  </button>
+                                  <span className="ie-help">
+                                    수락하면 이 학습자를 내가 맡게 돼요.
+                                  </span>
+                                </span>
+                              ) : null}
+                              {n.didAccept ? (
+                                <span
+                                  className="ie-help"
+                                  role="status"
+                                  style={{ marginTop: "6px" }}
+                                >
+                                  수락했어요. 이제 이 학습자를 내가 맡아요.
+                                </span>
+                              ) : null}
                             </span>{" "}
-                            <span className="ie-noti-go" aria-hidden="true">
-                              <svg width="16" height="16" viewBox="0 0 256 256" aria-hidden="true">
-                                <path
-                                  d="M96 48 L176 128 L96 208"
-                                  fill="none"
-                                  stroke="#4E3FA6"
-                                  strokeWidth="24"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </span>
-                          </A>
+                            {n.isTransfer ? null : (
+                              <span className="ie-noti-go" aria-hidden="true">
+                                <svg
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 256 256"
+                                  aria-hidden="true"
+                                >
+                                  <path
+                                    d="M96 48 L176 128 L96 208"
+                                    fill="none"
+                                    stroke="#4E3FA6"
+                                    strokeWidth="24"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </span>
+                            )}
+                          </NotiCard>
                         </li>
                       </Fragment>
                     ))}

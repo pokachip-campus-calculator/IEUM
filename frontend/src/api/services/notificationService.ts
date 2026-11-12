@@ -7,10 +7,10 @@ import { notifyBadgeCountsChanged } from "./badgeEvents";
 
 interface ApiNotification {
   id: number;
-  type: "REPLY_ARRIVED" | "NOTE_READ" | "TEACHER_ASSIGNED" | "NOTE_RECEIVED" | "SIGNAL_FLAGGED" | "LEARNER_ASSIGNED";
+  type: "REPLY_ARRIVED" | "NOTE_READ" | "TEACHER_ASSIGNED" | "NOTE_RECEIVED" | "SIGNAL_FLAGGED" | "LEARNER_ASSIGNED" | "TRANSFER_REQUESTED" | "TRANSFER_ACCEPTED";
   title: string;
   body: string;
-  linkType: "THREAD" | "PROFILE" | "SIGNAL" | "STUDENT" | null;
+  linkType: "THREAD" | "PROFILE" | "SIGNAL" | "STUDENT" | "TRANSFER" | null;
   linkId: number | null;
   isRead: boolean;
   createdAt: string;
@@ -36,7 +36,9 @@ function mapNotification(notification: ApiNotification): AppNotification {
   const type: AppNotification["type"] =
     notification.type === "REPLY_ARRIVED"
       ? "reply"
-      : notification.type === "NOTE_READ" || notification.type === "NOTE_RECEIVED"
+      : notification.type === "NOTE_READ" ||
+      notification.type === "NOTE_RECEIVED" ||
+      notification.type === "TRANSFER_REQUESTED"
         ? "msg"
         : notification.type === "SIGNAL_FLAGGED"
           ? "signal"
@@ -46,7 +48,9 @@ function mapNotification(notification: ApiNotification): AppNotification {
       ? ROUTES.profile
       : notification.linkType === "SIGNAL"
         ? ROUTES.teacherSignal
-        : notification.linkType === "STUDENT"
+        : notification.linkType === "TRANSFER"
+          ? ROUTES.notifications
+          : notification.linkType === "STUDENT"
           ? withId(ROUTES.teacher, "student", notification.linkId)
           : withId(
               session.user.role === "teacher" ? ROUTES.teacherMessages : ROUTES.messages,
@@ -63,6 +67,10 @@ function mapNotification(notification: ApiNotification): AppNotification {
     body: notification.body,
     href,
     unread: !notification.isRead,
+    transferId:
+      notification.type === "TRANSFER_REQUESTED" && notification.linkId !== null
+        ? notification.linkId
+        : undefined,
   };
 }
 
