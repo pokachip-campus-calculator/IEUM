@@ -23,3 +23,27 @@ WHERE role = 'STUDENT' AND COALESCE(last_login_at, created_at) < NOW() - INTERVA
 
 DELETE FROM users
 WHERE role = 'STUDENT' AND COALESCE(last_login_at, created_at) < NOW() - INTERVAL 1 YEAR;
+
+-- (5) 담당 이음쌤 이관 — 학습자의 담당 이음쌤을 다른 이음쌤으로 바꾸고, 새 이음쌤에게 알림을 보낸다
+--     이음쌤끼리 신청·수락하는 기능(V6, API)이 안 될 때를 위한 운영자용 대비책이다. 학습자에게는 알림을 보내지 않는다.
+--     users.teacher_id(학습자의 담당)와 message_threads.teacher_id(쪽지 묶음의 이음쌤)를 함께 바꾸고,
+--     알림 1건(새 이음쌤: LEARNER_ASSIGNED)을 만든다. 알림 문구는 서버가 쓰는 고정 문구와 같다.
+--     아래 '학습자아이디'와 '새이음쌤아이디'만 바꿔서 통째로 실행한다. 확인 뒤 COMMIT, 이상하면 ROLLBACK.
+SET time_zone = '+09:00';
+SET @student = (SELECT id FROM users WHERE login_id = '학습자아이디' AND role = 'STUDENT');
+SET @newt    = (SELECT id FROM users WHERE login_id = '새이음쌤아이디' AND role = 'TEACHER' AND status = 'ACTIVE');
+SELECT @student AS 학습자id, @newt AS 새이음쌤id;   -- 둘 다 숫자여야 한다. NULL이면 아이디가 틀린 것이라 아래는 아무것도 바꾸지 않는다
+
+START TRANSACTION;
+UPDATE users SET teacher_id = @newt, teacher_assigned_at = NOW()
+WHERE id = @student AND @newt IS NOT NULL;
+UPDATE message_threads SET teacher_id = @newt
+WHERE student_id = @student AND @newt IS NOT NULL;
+INSERT INTO notifications (user_id, type, title, body, link_type, link_id)
+SELECT @newt, 'LEARNER_ASSIGNED', '새 학습자가 배정됐어요', '이음쌤 홈에서 확인해 보세요', 'STUDENT', @student
+WHERE @student IS NOT NULL AND @newt IS NOT NULL;
+
+SELECT id, login_id, teacher_id, teacher_assigned_at FROM users WHERE id = @student;
+SELECT id, teacher_id FROM message_threads WHERE student_id = @student;
+SELECT user_id, type, title FROM notifications WHERE user_id = @newt ORDER BY id DESC LIMIT 1;
+-- 맞으면 COMMIT;  이상하면 ROLLBACK;

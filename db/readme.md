@@ -1,6 +1,6 @@
 # db/ — 이음 DB 작업공간
 
-MySQL 8, InnoDB, utf8mb4. 테이블 8개이고, 스키마의 기준은 이 폴더의 SQL 파일이다. 백엔드는 테이블을 만들거나 바꾸지 않는다(`ddl-auto: none`).
+MySQL 8, InnoDB, utf8mb4. 테이블 9개이고, 스키마의 기준은 이 폴더의 SQL 파일이다. 백엔드는 테이블을 만들거나 바꾸지 않는다(`ddl-auto: none`).
 
 - 구조와 설계 이유: [DB설계.md](../docs/2-설계/DB설계.md) (ERD, 테이블 정의서, 설계 결정, 인덱스)
 - ERD 그림: [ERD.png](../docs/2-설계/ERD.png)
@@ -14,19 +14,20 @@ MySQL 8, InnoDB, utf8mb4. 테이블 8개이고, 스키마의 기준은 이 폴�
 | `V3__seed_practices.sql` | 연습 콘텐츠 3건 (질문지, 시나리오, 감정 읽기) | |
 | `V4__users_birth_date_not_null.sql` | `users.birth_date`를 NOT NULL로 변경 | 이음쌤도 생년월일 필수 |
 | `V5__seed_practices_more.sql` | 연습 콘텐츠 3건 추가 → 연습 6건 | 다시 실행해도 중복되지 않는다 |
-| `ops.sql` | 운영 SQL 4개 | 이음쌤 등록, 보호자 확인, 비밀번호 초기화, 1년 미이용 학습자 삭제. 필요한 것만 골라 실행한다 |
+| `V6__transfer_requests.sql` | 이관 신청 테이블 `transfer_requests` 추가, 알림 종류 확장 → 테이블 9개 | 이음쌤끼리 하는 담당 이관용. 백엔드는 V6 실행 뒤에 배포한다 |
+| `ops.sql` | 운영 SQL 5개 | 이음쌤 등록, 보호자 확인, 비밀번호 초기화, 1년 미이용 학습자 삭제, 담당 이음쌤 이관(새 이음쌤에게 알림, 운영자용 대비책). 필요한 것만 골라 실행한다 |
 
 ## 실행 방법 (MySQL Workbench)
 
 1. DB를 하나 만들고(로컬은 `ieum_dev`) Schemas에서 **Set as Default Schema**를 한다. SQL 파일에는 `USE`가 없어서 기본 스키마에서 실행된다.
-2. **V1 → V2 → V3 → V4 → V5** 번호 순서대로 한 번씩 연다. 번개 아이콘 중 **왼쪽(Execute all)** 으로 실행한다.
+2. **V1 → V2 → V3 → V4 → V5 → V6** 번호 순서대로 한 번씩 연다. 번개 아이콘 중 **왼쪽(Execute all)** 으로 실행한다.
 3. 로컬 DB와 배포 DB(Railway) 모두 같은 파일을 같은 순서로 실행한다. 새 파일이 생기면 로컬 → Git → 배포 순서로 한다.
 4. Error 1175(안전 업데이트 모드)가 나면 먼저 `SET SQL_SAFE_UPDATES = 0;`을 실행한다.
 
 실행 뒤 확인:
 
 ```sql
-SHOW TABLES;                                          -- 8개
+SHOW TABLES;                                          -- 9개
 SELECT COUNT(*) FROM signal_keywords;                 -- 107
 SELECT id, type, area, level, title, JSON_VALID(content_json) AS ok
 FROM practices ORDER BY area, level, id;              -- 6행, ok가 모두 1

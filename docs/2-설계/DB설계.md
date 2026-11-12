@@ -2,13 +2,13 @@
 
 > 데이터의 구조와 관계 정의
 
-MySQL 8.0, InnoDB, utf8mb4(`utf8mb4_0900_ai_ci`). 테이블은 8개이고 스키마의 기준은 `db/` 폴더의 SQL 파일이다(V1 이후 변경은 V2, V3 … 새 파일로 쌓는다). 이 문서는 **V5(연습 콘텐츠 시드 추가)까지 적용한 상태**를 적는다.
+MySQL 8.0, InnoDB, utf8mb4(`utf8mb4_0900_ai_ci`). 테이블은 9개이고 스키마의 기준은 `db/` 폴더의 SQL 파일이다(V1 이후 변경은 V2, V3 … 새 파일로 쌓는다). 이 문서는 **V6(이음쌤 이관 신청 테이블)까지 적용한 상태**를 적는다.
 
 ## 1. ERD (물리/논리)
 
-`users`에서 학습 기록과 쪽지·신호 두 줄기가 갈라진다. `users.teacher_id`, `message_threads.student_id`·`teacher_id`는 모두 `users`를 가리킨다.
+`users`에서 학습 기록과 쪽지·신호 두 줄기가 갈라진다. `users.teacher_id`, `message_threads.student_id`·`teacher_id`, `transfer_requests.student_id`·`from_teacher_id`·`to_teacher_id`는 모두 `users`를 가리킨다.
 
-![이음 ERD (테이블 8개, 전체 컬럼)](ERD.png)
+![이음 ERD (테이블 9개, 전체 컬럼)](ERD.png)
 
 아래 Mermaid 그림은 같은 구조를 핵심 컬럼만 요약한 것이다. 전체 컬럼은 위 이미지와 2장 테이블 정의서를 본다.
 
@@ -25,6 +25,9 @@ erDiagram
     signal_keywords ||--o{ signal_events : "찾은 낱말"
     users ||--o{ signal_events : "신호가 나온 학습자(student_id)"
     users ||--o{ notifications : "받는다"
+    users ||--o{ transfer_requests : "이관 대상(student_id)"
+    users ||--o{ transfer_requests : "신청한 이음쌤(from_teacher_id)"
+    users ||--o{ transfer_requests : "받는 이음쌤(to_teacher_id)"
 
     users {
         BIGINT id PK
@@ -82,6 +85,13 @@ erDiagram
         ENUM type
         INT is_read
     }
+    transfer_requests {
+        BIGINT id PK
+        BIGINT student_id FK
+        BIGINT from_teacher_id FK
+        BIGINT to_teacher_id FK
+        ENUM status
+    }
 ```
 
 | 관계 | 설명 |
@@ -96,6 +106,7 @@ erDiagram
 | signal_keywords 1 : N signal_events | 신호가 나온 낱말을 가리킨다 |
 | users 1 : N signal_events | 신호가 나온 학습자를 가리킨다 (`student_id`, 학습자가 지워지면 신호도 함께 지워진다) |
 | users 1 : N notifications | 받는 사람(학습자·이음쌤)별 알림 |
+| users 1 : N transfer_requests | 이관 신청은 옮길 학습자, 신청한 이음쌤, 받는 이음쌤을 각각 가리킨다 (셋 중 누가 지워져도 신청은 함께 지워진다) |
 
 ## 2. 테이블 정의서
 
@@ -211,14 +222,29 @@ erDiagram
 |---|---|---|---|---|---|
 | id | BIGINT UNSIGNED | NOT NULL | PK | AUTO_INCREMENT | 알림 번호 (자동 증가) |
 | user_id | BIGINT UNSIGNED | NOT NULL | FK → users.id (ON DELETE CASCADE) |  | 받는 사람(users.id). 학습자 또는 이음쌤 |
-| type | ENUM('NOTE_RECEIVED','SIGNAL_FLAGGED','LEARNER_ASSIGNED','REPLY_ARRIVED','NOTE_READ','TEACHER_ASSIGNED') | NOT NULL |  |  | 알림 종류 6가지. NOTE_RECEIVED, SIGNAL_FLAGGED, LEARNER_ASSIGNED, REPLY_ARRIVED, NOTE_READ, TEACHER_ASSIGNED |
+| type | ENUM('NOTE_RECEIVED','SIGNAL_FLAGGED','LEARNER_ASSIGNED','REPLY_ARRIVED','NOTE_READ','TEACHER_ASSIGNED','TRANSFER_REQUESTED','TRANSFER_ACCEPTED') | NOT NULL |  |  | 알림 종류 8가지. NOTE_RECEIVED, SIGNAL_FLAGGED, LEARNER_ASSIGNED, REPLY_ARRIVED, NOTE_READ, TEACHER_ASSIGNED, TRANSFER_REQUESTED(이관 신청이 도착함), TRANSFER_ACCEPTED(이관이 수락됨) |
 | title | VARCHAR(80) | NOT NULL |  |  | 알림 제목. 서버가 정해 둔 문구만 쓴다 (쪽지 본문·찾은 낱말 금지) |
 | body | VARCHAR(200) | NOT NULL |  |  | 알림 내용. 서버가 정해 둔 문구만 쓴다 |
-| link_type | ENUM('THREAD','SIGNAL','PROFILE','STUDENT') | NULL |  |  | 눌렀을 때 이동할 곳. THREAD, SIGNAL, PROFILE, STUDENT |
+| link_type | ENUM('THREAD','SIGNAL','PROFILE','STUDENT','TRANSFER') | NULL |  |  | 눌렀을 때 이동할 곳. THREAD, SIGNAL, PROFILE, STUDENT, TRANSFER(이관 신청, link_id는 신청 번호) |
 | link_id | BIGINT UNSIGNED | NULL |  |  | 이동할 대상의 번호 |
 | is_read | TINYINT(1) | NOT NULL |  | 0 | 0 안 읽음 / 1 읽음 |
 | read_at | DATETIME | NULL |  |  | 읽은 시각 |
 | created_at | DATETIME | NOT NULL |  | CURRENT_TIMESTAMP | 알림이 만들어진 시각 |
+
+### 테이블명: transfer_requests — 이관 신청: 이음쌤끼리 학습자를 넘기자는 요청 (V6)
+
+| 컬럼명 | 데이터 타입 | Null 여부 | 제약 조건 | 기본값 | 설명 |
+|---|---|---|---|---|---|
+| id | BIGINT UNSIGNED | NOT NULL | PK | AUTO_INCREMENT | 신청 번호 (자동 증가) |
+| student_id | BIGINT UNSIGNED | NOT NULL | FK → users.id (ON DELETE CASCADE) |  | 옮길 학습자. 학습자가 지워지면 신청도 지워진다 |
+| from_teacher_id | BIGINT UNSIGNED | NOT NULL | FK → users.id (ON DELETE CASCADE) |  | 신청한 이음쌤(지금 담당) |
+| to_teacher_id | BIGINT UNSIGNED | NOT NULL | FK → users.id (ON DELETE CASCADE) |  | 받는 이음쌤. 이 사람이 수락한다 |
+| status | ENUM('PENDING','ACCEPTED') | NOT NULL |  | 'PENDING' | 기다림 / 수락함. 거절은 없다 |
+| created_at | DATETIME | NOT NULL |  | CURRENT_TIMESTAMP | 신청한 시각 |
+| handled_at | DATETIME | NULL |  |  | 수락한 시각 |
+
+- 한 학습자에게 기다리는(`PENDING`) 신청은 1건만 둔다. 이 규칙은 DB가 아니라 신청 API가 확인한다(5장 참고).
+- 수락하면 `users.teacher_id`·`teacher_assigned_at`과 `message_threads.teacher_id`를 받는 이음쌤으로 한 번에 바꾸고, 신청한 이음쌤에게 `TRANSFER_ACCEPTED` 알림을 보낸다. 학습자에게는 알림을 보내지 않는다.
 
 ## 3. 데이터 이력 관리 정책
 - 삭제 방식: **Hard Delete** (삭제 여부 플래그 컬럼을 두지 않는다)
@@ -227,6 +253,7 @@ erDiagram
   - 학습 기록·쪽지·신호·알림은 모두 `users`에 딸려 있어서, `users` 행을 지우면 `ON DELETE CASCADE`로 함께 사라진다. 지워야 하는 곳이 한 곳이다.
   - 신호 기록과 쪽지 본문까지 지우므로 개인정보 보유 기간 안내와 맞다.
 - 예외: `practices`(연습 콘텐츠)는 삭제하지 않고 `published = 0`으로 목록에서 숨긴다. 수정·삭제 API가 없고 시드 SQL로만 등록한다.
+- 이관 신청(`transfer_requests`)은 수락한 뒤에도 행을 남기고 `handled_at`에 시각을 적는다. 학습자나 이음쌤이 지워지면 신청도 함께 지워진다.
 - 이음쌤 행이 지워져도 `users.teacher_id`는 NULL이 되고(ON DELETE SET NULL), 쪽지 묶음이 남아 있는 이음쌤은 `message_threads.teacher_id`에 삭제 규칙이 없어서 먼저 지울 수 없다. 이음쌤 삭제 전에 담당을 이관한다.
 
 ## 4. 인덱스와 유니크 키
@@ -247,10 +274,12 @@ erDiagram
 | signal_events | ix_signal_status | status, created_at | 확인 필요 신호 목록 (16·20) |
 | signal_events | ix_signal_student | student_id | 학습자별 신호 (17) |
 | notifications | ix_notifications_user | user_id, is_read, created_at | 받는 사람별 안 읽음 알림 (22) |
+| transfer_requests | ix_transfer_to | to_teacher_id, status, created_at | 받는 이음쌤의 기다리는 신청 (이관 수락 API) |
+| transfer_requests | ix_transfer_student | student_id, status | 학습자별 기다리는 신청 확인 (이관 신청 API) |
 
 ## 5. 설계 결정 (대안 비교)
 
-원래 설계(API 150개·테이블 56개)를 1주·3인 일정에 맞춰 **API 24개·테이블 8개**로 줄였다. 줄인 기능은 버리지 않고 보관 원본(역설계 초안)에 남겨 두었다.
+원래 설계(API 150개·테이블 56개)를 1주·3인 일정에 맞춰 **API 24개·테이블 8개**로 줄였다. 줄인 기능은 버리지 않고 보관 원본(역설계 초안)에 남겨 두었다. 이후 이음쌤끼리 하는 이관을 더하면서 테이블 1개(`transfer_requests`, V6)와 API 2개가 늘었다.
 
 | 결정 | 선택한 방식 | 버린 대안 | 이유 |
 |---|---|---|---|
@@ -259,9 +288,11 @@ erDiagram
 | 점수 | 만들지 않는다 | 점수·순위 컬럼 | 화면이 "점수·순위·맞고 틀림을 남기지 않는다"고 약속한다 |
 | 나에게 한 줄 | `practice_records.my_note` 컬럼, 이음쌤용 쿼리가 읽지 않는다 | 별도 노트 테이블, 노트 암호화 | 이음쌤에게 보이지 않는 규칙을 쿼리 수준에서 지킨다 |
 | 신호 감지 | 쪽지를 저장하는 같은 트랜잭션에서 낱말 사전과 비교해 `signal_events`에 기록한다 | outbox 같은 별도 작업 테이블과 배치 | 쪽지 저장과 신호 기록이 함께 성공하거나 실패해야 하고, 작업 테이블을 두면 관리할 것이 는다 |
-| 이음쌤 배정 | 첫 쪽지 때 학습자 수가 가장 적은 활성 이음쌤을 `users.teacher_id`에 기록한다 | 배정 화면·배정 테이블 | 배정 이력이 필요 없다. 이관은 화면에서 신청 알림만 보여 주기로 했다 |
+| 이음쌤 배정 | 첫 쪽지 때 학습자 수가 가장 적은 활성 이음쌤을 `users.teacher_id`에 기록한다 | 배정 화면·배정 테이블 | 배정 이력이 필요 없다. 이관은 이음쌤끼리 신청·수락하는 기능(V6)으로 하고, 운영자용 대비책으로 `ops.sql`의 (5)가 담당을 바꾸면서 새 이음쌤에게 알림을 보낸다 |
 | 계정 | `users` 한 테이블에 `role`로 학습자·이음쌤을 함께 둔다 | 학습자·이음쌤·보호자 테이블 분리 | 로그인과 알림이 공통이고, 보호자는 컬럼 3개로 충분하다 |
 | 알림 | `notifications` 테이블에 받는 사람별로 저장한다 | 쪽지·신호에서 그때그때 계산 | 읽음 상태가 필요하고, 알림 제목·본문은 서버가 정한 고정 문구만 써서 쪽지 내용이 새지 않는다 |
+| 이관 신청 | `transfer_requests` 한 테이블(PENDING·ACCEPTED), 수락하면 담당과 쪽지 묶음의 이음쌤을 한 번에 바꾼다 | 알림만 보내고 신청 기록은 두지 않는다, 거절·취소 상태까지 둔다 | 수락할 때까지 신청이 남아 있어야 하고(알림만으로는 수락할 대상이 없다), 거절은 하지 않기로 해서 상태를 2가지로 줄였다 |
+| 기다리는 신청 1건 규칙 | 신청 API가 `PENDING` 행이 있는지 확인해 있으면 409 | 계산 칸(`pending_student_id`)에 UNIQUE를 걸어 DB가 막는다 | 처음 V6에 넣었더니 MySQL이 오류 1215(`Cannot add foreign key constraint`)를 냈다. 계산 칸의 재료인 `student_id`에는 `ON DELETE CASCADE` 외래키를 함께 걸 수 없기 때문이다(MariaDB는 통과해서 임시 검증에서 잡지 못했다). 학습자가 지워지면 신청도 지워지는 CASCADE가 더 중요해서 계산 칸을 빼고 API 확인으로 바꿨다 |
 | 날짜 입력 | `birth_date`는 학습자·이음쌤 모두 NOT NULL (V4) | 이음쌤은 NULL 허용 | 가입 화면과 API가 이음쌤도 생년월일을 필수로 받는다. DB도 같은 기준으로 맞췄다 |
 
 ## 6. 시드와 마이그레이션 이력
@@ -275,6 +306,7 @@ SQL 파일은 `db/`에 있고 번호 순서대로 실행한다. 이미 실행한
 | `V3__seed_practices.sql` | 연습 콘텐츠 3건 (질문지 1, 시나리오 1, 감정 읽기 1) | 나머지 연습은 V5에서 추가 |
 | `V4__users_birth_date_not_null.sql` | `users.birth_date`를 NOT NULL로 변경 | 이음쌤도 생년월일 필수. NULL인 이음쌤은 임시 값으로 채움 |
 | `V5__seed_practices_more.sql` | 연습 콘텐츠 3건 추가 (시나리오 2건, 영상 단계 질문지 1건) → 연습 6건 | 내용은 프론트 mock 문구 그대로. 영상 파일은 프론트에 있어 서버에는 질문·카드만 둔다. 다시 실행해도 중복되지 않는다 |
-| `ops.sql` | 운영 SQL 4개 | 이음쌤 등록, 보호자 확인(PENDING_GUARDIAN → ACTIVE), 비밀번호 초기화, 1년 미이용 학습자 삭제 |
+| `V6__transfer_requests.sql` | `transfer_requests` 테이블 추가(테이블 9개), `notifications`의 `type`에 TRANSFER_REQUESTED·TRANSFER_ACCEPTED, `link_type`에 TRANSFER 추가 | 이음쌤끼리 하는 이관용. 백엔드는 V6 실행 뒤에 배포한다. 처음 버전은 MySQL 오류 1215로 고쳐서 다시 만들었다(5장) |
+| `ops.sql` | 운영 SQL 5개 | 이음쌤 등록, 보호자 확인(PENDING_GUARDIAN → ACTIVE), 비밀번호 초기화, 1년 미이용 학습자 삭제, 담당 이음쌤 이관(운영자용 대비책) |
 
-이음쌤 계정(비밀번호 해시 포함)은 Git에 올리지 않는다. 레포가 Public이기 때문이다. 필요하면 가입 API(01번)에서 role=TEACHER로 가입하거나, ops.sql의 (1)에 본인이 만든 BCrypt 해시를 넣어 DB에 직접 등록한다.
+이음쌤 계정(비밀번호 해시 포함)은 Git에 올리지 않는다. 레포가 Public이기 때문이다. 이음쌤은 가입 API(01번)로 만들 수 없다(role=TEACHER는 403 TEACHER_SIGNUP_CLOSED로 거부한다). ops.sql의 (1)에 본인이 만든 BCrypt 해시를 넣어 DB에 직접 등록한다.
