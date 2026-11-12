@@ -57,6 +57,6 @@ export const profileService = {
   /** POST /me/withdraw — 탈퇴 */
   async withdraw(): Promise<void> {
     if (USE_MOCK) return;
-    return http("POST", "/me/withdraw");
+    return http("POST", "/me/withdraw", { acknowledged: true });
   },
 };
