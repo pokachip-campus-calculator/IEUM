@@ -49,7 +49,7 @@ class AuthServiceTest {
         userRepository = mock(UserRepository.class);
         encoder = new BCryptPasswordEncoder();
         JwtProvider jwt = new JwtProvider("test-secret-test-secret-test-secret-1234", 60);
-        service = new AuthService(userRepository, encoder, jwt, CLOCK);
+        service = new AuthService(userRepository, encoder, jwt, CLOCK, new LoginAttemptLimiter(CLOCK));
     }
 
     private SignupRequest student(LocalDate birth, SignupRequest.Guardian guardian) {
@@ -201,5 +201,64 @@ class AuthServiceTest {
         assertThatThrownBy(() -> service.login(new LoginRequest("student01", "password1")))
                 .isInstanceOfSatisfying(ApiException.class,
                         e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.GUARDIAN_PENDING));
+    }
+
+    private void assertLoginFails(String loginId, String password, ErrorCode expected) {
+        assertThatThrownBy(() -> service.login(new LoginRequest(loginId, password)))
+                .isInstanceOfSatisfying(ApiException.class,
+                        e -> assertThat(e.getErrorCode()).isEqualTo(expected));
+    }
+
+    @Test
+    void 비밀번호를_5번_틀리면_6번째는_맞는_비밀번호여도_TOO_MANY_ATTEMPTS() {
+        account(UserStatus.ACTIVE);
+
+        for (int i = 0; i < 5; i++) {
+            assertLoginFails("student01", "wrong-password", ErrorCode.BAD_CREDENTIALS);
+        }
+        assertLoginFails("student01", "password1", ErrorCode.TOO_MANY_ATTEMPTS);
+        assertLoginFails("STUDENT01", "wrong-password", ErrorCode.TOO_MANY_ATTEMPTS);   // 대소문자 달라도 같은 아이디
+    }
+
+    @Test
+    void 없는_아이디도_5번_틀리면_TOO_MANY_ATTEMPTS() {
+        when(userRepository.findByLoginId(anyString())).thenReturn(Optional.empty());
+
+        for (int i = 0; i < 5; i++) {
+            assertLoginFails("nobody", "password1", ErrorCode.BAD_CREDENTIALS);
+        }
+        assertLoginFails("nobody", "password1", ErrorCode.TOO_MANY_ATTEMPTS);
+    }
+
+    @Test
+    void 다른_아이디는_영향을_받지_않는다() {
+        account(UserStatus.ACTIVE);
+        for (int i = 0; i < 5; i++) {
+            assertLoginFails("nobody", "password1", ErrorCode.BAD_CREDENTIALS);
+        }
+
+        assertThat(service.login(new LoginRequest("student01", "password1")).token()).isNotBlank();
+    }
+
+    @Test
+    void 로그인에_성공하면_실패_횟수가_지워진다() {
+        account(UserStatus.ACTIVE);
+
+        for (int i = 0; i < 4; i++) {
+            assertLoginFails("student01", "wrong-password", ErrorCode.BAD_CREDENTIALS);
+        }
+        assertThat(service.login(new LoginRequest("student01", "password1")).token()).isNotBlank();
+        for (int i = 0; i < 4; i++) {
+            assertLoginFails("student01", "wrong-password", ErrorCode.BAD_CREDENTIALS);
+        }
+        assertThat(service.login(new LoginRequest("student01", "password1")).token()).isNotBlank();
+    }
+
+    @Test
+    void 아이디가_20자보다_길면_기록하지_않고_BAD_CREDENTIALS() {
+        for (int i = 0; i < 6; i++) {
+            assertLoginFails("a".repeat(21), "password1", ErrorCode.BAD_CREDENTIALS);
+        }
+        verify(userRepository, never()).findByLoginId(anyString());
     }
 }
