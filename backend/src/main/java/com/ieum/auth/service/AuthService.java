@@ -25,25 +25,29 @@ import java.time.Period;
 /**
  * [역할] 회원가입(01)과 로그인(02)의 규칙을 처리한다.
  * [동작] 가입은 역할·나이에 따라 ACTIVE/PENDING_GUARDIAN을 정해 저장하고, 로그인은 비밀번호·상태를 확인해 토큰을 준다.
- * [연결] AuthController가 부른다 / UserRepository(users), JwtProvider, PasswordEncoder, Clock
+ * [연결] AuthController가 부른다 / UserRepository(users), JwtProvider, PasswordEncoder, Clock, LoginAttemptLimiter
  * [주의] 로그인 아이디는 소문자로 바꿔 저장·조회한다(대소문자 구분 없이 중복 불가). 만 14세 기준은 가입일이다.
+ *        로그인은 같은 아이디로 5회 연속 실패하면 5분간 TOO_MANY_ATTEMPTS(429)로 막는다.
  */
 @Service
 public class AuthService {
 
     private static final int GUARDIAN_REQUIRED_UNDER_AGE = 14;
+    private static final int MAX_LOGIN_ID_LENGTH = 20;   // users.login_id 길이
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final Clock clock;
+    private final LoginAttemptLimiter loginAttemptLimiter;
 
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                       JwtProvider jwtProvider, Clock clock) {
+                       JwtProvider jwtProvider, Clock clock, LoginAttemptLimiter loginAttemptLimiter) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtProvider = jwtProvider;
         this.clock = clock;
+        this.loginAttemptLimiter = loginAttemptLimiter;
     }
 
     @Transactional
@@ -95,12 +99,22 @@ public class AuthService {
 
     @Transactional
     public LoginResponse login(LoginRequest req) {
-        // 아이디가 없든 비밀번호가 틀리든 같은 오류로 답한다(계정 존재 여부를 알려주지 않기 위해)
-        User user = userRepository.findByLoginId(req.loginId().toLowerCase())
-                .orElseThrow(() -> new ApiException(ErrorCode.BAD_CREDENTIALS));
-        if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
+        String loginId = req.loginId().toLowerCase();
+        // 아이디는 최대 20자라 더 긴 값은 있을 수 없다. 실패 기록에 쌓이지 않게 바로 돌려보낸다
+        if (loginId.length() > MAX_LOGIN_ID_LENGTH) {
             throw new ApiException(ErrorCode.BAD_CREDENTIALS);
         }
+        // 잠긴 동안에는 비밀번호가 맞아도 거절한다(5회 연속 실패 → 5분)
+        if (loginAttemptLimiter.isLocked(loginId)) {
+            throw new ApiException(ErrorCode.TOO_MANY_ATTEMPTS);
+        }
+        // 아이디가 없든 비밀번호가 틀리든 같은 오류로 답하고 똑같이 센다(계정 존재 여부를 알려주지 않기 위해)
+        User user = userRepository.findByLoginId(loginId).orElse(null);
+        if (user == null || !passwordEncoder.matches(req.password(), user.getPasswordHash())) {
+            loginAttemptLimiter.recordFailure(loginId);
+            throw new ApiException(ErrorCode.BAD_CREDENTIALS);
+        }
+        loginAttemptLimiter.clear(loginId);
         if (user.getStatus() == UserStatus.PENDING_GUARDIAN) {
             throw new ApiException(ErrorCode.GUARDIAN_PENDING);
         }
