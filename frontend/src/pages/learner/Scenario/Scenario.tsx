@@ -24,20 +24,17 @@ export default class Scenario extends Component<any, any> {
       pick: null,
       paused: false,
       feels: [],
-      note: "",
-      saved: false,
       apiError: "",
     };
   }
   componentDidMount() {
-    // "잠시 쉬기"로 저장해 둔 진행 중 기록이 있으면 고른 방법·마음·한 줄을 그대로 이어서 보여 줘요.
+    // "잠시 쉬기"로 저장해 둔 진행 중 기록이 있으면 고른 방법·마음을 그대로 이어서 보여 줘요.
     const sc = this.props.scenarios[this.state.sid] || this.props.scenarios.secret;
     const draft = recordService.restoreScenarioProgress(this.props.record, sc.choices.length);
     if (!draft) return;
     this.setState({
       pick: draft.pick,
       feels: draft.feels,
-      note: draft.note,
       phase: draft.pick === null ? "choose" : "result",
     });
   }
@@ -46,9 +43,9 @@ export default class Scenario extends Component<any, any> {
     const s = this.state;
     const sc = SC[s.sid] || SC.secret;
     const C = sc.choices;
-    const order = ["meet", "choose", "result", "reflect"];
+    const order = ["meet", "choose", "result"];
     const idx = order.indexOf(s.phase);
-    const labels = ["상황 만나기", "선택하기", "결과 살펴보기", "했어요 기록"];
+    const labels = ["상황 만나기", "선택하기", "결과 살펴보기"];
     const cur = idx;
     const steps = labels.map((l, i) => ({
       label: l,
@@ -56,7 +53,6 @@ export default class Scenario extends Component<any, any> {
       cls: i < cur ? "ie-step is-done" : "ie-step",
       current: i === cur ? "step" : "false",
     }));
-    const F = ["불편했어요", "헷갈렸어요", "괜찮았어요", "누군가에게 말하고 싶어졌어요"];
     return {
       steps,
       sc: {
@@ -76,17 +72,13 @@ export default class Scenario extends Component<any, any> {
             pick: null,
             paused: false,
             feels: [],
-            note: "",
-            saved: false,
           }),
       })),
       paused: s.paused,
       active: !s.paused,
       meeting: s.phase === "meet",
       choosing: s.phase === "choose",
-      showResult: s.phase === "result" || s.phase === "reflect",
-      inResult: s.phase === "result",
-      reflecting: s.phase === "reflect",
+      showResult: s.phase === "result",
       hasPick: s.pick !== null,
       noPick: s.pick === null,
       choices: C.map((c, i) => ({
@@ -95,49 +87,27 @@ export default class Scenario extends Component<any, any> {
         pick: () => this.setState({ pick: i }),
       })),
       picked: s.pick !== null ? C[s.pick] : { text: "", follow: "", hear: "" },
-      feels: F.map((f) => {
-        const on = s.feels.indexOf(f) !== -1;
-        return {
-          label: f,
-          on,
-          toggle: () =>
-            this.setState({
-              feels: on ? s.feels.filter((x) => x !== f) : s.feels.concat([f]),
-              saved: false,
-            }),
-        };
-      }),
-      note: s.note.trim(),
-      noteCount: s.note.length,
-      hasNote: s.note.trim() !== "",
-      noNote: s.note.trim() === "",
-      hasFeels: s.feels.length > 0,
-      savedFeels: s.feels,
-      isSaved: s.saved,
-      notSaved: !s.saved,
       apiError: s.apiError,
-      save: async () => {
-        this.setState({ apiError: "" });
-        try {
-          await recordService.saveScenarioReflection({
-            practiceId: this.props.practiceId,
-            scenario: s.sid,
-            choice: s.pick,
-            feelings: s.feels,
-            note: s.note,
-          });
-          this.setState({ saved: true });
-        } catch (error) {
-          this.setState({
-            apiError: error instanceof Error ? error.message : "기록을 저장하지 못했어요.",
-          });
-        }
-      },
-      editSaved: () => this.setState({ saved: false }),
-      onNote: (e) => this.setState({ note: e.target.value, saved: false }),
       toChoose: () => this.setState({ phase: "choose" }),
-      toResult: () => this.setState({ phase: "result" }),
-      toReflect: () => this.setState({ phase: "reflect" }),
+      // 결과 화면으로 넘어갈 때 완료(done:true)로 저장해요. 저장이 실패해도 결과는 보여 줘요.
+      toResult: async () => {
+        this.setState({ apiError: "" });
+        if (s.pick !== null) {
+          try {
+            await recordService.saveScenarioReflection({
+              practiceId: this.props.practiceId,
+              scenario: s.sid,
+              choice: s.pick,
+              feelings: [],
+            });
+          } catch (error) {
+            this.setState({
+              apiError: error instanceof Error ? error.message : "기록을 저장하지 못했어요.",
+            });
+          }
+        }
+        this.setState({ phase: "result" });
+      },
       rechoose: () => this.setState({ phase: "choose" }),
       pause: async () => {
         this.setState({ paused: true, apiError: "" });
@@ -146,7 +116,6 @@ export default class Scenario extends Component<any, any> {
             practiceId: this.props.practiceId,
             choice: s.pick,
             feelings: s.feels,
-            note: s.note,
           });
         } catch (error) {
           this.setState({
@@ -207,22 +176,6 @@ export default class Scenario extends Component<any, any> {
                   <img className="ie-3img" src={img.bannerScenario} alt="" draggable="false" />
                 </div>
               </header>
-              <div
-                className="ie-row"
-                role="group"
-                aria-label="연습할 상황 고르기"
-                style={{ gap: "10px", margin: "2px 0 14px" }}
-              >
-                <span className="ie-meta">다른 상황 연습하기</span>{" "}
-                {(v.scList || []).map((s: any, __i0: number) => (
-                  <Fragment key={__i0}>
-                    <button type="button" className="ie-chip" aria-pressed={s.on} onClick={s.pick}>
-                      <span className="ie-box" />
-                      {s.label}
-                    </button>
-                  </Fragment>
-                ))}
-              </div>
               {v.paused ? (
                 <section
                   className="ie-card ie-card--hero ie-card--lav"
@@ -400,16 +353,21 @@ export default class Scenario extends Component<any, any> {
                           ))}
                         </ul>
                       </div>
+                      {v.apiError ? (
+                        <p className="ie-error-text" role="alert">
+                          {v.apiError}
+                        </p>
+                      ) : null}
                       <div className="ie-dock">
-                        {v.inResult ? (
-                          <button
-                            type="button"
-                            className="ie-btn ie-btn--primary ie-btn--lg"
-                            onClick={v.toReflect}
-                          >
-                            했어요 남기기
-                          </button>
-                        ) : null}{" "}
+                        <A className="ie-btn ie-btn--primary ie-btn--lg" href={ROUTES.collection}>
+                          내 학습 기록에서 보기
+                        </A>{" "}
+                        <A
+                          className="ie-btn ie-btn--outline ie-btn--lg"
+                          href={`${ROUTES.talk}?practiceId=${this.props.practiceId}`}
+                        >
+                          이음쌤에게 쪽지 쓰기
+                        </A>{" "}
                         <button
                           type="button"
                           className="ie-btn ie-btn--outline ie-btn--lg"
@@ -420,143 +378,6 @@ export default class Scenario extends Component<any, any> {
                       </div>
                     </section>
                   ) : null}{" "}
-                  {v.reflecting ? (
-                    <section className="ie-ask ie-ask--lav" aria-labelledby="ref">
-                      <div className="ie-stack-s" style={{ gap: "4px" }}>
-                        <span className="ie-eyebrow">했어요 기록 · 답하지 않아도 괜찮아요</span>
-                        <h2 id="ref" className="ie-h3">
-                          이 이야기를 지나며 어떤 마음이 들었나요?
-                        </h2>
-                        <p className="ie-body ie-sub">여러 개 골라도 돼요.</p>
-                      </div>
-                      <div className="ie-row" role="group" aria-labelledby="ref">
-                        {(v.feels || []).map((f: any, __i0: number) => (
-                          <Fragment key={__i0}>
-                            <button
-                              type="button"
-                              className="ie-chip ie-chip--lg"
-                              aria-pressed={f.on}
-                              onClick={f.toggle}
-                            >
-                              <span className="ie-box" />
-                              {f.label}
-                            </button>
-                          </Fragment>
-                        ))}
-                      </div>
-                      <div className="ie-field">
-                        <label className="ie-label" htmlFor="note">
-                          {"나에게 한 줄 남기기 "}
-                          <span className="ie-opt">선택</span>
-                        </label>
-                        <textarea
-                          id="note"
-                          className="ie-textarea"
-                          maxLength={500}
-                          style={{ minHeight: "96px" }}
-                          placeholder="예: 불편하면 멈춰도 된다는 걸 기억할래요."
-                          value={v.note}
-                          onChange={v.onNote}
-                        />
-                        <div className="ie-row-between">
-                          <span />
-                          <span className="ie-help">
-                            {v.noteCount}
-                            {" / 500"}
-                          </span>
-                        </div>
-                      </div>
-                      <span className="ie-help">
-                        남긴 내용은 ‘내 학습 기록’의 이 연습 아래에 저장돼요. 나만 볼 수 있고,
-                        이음쌤에게는 보이지 않아요.
-                      </span>{" "}
-                      {v.notSaved ? (
-                        <div className="ie-row">
-                          <button
-                            type="button"
-                            className="ie-btn ie-btn--secondary"
-                            onClick={v.save}
-                          >
-                            내 학습 기록에 남기기
-                          </button>
-                        </div>
-                      ) : null}{" "}
-                      {v.apiError ? (
-                        <p className="ie-error-text" role="alert">
-                          {v.apiError}
-                        </p>
-                      ) : null}
-                      {v.isSaved ? (
-                        <div className="ie-ask-saved" role="status">
-                          <svg
-                            width="28"
-                            height="28"
-                            viewBox="0 0 256 256"
-                            aria-hidden="true"
-                            style={{ flex: "none" }}
-                          >
-                            <path
-                              d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z"
-                              fill="#B8E6D3"
-                            />
-                            <path
-                              d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34Z"
-                              fill="#2A6A52"
-                            />
-                          </svg>
-                          <div
-                            className="ie-stack-s"
-                            style={{ gap: "8px", minWidth: "0", flex: "1 1 auto" }}
-                          >
-                            <b className="ie-body ie-strong">내 학습 기록에 저장했어요</b>{" "}
-                            <span className="ie-meta">
-                              {"내 학습 기록 › "}
-                              {v.sc.title}
-                              {" · 오늘 · 나만 볼 수 있어요"}
-                            </span>{" "}
-                            {v.hasNote ? <p className="ie-body ie-saved-note">“{v.note}”</p> : null}{" "}
-                            {v.noNote ? (
-                              <span className="ie-meta">
-                                한 줄은 비워 두고, 고른 마음만 남겼어요.
-                              </span>
-                            ) : null}{" "}
-                            {v.hasFeels ? (
-                              <div className="ie-row">
-                                {(v.savedFeels || []).map((x: any, __i0: number) => (
-                                  <Fragment key={__i0}>
-                                    <span className="ie-tag ie-tag--emotion">{x}</span>
-                                  </Fragment>
-                                ))}
-                              </div>
-                            ) : null}
-                            <div className="ie-row">
-                              <button
-                                type="button"
-                                className="ie-btn ie-btn--text ie-btn--sm"
-                                onClick={v.editSaved}
-                              >
-                                고쳐 쓰기
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ) : null}
-                      <div className="ie-dock">
-                        <A className="ie-btn ie-btn--primary ie-btn--lg" href={ROUTES.collection}>
-                          내 학습 기록에서 보기
-                        </A>{" "}
-                        <A className="ie-btn ie-btn--outline ie-btn--lg" href={ROUTES.areas}>
-                          다음 연습 고르기
-                        </A>{" "}
-                        <A
-                          className="ie-btn ie-btn--outline ie-btn--lg"
-                          href={`${ROUTES.talk}?practiceId=${this.props.practiceId}`}
-                        >
-                          이음쌤에게 쪽지 쓰기
-                        </A>
-                      </div>
-                    </section>
-                  ) : null}
                 </div>
               ) : null}
             </main>
