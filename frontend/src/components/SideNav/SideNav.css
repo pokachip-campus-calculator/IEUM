@@ -176,6 +176,10 @@
     flex: 0 0 84px;
     width: 84px;
     margin: 14px 0 14px 12px;
+    /* 이름 말풍선이 슬롯 밖(본문 위)으로 나오게: 슬롯이 backdrop-filter 로 따로 쌓이는 칸이라
+       본문(.ie-main, z-index 1)보다 높게 올리고 넘치는 부분을 자르지 않아요. */
+    overflow: visible;
+    z-index: 30;
   }
   .ie-side-slot .ie-sn {
     padding: 16px 0;
