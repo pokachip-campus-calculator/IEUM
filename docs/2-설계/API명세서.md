@@ -181,6 +181,8 @@
 - `restart:true`는 `answers`·`my_note`를 비우고 status=IN_PROGRESS, `completed_at`은 지우지 않는다(다른 필드는 무시). completed_at이 있으면 “완료한 적 있다”는 뜻이라 도장과 내 기록에 평생 남는다. DONE인 기록은 `restart`로만 되돌린다.
 - `answers` 안의 id가 연습 `content`에 없으면 `VALIDATION_FAILED`. `myNote`는 SCENARIO에서만 저장하고(500자) 다른 유형에서는 무시한다. answers의 키는 유형별로 정해진 것만 받고(UNIT은 pre·cardsRead·post, SCENARIO는 choice·feelings, EMOTION은 clues·feelings) 그 밖의 키는 VALIDATION_FAILED이다. UNIT의 문항·선택지 id와 cardsRead 번호(1부터 카드 수까지)도 content에 있는 것만 받는다. EMOTION에서 exclusive인 마음은 다른 마음과 함께 고를 수 없다(VALIDATION_FAILED).
 
+동시 저장: 같은 연습의 첫 저장이 동시에 두 번 오면 `(user_id, practice_id)` 유니크 키 충돌이 나는데, 서버가 한 번 다시 처리해 먼저 저장된 기록에 이번 요청을 덮어쓰고 200으로 응답한다(500이 아니다). 요청·응답 형식은 그대로다.
+
 **11 `GET /records?status=&sort=`** — S10. `status`는 DONE 또는 IN_PROGRESS(생략=모두), `sort`는 `recent`(기본) 또는 `old`. DONE은 completed_at이 있는 기록이라 다시 하는 중인 연습도 남고, 그 연습은 IN_PROGRESS에도 함께 나온다.
 
 ```json
