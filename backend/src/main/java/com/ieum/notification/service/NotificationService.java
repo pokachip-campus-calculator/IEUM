@@ -8,6 +8,11 @@ import com.ieum.notification.entity.LinkType;
 import com.ieum.notification.entity.Notification;
 import com.ieum.notification.entity.NotificationType;
 import com.ieum.notification.repository.NotificationRepository;
+import com.ieum.transfer.entity.TransferRequest;
+import com.ieum.transfer.entity.TransferStatus;
+import com.ieum.transfer.repository.TransferRequestRepository;
+import com.ieum.user.entity.User;
+import com.ieum.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +20,9 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * [역할] 알림 목록·읽음(22~24)을 처리하고, 쪽지·신호·배정이 일어날 때 알림 행을 만든다.
@@ -26,10 +34,15 @@ import java.util.List;
 public class NotificationService {
 
     private final NotificationRepository repository;
+    private final TransferRequestRepository transferRepository;
+    private final UserRepository userRepository;
     private final Clock clock;
 
-    public NotificationService(NotificationRepository repository, Clock clock) {
+    public NotificationService(NotificationRepository repository, TransferRequestRepository transferRepository,
+                               UserRepository userRepository, Clock clock) {
         this.repository = repository;
+        this.transferRepository = transferRepository;
+        this.userRepository = userRepository;
         this.clock = clock;
     }
 
@@ -104,7 +117,30 @@ public class NotificationService {
                 ? repository.findTop50ByUserIdAndReadFalseOrderByCreatedAtDescIdDesc(userId)
                 : repository.findTop50ByUserIdOrderByCreatedAtDescIdDesc(userId);
         long unreadCount = repository.countByUserIdAndReadFalse(userId);
-        return new NotificationListResponse(unreadCount, found.stream().map(this::toItem).toList());
+        Map<Long, String> transferStatus = transferStatuses(found);
+        return new NotificationListResponse(unreadCount,
+                found.stream().map(n -> toItem(n, transferStatus)).toList());
+    }
+
+    // TRANSFER 알림의 신청 상태: 수락됐으면 ACCEPTED, 기다리는 중인데 학습자 담당이 이미 바뀌었으면 EXPIRED, 아니면 PENDING
+    private Map<Long, String> transferStatuses(List<Notification> found) {
+        List<Long> requestIds = found.stream().filter(n -> n.getLinkType() == LinkType.TRANSFER)
+                .map(Notification::getLinkId).distinct().toList();
+        if (requestIds.isEmpty()) {
+            return Map.of();
+        }
+        List<TransferRequest> requests = transferRepository.findAllById(requestIds);
+        Map<Long, User> students = userRepository
+                .findAllById(requests.stream().map(TransferRequest::getStudentId).distinct().toList())
+                .stream().collect(Collectors.toMap(User::getId, Function.identity()));
+        return requests.stream().collect(Collectors.toMap(TransferRequest::getId, r -> {
+            if (r.getStatus() == TransferStatus.ACCEPTED) {
+                return "ACCEPTED";
+            }
+            User student = students.get(r.getStudentId());
+            boolean stale = student == null || !r.getFromTeacherId().equals(student.getTeacherId());
+            return stale ? "EXPIRED" : "PENDING";
+        }));
     }
 
     // 23: 이미 읽은 알림은 그대로 두고, 남의 알림·없는 id는 구분 없이 NOT_FOUND
@@ -123,9 +159,10 @@ public class NotificationService {
         return new ReadAllResponse(repository.markAllRead(userId, LocalDateTime.now(clock)));
     }
 
-    private NotificationListResponse.Item toItem(Notification n) {
+    private NotificationListResponse.Item toItem(Notification n, Map<Long, String> transferStatus) {
         OffsetDateTime created = n.getCreatedAt().atZone(clock.getZone()).toOffsetDateTime();
         return new NotificationListResponse.Item(n.getId(), n.getType(), n.getTitle(), n.getBody(),
-                n.getLinkType(), n.getLinkId(), n.isRead(), created);
+                n.getLinkType(), n.getLinkId(), n.isRead(), created,
+                n.getLinkType() == LinkType.TRANSFER ? transferStatus.get(n.getLinkId()) : null);
     }
 }

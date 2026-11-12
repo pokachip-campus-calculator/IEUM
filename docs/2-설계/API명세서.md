@@ -345,8 +345,20 @@
 ```json
 { "unreadCount": 3,
   "items": [ { "id": 41, "type": "REPLY_ARRIVED", "title": "이음쌤의 답장이 도착했어요", "body": "쪽지함에서 확인해 보세요",
-               "linkType": "THREAD", "linkId": 7, "isRead": false, "createdAt": "2026-11-02T09:12:00+09:00" } ] }
+               "linkType": "THREAD", "linkId": 7, "isRead": false, "createdAt": "2026-11-02T09:12:00+09:00",
+               "transferStatus": null },
+             { "id": 54, "type": "TRANSFER_REQUESTED", "title": "이관 신청이 도착했어요", "body": "알림에서 확인하고 수락할 수 있어요",
+               "linkType": "TRANSFER", "linkId": 7, "isRead": false, "createdAt": "2026-11-12T10:00:00+09:00",
+               "transferStatus": "PENDING" } ] }
 ```
+
+`transferStatus`는 `linkType`이 `TRANSFER`인 알림에만 값이 있고, 나머지 알림은 `null`입니다. 이관 알림 화면은 이 값으로 수락 버튼을 보여 줄지 정합니다.
+
+| transferStatus | 뜻 | 화면 |
+|---|---|---|
+| `PENDING` | 아직 수락 전이고 수락할 수 있음 | "이관 수락하기" 버튼 |
+| `ACCEPTED` | 이미 수락됨 | "수락했어요" 문구만 |
+| `EXPIRED` | 수락 전인데 신청한 뒤 학습자의 담당이 이미 바뀌어 수락할 수 없음(26을 누르면 `TRANSFER_NOT_PENDING`) | 버튼 없이 "더 이상 수락할 수 없어요" 정도의 문구 |
 
 ### 23. PATCH /notifications/{id}/read
 
@@ -377,7 +389,7 @@
 
 알림의 제목과 본문은 서버가 정해 둔 문구만 씁니다. 쪽지 본문, 학습자가 쓴 글, 찾은 낱말은 넣지 않고, 학습자 계정에는 `SIGNAL_FLAGGED`를 만들지 않습니다. 문자나 메일로는 보내지 않고 앱 안에서만 보여 줍니다.
 
-알림 본문과 누르면 가는 곳은 아래처럼 정해져 있고, 응답의 `linkType`·`linkId`로 내려갑니다. `linkType`은 THREAD(쪽지 묶음), SIGNAL(신호 목록), PROFILE(내 정보), STUDENT(이음쌤 홈의 학습자) 네 가지입니다.
+알림 본문과 누르면 가는 곳은 아래처럼 정해져 있고, 응답의 `linkType`·`linkId`로 내려갑니다. `linkType`은 THREAD(쪽지 묶음), SIGNAL(신호 목록), PROFILE(내 정보), STUDENT(이음쌤 홈의 학습자), TRANSFER(이관 신청) 다섯 가지입니다.
 
 | type | 본문 | linkType | linkId |
 | --- | --- | --- | --- |

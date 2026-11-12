@@ -7,6 +7,12 @@ import com.ieum.notification.entity.LinkType;
 import com.ieum.notification.entity.Notification;
 import com.ieum.notification.entity.NotificationType;
 import com.ieum.notification.repository.NotificationRepository;
+import com.ieum.transfer.entity.TransferRequest;
+import com.ieum.transfer.repository.TransferRequestRepository;
+import com.ieum.user.entity.Role;
+import com.ieum.user.entity.User;
+import com.ieum.user.entity.UserStatus;
+import com.ieum.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -34,11 +40,15 @@ class NotificationServiceTest {
 
     private NotificationRepository repository;
     private NotificationService service;
+    private TransferRequestRepository transferRepository;
+    private UserRepository userRepository;
 
     @BeforeEach
     void setUp() {
         repository = mock(NotificationRepository.class);
-        service = new NotificationService(repository, Clock.fixed(NOW.atZone(SEOUL).toInstant(), SEOUL));
+        transferRepository = mock(TransferRequestRepository.class);
+        userRepository = mock(UserRepository.class);
+        service = new NotificationService(repository, transferRepository, userRepository, Clock.fixed(NOW.atZone(SEOUL).toInstant(), SEOUL));
     }
 
     private Notification saved() {
@@ -140,6 +150,55 @@ class NotificationServiceTest {
         assertThat(first.id()).isEqualTo(41L);
         assertThat(first.isRead()).isFalse();
         assertThat(first.createdAt().toString()).isEqualTo("2026-11-02T09:12+09:00");
+    }
+
+    private Notification transferNotice(long id, long requestId) {
+        Notification n = new Notification(3L, NotificationType.TRANSFER_REQUESTED, "제목", "본문", LinkType.TRANSFER, requestId);
+        ReflectionTestUtils.setField(n, "id", id);
+        ReflectionTestUtils.setField(n, "createdAt", LocalDateTime.of(2026, 11, 12, 9, 0));
+        return n;
+    }
+
+    private TransferRequest transfer(long id, long studentId) {
+        TransferRequest r = new TransferRequest(studentId, 2L, 3L);
+        ReflectionTestUtils.setField(r, "id", id);
+        return r;
+    }
+
+    private User student(long id, long teacherId) {
+        User u = new User("s" + id, "hash", Role.STUDENT, UserStatus.ACTIVE, "이름", "닉네임", NOW);
+        ReflectionTestUtils.setField(u, "id", id);
+        u.assignTeacher(teacherId, NOW.minusDays(3));
+        return u;
+    }
+
+    @Test
+    void 이관_알림에는_신청_상태가_붙고_다른_알림은_null이다() {
+        TransferRequest pending = transfer(7, 12);
+        TransferRequest accepted = transfer(8, 13);
+        accepted.accept(NOW);
+        TransferRequest stale = transfer(9, 14);
+        when(repository.findTop50ByUserIdOrderByCreatedAtDescIdDesc(3L)).thenReturn(List.of(
+                transferNotice(54, 7), transferNotice(53, 8), transferNotice(52, 9), existing(51, 3, false)));
+        when(transferRepository.findAllById(List.of(7L, 8L, 9L))).thenReturn(List.of(pending, accepted, stale));
+        when(userRepository.findAllById(List.of(12L, 13L, 14L))).thenReturn(List.of(
+                student(12, 2L), student(13, 3L), student(14, 5L)));   // 14번 학습자는 신청 뒤 담당이 5번으로 바뀜
+
+        List<NotificationListResponse.Item> items = service.list(3L, false).items();
+
+        assertThat(items.get(0).transferStatus()).isEqualTo("PENDING");
+        assertThat(items.get(1).transferStatus()).isEqualTo("ACCEPTED");
+        assertThat(items.get(2).transferStatus()).isEqualTo("EXPIRED");
+        assertThat(items.get(3).transferStatus()).isNull();
+    }
+
+    @Test
+    void 이관_알림이_없으면_이관_신청을_조회하지_않는다() {
+        when(repository.findTop50ByUserIdOrderByCreatedAtDescIdDesc(1L)).thenReturn(List.of(existing(41, 1, false)));
+
+        service.list(1L, false);
+
+        verify(transferRepository, never()).findAllById(any());
     }
 
     @Test
