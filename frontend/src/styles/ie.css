@@ -1816,3 +1816,21 @@ a.ie-card:hover,.ie-card--link:hover,.ie-pcard:hover{box-shadow:0 2px 4px rgba(6
     움직임 줄이기 설정이거나 768px 미만이면 이 효과가 꺼지고 위의 sticky 로 화면에 붙어 있어요.) */
 .ie-side-slot.is-floating{position:relative!important;top:auto!important;will-change:transform;transition:box-shadow .35s ease}
 .ie-side-slot.is-floating.is-moving{box-shadow:0 28px 54px -22px rgba(83,70,160,.40),0 2px 4px rgba(40,51,76,.06)}
+
+/* 홈 마을 이름표 — '파스텔 구름섬 마을' 시안의 말풍선: 반투명 유리 알약 + 흰 동그라미 아이콘 + 아래로 뾰족한 꼬리 */
+.ie-3lab{
+  padding:4px 16px 4px 4px;
+  background:linear-gradient(180deg,rgba(255,255,255,.82) 0%,rgba(244,240,255,.58) 100%);
+  -webkit-backdrop-filter:blur(10px) saturate(1.25);backdrop-filter:blur(10px) saturate(1.25);
+  border:1.5px solid rgba(255,255,255,.9);
+  box-shadow:0 10px 22px -12px rgba(94,84,190,.55),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -7px 12px rgba(196,186,246,.2);
+  color:#3A3F85;font-weight:700;letter-spacing:-.01em;
+}
+.ie-3lab::after{
+  width:14px;height:8px;margin-left:-7px;border-radius:0;
+  background:linear-gradient(180deg,rgba(244,240,255,.7),rgba(244,240,255,.5));
+  clip-path:polygon(0 0,100% 0,50% 100%);
+}
+.ie-3lic{background:#fff;box-shadow:0 2px 6px -2px rgba(94,84,190,.45),inset 0 0 0 1.5px var(--soft)}
+.ie-3lab:hover,.ie-3lab:focus-visible{border-color:var(--c);background:linear-gradient(180deg,rgba(255,255,255,.94) 0%,rgba(250,247,255,.78) 100%)}
+.ie-w3.is-near .ie-3lab.is-front{box-shadow:0 14px 26px -12px rgba(94,84,190,.65),inset 0 1px 0 rgba(255,255,255,.95)}
