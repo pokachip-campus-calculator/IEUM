@@ -298,7 +298,12 @@ export const router = createBrowserRouter([
           session.token
         );
       } catch (error) {
-        console.error("사용자 정보 조회 실패:", error);
+        if (error instanceof ApiError && error.status === 401) {
+          // 저장된 토큰이 만료·무효면 로그아웃 상태로 되돌려요(오류로 남기지 않아요).
+          clearSessionUser();
+        } else {
+          console.error("사용자 정보 조회 실패:", error);
+        }
       }
 
       return null;
