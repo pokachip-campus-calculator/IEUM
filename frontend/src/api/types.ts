@@ -51,6 +51,7 @@ export interface PracticeItem {
   title: string;
   summary: string;
   estMinutes: number;
+  completedAt?: string | null;
   myStatus: PracticeStatus;
 }
 
