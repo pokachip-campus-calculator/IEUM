@@ -170,7 +170,9 @@ class Login extends Component<any, any> {
           console.error("로그인 오류:", err);
 
           this.setState({
-            error: err instanceof ApiError
+            error: err instanceof ApiError && err.code === "TOO_MANY_ATTEMPTS"
+              ? "로그인 시도가 너무 많아요. 5분 뒤에 다시 시도해 주세요."
+              : err instanceof ApiError
               ? err.message
               : "로그인 서버에 연결하지 못했어요. 잠시 뒤 다시 시도해 주세요.",
             loading: false,
