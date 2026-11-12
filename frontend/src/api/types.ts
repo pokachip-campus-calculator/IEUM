@@ -204,6 +204,8 @@ export interface AppNotification {
   unread: boolean;
   /** 이관 신청 알림이면 수락할 신청 번호 */
   transferId?: number;
+  /** 이관 알림일 때 신청 상태. 서버가 안 보내면(옛 서버) 없음 */
+  transferStatus?: "PENDING" | "ACCEPTED" | "EXPIRED";
 }
 
 /* ---------- 이음쌤 ---------- */

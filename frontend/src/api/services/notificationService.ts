@@ -14,6 +14,8 @@ interface ApiNotification {
   linkId: number | null;
   isRead: boolean;
   createdAt: string;
+  /** linkType이 TRANSFER일 때만 값이 있어요(나머지는 null) */
+  transferStatus?: "PENDING" | "ACCEPTED" | "EXPIRED" | null;
 }
 
 interface ApiNotificationsResponse {
@@ -71,6 +73,7 @@ function mapNotification(notification: ApiNotification): AppNotification {
       notification.type === "TRANSFER_REQUESTED" && notification.linkId !== null
         ? notification.linkId
         : undefined,
+    transferStatus: notification.transferStatus ?? undefined,
   };
 }
 
